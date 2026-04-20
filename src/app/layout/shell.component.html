@@ -1,0 +1,73 @@
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">PN</div>
+      <span class="logo-text">AdministracionPN</span>
+    </div>
+    <nav class="nav">
+      <a routerLink="/inicio" routerLinkActive="active" class="nav-item"><span class="nav-icon">&#9632;</span> Inicio</a>
+
+      <a class="nav-item nav-parent" [class.open]="isOpen('listados')" (click)="toggle('listados')">
+        <span class="nav-icon">&#9776;</span> Listados <span class="nav-arrow">&#9662;</span>
+      </a>
+      <div class="nav-submenu" [class.open]="isOpen('listados')">
+        <a routerLink="/listados" class="nav-subitem">Mov. de Sistema</a>
+        <a routerLink="/listados" class="nav-subitem">Agrup. Parlamentarias</a>
+        <a routerLink="/listados" class="nav-subitem">Agrup. de Gobierno</a>
+        <a routerLink="/listados" class="nav-subitem">Com. Departamentales</a>
+        <a routerLink="/listados" class="nav-subitem">Intendencias Nacionalistas</a>
+        <a routerLink="/listados" class="nav-subitem">Intendencias PN</a>
+        <a routerLink="/listados" class="nav-subitem">Alcaldes</a>
+        <a routerLink="/listados" class="nav-subitem">Com. Jovenes</a>
+        <a routerLink="/convencionales" class="nav-subitem">Convencionales</a>
+        <a routerLink="/listados" class="nav-subitem">Directorio</a>
+      </div>
+
+      <a routerLink="/productos" routerLinkActive="active" class="nav-item"><span class="nav-icon">&#9744;</span> Productos</a>
+      <a routerLink="/agenda" routerLinkActive="active" class="nav-item"><span class="nav-icon">&#9786;</span> Agenda</a>
+      <a routerLink="/adhesiones" routerLinkActive="active" class="nav-item"><span class="nav-icon">&#9733;</span> Adhesiones</a>
+      <a routerLink="/debitos" routerLinkActive="active" class="nav-item"><span class="nav-icon">&#9632;</span> Débitos</a>
+
+      <a class="nav-item nav-parent" [class.open]="isOpen('orgs')" (click)="toggle('orgs')">
+        <span class="nav-icon">&#9881;</span> Organismos <span class="nav-arrow">&#9662;</span>
+      </a>
+      <div class="nav-submenu" [class.open]="isOpen('orgs')">
+        <a routerLink="/organismos" class="nav-subitem">Todos los Organismos</a>
+        <a routerLink="/organismos" class="nav-subitem">Info de la Organizacion</a>
+        <a routerLink="/organismos" class="nav-subitem">Integrantes</a>
+        <a routerLink="/organismos" class="nav-subitem">Ref. Partidarias</a>
+      </div>
+
+      <a class="nav-item nav-parent" [class.open]="isOpen('agrup')" (click)="toggle('agrup')">
+        <span class="nav-icon">&#9670;</span> Agrupaciones <span class="nav-arrow">&#9662;</span>
+      </a>
+      <div class="nav-submenu" [class.open]="isOpen('agrup')">
+        <a routerLink="/agrupaciones" class="nav-subitem">Todas</a>
+        <a routerLink="/agrupaciones" class="nav-subitem">Integrantes por Agrupacion</a>
+        <a routerLink="/agrupaciones" class="nav-subitem">Padron Electoral</a>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-badge">
+        <div class="user-avatar">{{ initials(user()?.usuario) }}</div>
+        <div style="flex:1">
+          <div class="user-name">{{ user()?.usuario }}</div>
+          <div class="user-role">{{ user()?.rol }}</div>
+        </div>
+        <button class="btn btn-sm btn-secondary" (click)="logout()" title="Salir">⎋</button>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <h1 class="page-title">{{ titleSvc.title() }}</h1>
+      <div class="topbar-actions">
+        <span class="date-display">{{ today }}</span>
+      </div>
+    </header>
+    <div class="content">
+      <router-outlet></router-outlet>
+    </div>
+  </main>
+</div>
