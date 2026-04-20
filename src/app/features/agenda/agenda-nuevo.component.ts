@@ -2,6 +2,7 @@ import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Observable } from 'rxjs';
 import { ContactosService, Contacto } from './contactos.service';
 import { PageTitleService } from '../../core/page-title.service';
 
@@ -76,7 +77,7 @@ export class AgendaNuevoComponent {
   }
 
   guardar() {
-    const req = this.editingId
+    const req: Observable<unknown> = this.editingId
       ? this.svc.update(this.c as Contacto)
       : this.svc.create(this.c);
     req.subscribe(() => this.router.navigate(['/agenda']));
