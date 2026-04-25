@@ -24,6 +24,11 @@ export interface Contacto {
   ocupacion?: string;
   empresa?: string;
   cargoLaboral?: string;
+  telefonoTrabajo?: string;
+  interno?: string;
+  datosSecretaria?: string;
+  departamentoLaboral?: string;
+  mailTrabajo?: string;
   activo: boolean;
 }
 

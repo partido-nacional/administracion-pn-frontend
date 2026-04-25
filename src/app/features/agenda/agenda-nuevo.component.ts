@@ -91,6 +91,30 @@ import { PageTitleService } from '../../core/page-title.service';
             <div class="form-group"><label class="form-label">Ocupación</label><input class="form-input" name="ocu" [(ngModel)]="c.ocupacion"></div>
             <div class="form-group"><label class="form-label">Empresa</label><input class="form-input" name="emp" [(ngModel)]="c.empresa"></div>
             <div class="form-group full-width"><label class="form-label">Cargo</label><input class="form-input" name="cargo" [(ngModel)]="c.cargoLaboral"></div>
+            <div class="form-group">
+              <label class="form-label">Teléfono</label>
+              <input class="form-input" name="telTrab" [(ngModel)]="c.telefonoTrabajo" #telTrab="ngModel"
+                     pattern="^[0-9]+$" inputmode="numeric"
+                     placeholder="Solo numeros, sin espacios">
+              @if (telTrab.invalid && (telTrab.dirty || telTrab.touched)) {
+                <small style="color:#c00; font-size:12px">El telefono debe ser numerico, sin espacios.</small>
+              }
+            </div>
+            <div class="form-group">
+              <label class="form-label">Interno</label>
+              <input class="form-input" name="interno" [(ngModel)]="c.interno" #int="ngModel"
+                     pattern="^[0-9]*$" inputmode="numeric" placeholder="Solo numeros">
+              @if (int.invalid && (int.dirty || int.touched)) {
+                <small style="color:#c00; font-size:12px">El interno debe ser numerico.</small>
+              }
+            </div>
+            <div class="form-group"><label class="form-label">Departamento</label>
+              <select class="form-select" name="depLab" [(ngModel)]="c.departamentoLaboral">
+                <option value="">—</option>
+                @for (d of departamentos; track d) { <option>{{ d }}</option> }
+              </select></div>
+            <div class="form-group"><label class="form-label">Email</label><input class="form-input" type="email" name="mailLab" [(ngModel)]="c.mailTrabajo"></div>
+            <div class="form-group full-width"><label class="form-label">Datos Secretaría</label><input class="form-input" name="sec" [(ngModel)]="c.datosSecretaria"></div>
           </div>
 
           <div class="form-actions">
