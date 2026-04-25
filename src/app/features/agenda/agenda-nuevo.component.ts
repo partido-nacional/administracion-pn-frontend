@@ -18,7 +18,15 @@ import { PageTitleService } from '../../core/page-title.service';
           <div class="form-grid">
             <div class="form-group"><label class="form-label">Nombre *</label><input class="form-input" name="nombre" [(ngModel)]="c.nombre" required></div>
             <div class="form-group"><label class="form-label">Apellido *</label><input class="form-input" name="apellido" [(ngModel)]="c.apellido" required></div>
-            <div class="form-group"><label class="form-label">Documento</label><input class="form-input" name="documento" [(ngModel)]="c.documento"></div>
+            <div class="form-group">
+              <label class="form-label">Cedula</label>
+              <input class="form-input" name="documento" [(ngModel)]="c.documento" #doc="ngModel"
+                     pattern="^[0-9]{7,8}$" inputmode="numeric" maxlength="8"
+                     placeholder="Solo numeros, 7 u 8 digitos">
+              @if (doc.invalid && (doc.dirty || doc.touched)) {
+                <small style="color:#c00; font-size:12px">La cedula debe ser numerica de 7 u 8 digitos.</small>
+              }
+            </div>
             <div class="form-group"><label class="form-label">Fecha Nacimiento</label><input class="form-input" type="date" name="fn" [(ngModel)]="c.fechaNacimiento"></div>
             <div class="form-group"><label class="form-label">Sexo</label>
               <select class="form-select" name="sexo" [(ngModel)]="c.sexo">
