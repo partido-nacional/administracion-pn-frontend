@@ -107,8 +107,8 @@ type Tab = 'todos' | 'padron' | 'duplicados' | 'exportar';
                   </td>
                   <td>
                     <div class="action-group">
-                      <a class="action-link" (click)="ver(c.id)">Ver</a>
-                      <a [routerLink]="['/agenda', c.id]" class="action-link">Editar</a>
+                      <button class="btn btn-sm btn-secondary" (click)="ver(c.id)">Ver</button>
+                      <a [routerLink]="['/agenda', c.id]" class="btn btn-sm btn-primary">Editar</a>
                     </div>
                   </td>
                 </tr>
