@@ -60,9 +60,31 @@ type Tab = 'todos' | 'padron' | 'duplicados' | 'exportar';
                 <th>Adhesion</th>
                 <th></th>
               </tr>
+              <tr class="filter-row">
+                <th><input class="column-filter" [ngModel]="fId()"     (ngModelChange)="fId.set($event)"     placeholder="Filtrar..."></th>
+                <th><input class="column-filter" [ngModel]="fNombre()" (ngModelChange)="fNombre.set($event)" placeholder="Filtrar..."></th>
+                <th><input class="column-filter" [ngModel]="fCedula()" (ngModelChange)="fCedula.set($event)" placeholder="Filtrar..."></th>
+                <th>
+                  <select class="column-filter" [ngModel]="fDepto()" (ngModelChange)="fDepto.set($event)">
+                    <option value="">Todos</option>
+                    @for (d of deptos; track d) { @if (d) { <option>{{ d }}</option> } }
+                  </select>
+                </th>
+                <th><input class="column-filter" [ngModel]="fTel()"   (ngModelChange)="fTel.set($event)"   placeholder="Filtrar..."></th>
+                <th><input class="column-filter" [ngModel]="fEmail()" (ngModelChange)="fEmail.set($event)" placeholder="Filtrar..."></th>
+                <th>
+                  <select class="column-filter" [ngModel]="fAdh()" (ngModelChange)="fAdh.set($event)">
+                    <option value="">Todas</option>
+                    <option>Activa</option>
+                    <option>Pendiente</option>
+                    <option>Baja</option>
+                  </select>
+                </th>
+                <th></th>
+              </tr>
             </thead>
             <tbody>
-              @for (c of contactos(); track c.id) {
+              @for (c of filtrados(); track c.id) {
                 <tr>
                   <td>{{ c.id }}</td>
                   <td><strong>{{ c.apellido }}, {{ c.nombre }}</strong></td>
@@ -96,7 +118,7 @@ type Tab = 'todos' | 'padron' | 'duplicados' | 'exportar';
             </tbody>
           </table>
           <div class="pagination" style="padding:16px 24px">
-            <span class="pagination-info">Mostrando 1–{{ contactos().length }} de {{ contactos().length }} contactos</span>
+            <span class="pagination-info">Mostrando 1–{{ filtrados().length }} de {{ contactos().length }} contactos</span>
             <div class="pagination-buttons">
               <button class="page-btn">&lt;</button>
               <button class="page-btn active">1</button>
@@ -130,6 +152,30 @@ export class AgendaListadoComponent {
   depto = signal<string>('');
   deptos = ['', 'Montevideo', 'Canelones', 'Maldonado', 'Salto'];
   contactos = signal<ContactoListado[]>([]);
+
+  fId = signal('');
+  fNombre = signal('');
+  fCedula = signal('');
+  fDepto = signal('');
+  fTel = signal('');
+  fEmail = signal('');
+  fAdh = signal('');
+
+  filtrados = computed(() => {
+    const norm = (s: any) => (s ?? '').toString().toLowerCase();
+    const m = (val: any, q: string) => !q || norm(val).includes(q.toLowerCase());
+    const fId = this.fId(), fNom = this.fNombre(), fCed = this.fCedula(),
+          fDep = this.fDepto(), fTel = this.fTel(), fMail = this.fEmail(), fAdh = this.fAdh();
+    return this.contactos().filter(c =>
+      m(c.id, fId) &&
+      m(`${c.apellido}, ${c.nombre}`, fNom) &&
+      m(c.cedula, fCed) &&
+      (!fDep || c.departamento === fDep) &&
+      m(c.telefono, fTel) &&
+      m(c.email, fMail) &&
+      (!fAdh || (c.adhesion ?? '') === fAdh)
+    );
+  });
 
   constructor() {
     this.titleSvc.set('Agenda');
