@@ -5,9 +5,11 @@ import { Observable } from 'rxjs';
 
 export interface Contacto {
   id: number;
+  cortesia?: string;
   nombre: string;
   apellido: string;
   documento?: string;
+  credencialCivica?: string;
   fechaNacimiento?: string;
   sexo?: string;
   estadoCivil?: string;
@@ -15,9 +17,10 @@ export interface Contacto {
   celular?: string;
   email?: string;
   departamento?: string;
+  departamentoCredencial?: string;
   localidad?: string;
   direccion?: string;
-  codigoPostal?: string;
+  situacion?: string;
   ocupacion?: string;
   empresa?: string;
   cargoLaboral?: string;

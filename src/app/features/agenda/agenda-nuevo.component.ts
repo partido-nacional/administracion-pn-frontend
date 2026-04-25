@@ -16,6 +16,12 @@ import { PageTitleService } from '../../core/page-title.service';
         <div class="card-body">
           <div class="form-section"><div class="form-section-title">Datos personales</div></div>
           <div class="form-grid">
+            <div class="form-group"><label class="form-label">Cortesía</label>
+              <select class="form-select" name="cortesia" [(ngModel)]="c.cortesia">
+                <option value="">—</option><option>Sr.</option><option>Sra.</option><option>Srta.</option>
+                <option>Dr.</option><option>Dra.</option><option>Ing.</option><option>Lic.</option>
+                <option>Esc.</option><option>Cr.</option><option>Cra.</option><option>Prof.</option>
+              </select></div>
             <div class="form-group"><label class="form-label">Nombre *</label><input class="form-input" name="nombre" [(ngModel)]="c.nombre" required></div>
             <div class="form-group"><label class="form-label">Apellido *</label><input class="form-input" name="apellido" [(ngModel)]="c.apellido" required></div>
             <div class="form-group">
@@ -27,12 +33,23 @@ import { PageTitleService } from '../../core/page-title.service';
                 <small style="color:#c00; font-size:12px">La cedula debe ser numerica de 7 u 8 digitos.</small>
               }
             </div>
+            <div class="form-group"><label class="form-label">Credencial</label><input class="form-input" name="cred" [(ngModel)]="c.credencialCivica"></div>
+            <div class="form-group"><label class="form-label">Departamento Credencial</label>
+              <select class="form-select" name="depCred" [(ngModel)]="c.departamentoCredencial">
+                <option value="">—</option>
+                @for (d of departamentos; track d) { <option>{{ d }}</option> }
+              </select></div>
             <div class="form-group"><label class="form-label">Fecha Nacimiento</label><input class="form-input" type="date" name="fn" [(ngModel)]="c.fechaNacimiento"></div>
             <div class="form-group"><label class="form-label">Sexo</label>
               <select class="form-select" name="sexo" [(ngModel)]="c.sexo">
                 <option value="">—</option><option>Masculino</option><option>Femenino</option><option>Otro</option>
               </select></div>
             <div class="form-group"><label class="form-label">Estado civil</label><input class="form-input" name="ec" [(ngModel)]="c.estadoCivil"></div>
+            <div class="form-group"><label class="form-label">Situación</label>
+              <select class="form-select" name="sit" [(ngModel)]="c.situacion">
+                <option value="">—</option>
+                @for (s of situaciones; track s) { <option>{{ s }}</option> }
+              </select></div>
           </div>
 
           <div class="form-section"><div class="form-section-title">Contacto</div></div>
@@ -60,10 +77,13 @@ import { PageTitleService } from '../../core/page-title.service';
 
           <div class="form-section"><div class="form-section-title">Dirección</div></div>
           <div class="form-grid">
-            <div class="form-group"><label class="form-label">Departamento</label><input class="form-input" name="dep" [(ngModel)]="c.departamento"></div>
+            <div class="form-group"><label class="form-label">Departamento de la dirección</label>
+              <select class="form-select" name="dep" [(ngModel)]="c.departamento">
+                <option value="">—</option>
+                @for (d of departamentos; track d) { <option>{{ d }}</option> }
+              </select></div>
             <div class="form-group"><label class="form-label">Localidad</label><input class="form-input" name="loc" [(ngModel)]="c.localidad"></div>
             <div class="form-group full-width"><label class="form-label">Dirección</label><input class="form-input" name="dir" [(ngModel)]="c.direccion"></div>
-            <div class="form-group"><label class="form-label">Código postal</label><input class="form-input" name="cp" [(ngModel)]="c.codigoPostal"></div>
           </div>
 
           <div class="form-section"><div class="form-section-title">Laboral</div></div>
@@ -90,6 +110,14 @@ export class AgendaNuevoComponent {
 
   c: Partial<Contacto> = { activo: true };
   editingId?: number;
+
+  departamentos = [
+    'Artigas', 'Canelones', 'Cerro Largo', 'Colonia', 'Durazno', 'Flores',
+    'Florida', 'Lavalleja', 'Maldonado', 'Montevideo', 'Paysandu', 'Rio Negro',
+    'Rivera', 'Rocha', 'Salto', 'San Jose', 'Soriano', 'Tacuarembo', 'Treinta y Tres'
+  ];
+
+  situaciones = ['F', 'M', 'R', 'V', 'S', 'SM', 'CEN', 'ICE', 'PC', 'CA', 'PI', 'FA', 'OOPP'];
 
   constructor() {
     const id = this.route.snapshot.paramMap.get('id');
