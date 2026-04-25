@@ -5,11 +5,27 @@ import { HttpClient } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 import { environment } from '../../../environments/environment';
 import { PageTitleService } from '../../core/page-title.service';
+import { ContactosService, Contacto } from './contactos.service';
 
 interface ContactoListado {
   id: number; nombre: string; apellido: string; cedula?: string;
   departamento?: string; telefono?: string; email?: string; adhesion?: string;
 }
+
+const FIELD_LABELS: Record<string, string> = {
+  id: 'ID', cortesia: 'Cortesía', nombre: 'Nombre', apellido: 'Apellido',
+  documento: 'Cedula', credencialCivica: 'Credencial',
+  fechaNacimiento: 'Fecha Nacimiento', sexo: 'Sexo', estadoCivil: 'Estado civil',
+  telefono: 'Teléfono', celular: 'Celular', email: 'Email',
+  departamento: 'Departamento (dirección)', departamentoCredencial: 'Departamento Credencial',
+  localidad: 'Localidad', direccion: 'Dirección', situacion: 'Situación',
+  ocupacion: 'Ocupación', empresa: 'Empresa', cargoLaboral: 'Cargo',
+  telefonoTrabajo: 'Teléfono laboral', interno: 'Interno',
+  datosSecretaria: 'Datos Secretaría', departamentoLaboral: 'Departamento laboral',
+  mailTrabajo: 'Email laboral', observaciones: 'Observaciones',
+  fechaCreado: 'Fecha de creación', fechaUltimaModificacion: 'Última modificación',
+  activo: 'Activo'
+};
 
 type Tab = 'todos' | 'padron' | 'duplicados' | 'exportar';
 
@@ -91,7 +107,7 @@ type Tab = 'todos' | 'padron' | 'duplicados' | 'exportar';
                   </td>
                   <td>
                     <div class="action-group">
-                      <a [routerLink]="['/agenda', c.id]" class="action-link">Ver</a>
+                      <a class="action-link" (click)="ver(c.id)">Ver</a>
                       <a [routerLink]="['/agenda', c.id]" class="action-link">Editar</a>
                     </div>
                   </td>
@@ -122,18 +138,99 @@ type Tab = 'todos' | 'padron' | 'duplicados' | 'exportar';
     @if (tab() === 'exportar') {
       <div class="card"><div class="card-body"><div class="empty-state"><div class="empty-state-text">Exportar — proximamente</div></div></div></div>
     }
+
+    @if (verContacto()) {
+      <div class="modal-backdrop" (click)="verContacto.set(null)">
+        <div class="modal" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <h3>Contacto #{{ verContacto()!.id }}</h3>
+            <button class="modal-close" (click)="verContacto.set(null)">×</button>
+          </div>
+          <div class="modal-body">
+            <table class="detalle-table">
+              @for (row of verRows(); track row.key) {
+                <tr>
+                  <th>{{ row.label }}</th>
+                  <td>{{ row.value }}</td>
+                </tr>
+              }
+            </table>
+          </div>
+          <div class="modal-footer">
+            <a [routerLink]="['/agenda', verContacto()!.id]" class="btn btn-primary">Editar</a>
+            <button class="btn btn-secondary" (click)="verContacto.set(null)">Cerrar</button>
+          </div>
+        </div>
+      </div>
+    }
   `,
   styles: [`
     .topbar-inline { display:flex; justify-content:flex-end; margin-bottom:16px; }
+    .modal-backdrop {
+      position:fixed; inset:0; background:rgba(0,0,0,.5);
+      display:flex; align-items:center; justify-content:center; z-index:1000;
+    }
+    .modal {
+      background:#fff; border-radius:8px; width:min(720px, 92vw);
+      max-height:90vh; display:flex; flex-direction:column;
+      box-shadow:0 10px 40px rgba(0,0,0,.25);
+    }
+    .modal-header {
+      display:flex; justify-content:space-between; align-items:center;
+      padding:16px 20px; border-bottom:1px solid #eee;
+    }
+    .modal-header h3 { margin:0; font-size:18px; }
+    .modal-close {
+      background:none; border:none; font-size:24px; line-height:1;
+      cursor:pointer; color:#666; padding:0; width:32px; height:32px;
+    }
+    .modal-body { padding:16px 20px; overflow-y:auto; flex:1; }
+    .modal-footer {
+      padding:12px 20px; border-top:1px solid #eee;
+      display:flex; gap:8px; justify-content:flex-end;
+    }
+    .detalle-table { width:100%; border-collapse:collapse; }
+    .detalle-table th {
+      text-align:left; padding:8px 12px 8px 0; width:38%;
+      color:#666; font-weight:600; font-size:13px;
+      border-bottom:1px solid #f0f0f0;
+    }
+    .detalle-table td {
+      padding:8px 0; font-size:14px; border-bottom:1px solid #f0f0f0;
+      word-break:break-word;
+    }
   `]
 })
 export class AgendaListadoComponent {
   private http = inject(HttpClient);
   private titleSvc = inject(PageTitleService);
+  private svc = inject(ContactosService);
 
   tab = signal<Tab>('todos');
   deptos = ['Montevideo', 'Canelones', 'Maldonado', 'Salto'];
   contactos = signal<ContactoListado[]>([]);
+  verContacto = signal<Contacto | null>(null);
+
+  verRows = computed(() => {
+    const c = this.verContacto();
+    if (!c) return [];
+    const fmt = (v: any) => {
+      if (v == null || v === '') return '—';
+      if (typeof v === 'boolean') return v ? 'Sí' : 'No';
+      if (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}/.test(v)) {
+        const d = new Date(v);
+        return isNaN(d.getTime()) ? v : d.toLocaleString('es-UY');
+      }
+      return String(v);
+    };
+    return Object.keys(FIELD_LABELS)
+      .filter(k => k in c)
+      .map(k => ({ key: k, label: FIELD_LABELS[k], value: fmt((c as any)[k]) }));
+  });
+
+  ver(id: number) {
+    this.svc.get(id).subscribe(c => this.verContacto.set(c));
+  }
 
   fId = signal('');
   fNombre = signal('');

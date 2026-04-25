@@ -29,6 +29,9 @@ export interface Contacto {
   datosSecretaria?: string;
   departamentoLaboral?: string;
   mailTrabajo?: string;
+  observaciones?: string;
+  fechaCreado?: string;
+  fechaUltimaModificacion?: string;
   activo: boolean;
 }
 
