@@ -30,22 +30,6 @@ type Tab = 'todos' | 'padron' | 'duplicados' | 'exportar';
     </div>
 
     @if (tab() === 'todos') {
-      <div class="toolbar">
-        <div class="toolbar-left">
-          <div class="search-box">
-            <span class="search-icon">🔍</span>
-            <input class="search-input" placeholder="Buscar por nombre, cedula, telefono..."
-                   [(ngModel)]="q" (keyup.enter)="reload()">
-          </div>
-          <div class="filter-bar">
-            @for (d of deptos; track d) {
-              <span class="filter-chip" [class.active]="depto()===d" (click)="setDepto(d)">{{ d || 'Todos' }}</span>
-            }
-          </div>
-        </div>
-        <button class="btn btn-secondary">Exportar</button>
-      </div>
-
       <div class="card">
         <div class="card-body" style="padding:0; overflow-x:auto">
           <table class="table">
@@ -148,9 +132,7 @@ export class AgendaListadoComponent {
   private titleSvc = inject(PageTitleService);
 
   tab = signal<Tab>('todos');
-  q = '';
-  depto = signal<string>('');
-  deptos = ['', 'Montevideo', 'Canelones', 'Maldonado', 'Salto'];
+  deptos = ['Montevideo', 'Canelones', 'Maldonado', 'Salto'];
   contactos = signal<ContactoListado[]>([]);
 
   fId = signal('');
@@ -182,13 +164,8 @@ export class AgendaListadoComponent {
     this.reload();
   }
 
-  setDepto(d: string) { this.depto.set(d); this.reload(); }
-
   reload() {
-    const params: any = {};
-    if (this.q) params.q = this.q;
-    if (this.depto()) params.departamento = this.depto();
-    this.http.get<ContactoListado[]>(`${environment.apiUrl}/contactos`, { params })
+    this.http.get<ContactoListado[]>(`${environment.apiUrl}/contactos`)
       .subscribe(x => this.contactos.set(x));
   }
 }
