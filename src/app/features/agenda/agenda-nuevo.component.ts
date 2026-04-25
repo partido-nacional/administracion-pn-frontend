@@ -38,8 +38,24 @@ import { PageTitleService } from '../../core/page-title.service';
           <div class="form-section"><div class="form-section-title">Contacto</div></div>
           <div class="form-grid">
             <div class="form-group"><label class="form-label">Email</label><input class="form-input" type="email" name="email" [(ngModel)]="c.email"></div>
-            <div class="form-group"><label class="form-label">Teléfono</label><input class="form-input" name="tel" [(ngModel)]="c.telefono"></div>
-            <div class="form-group"><label class="form-label">Celular</label><input class="form-input" name="cel" [(ngModel)]="c.celular"></div>
+            <div class="form-group">
+              <label class="form-label">Teléfono</label>
+              <input class="form-input" name="tel" [(ngModel)]="c.telefono" #tel="ngModel"
+                     pattern="^[0-9]+$" inputmode="numeric"
+                     placeholder="Solo numeros, sin espacios">
+              @if (tel.invalid && (tel.dirty || tel.touched)) {
+                <small style="color:#c00; font-size:12px">El telefono debe ser numerico, sin espacios.</small>
+              }
+            </div>
+            <div class="form-group">
+              <label class="form-label">Celular</label>
+              <input class="form-input" name="cel" [(ngModel)]="c.celular" #cel="ngModel"
+                     pattern="^[0-9]+$" inputmode="numeric"
+                     placeholder="Solo numeros, sin espacios">
+              @if (cel.invalid && (cel.dirty || cel.touched)) {
+                <small style="color:#c00; font-size:12px">El celular debe ser numerico, sin espacios.</small>
+              }
+            </div>
           </div>
 
           <div class="form-section"><div class="form-section-title">Dirección</div></div>
