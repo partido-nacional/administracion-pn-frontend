@@ -33,9 +33,18 @@ import { PageTitleService } from '../../core/page-title.service';
                 <small style="color:#c00; font-size:12px">La cedula debe ser numerica de 7 u 8 digitos.</small>
               }
             </div>
-            <div class="form-group"><label class="form-label">Credencial</label><input class="form-input" name="cred" [(ngModel)]="c.credencialCivica"></div>
+            <div class="form-group">
+              <label class="form-label">Credencial</label>
+              <input class="form-input" name="cred" [(ngModel)]="c.credencialCivica" #cred="ngModel"
+                     (input)="onCredencialInput($event)"
+                     pattern="^[A-Z]{3}[0-9]{1,6}$" maxlength="9"
+                     placeholder="Ej: ABC123456 (3 letras + hasta 6 numeros)">
+              @if (cred.invalid && (cred.dirty || cred.touched)) {
+                <small style="color:#c00; font-size:12px">La credencial debe ser 3 letras seguidas de hasta 6 numeros, sin espacios.</small>
+              }
+            </div>
             <div class="form-group"><label class="form-label">Departamento Credencial</label>
-              <select class="form-select" name="depCred" [(ngModel)]="c.departamentoCredencial">
+              <select class="form-select" name="depCred" [(ngModel)]="c.departamentoCredencial" disabled>
                 <option value="">—</option>
                 @for (d of departamentos; track d) { <option>{{ d }}</option> }
               </select></div>
@@ -57,21 +66,27 @@ import { PageTitleService } from '../../core/page-title.service';
             <div class="form-group"><label class="form-label">Email</label><input class="form-input" type="email" name="email" [(ngModel)]="c.email"></div>
             <div class="form-group">
               <label class="form-label">Teléfono</label>
-              <input class="form-input" name="tel" [(ngModel)]="c.telefono" #tel="ngModel"
-                     pattern="^[0-9]+$" inputmode="numeric"
+              <input class="form-input" name="tel" [(ngModel)]="c.telefono"
+                     (input)="onlyDigits($event, 'telefono')"
+                     (keypress)="blockNonDigit($event)"
+                     inputmode="numeric"
                      placeholder="Solo numeros, sin espacios">
-              @if (tel.invalid && (tel.dirty || tel.touched)) {
-                <small style="color:#c00; font-size:12px">El telefono debe ser numerico, sin espacios.</small>
-              }
             </div>
             <div class="form-group">
               <label class="form-label">Celular</label>
-              <input class="form-input" name="cel" [(ngModel)]="c.celular" #cel="ngModel"
-                     pattern="^[0-9]+$" inputmode="numeric"
+              <input class="form-input" name="cel" [(ngModel)]="c.celular"
+                     (input)="onlyDigits($event, 'celular')"
+                     (keypress)="blockNonDigit($event)"
+                     inputmode="numeric"
                      placeholder="Solo numeros, sin espacios">
-              @if (cel.invalid && (cel.dirty || cel.touched)) {
-                <small style="color:#c00; font-size:12px">El celular debe ser numerico, sin espacios.</small>
-              }
+            </div>
+            <div class="form-group">
+              <label class="form-label">Celular 2</label>
+              <input class="form-input" name="cel2" [(ngModel)]="c.celular2"
+                     (input)="onlyDigits($event, 'celular2')"
+                     (keypress)="blockNonDigit($event)"
+                     inputmode="numeric"
+                     placeholder="Solo numeros, sin espacios">
             </div>
           </div>
 
@@ -90,23 +105,30 @@ import { PageTitleService } from '../../core/page-title.service';
           <div class="form-grid">
             <div class="form-group"><label class="form-label">Ocupación</label><input class="form-input" name="ocu" [(ngModel)]="c.ocupacion"></div>
             <div class="form-group"><label class="form-label">Empresa</label><input class="form-input" name="emp" [(ngModel)]="c.empresa"></div>
+            <div class="form-group"><label class="form-label">Organismo</label><input class="form-input" name="org" [(ngModel)]="c.organismo"></div>
             <div class="form-group full-width"><label class="form-label">Cargo</label><input class="form-input" name="cargo" [(ngModel)]="c.cargoLaboral"></div>
             <div class="form-group">
               <label class="form-label">Teléfono</label>
-              <input class="form-input" name="telTrab" [(ngModel)]="c.telefonoTrabajo" #telTrab="ngModel"
-                     pattern="^[0-9]+$" inputmode="numeric"
+              <input class="form-input" name="telTrab" [(ngModel)]="c.telefonoTrabajo"
+                     (input)="onlyDigits($event, 'telefonoTrabajo')"
+                     (keypress)="blockNonDigit($event)"
+                     inputmode="numeric"
                      placeholder="Solo numeros, sin espacios">
-              @if (telTrab.invalid && (telTrab.dirty || telTrab.touched)) {
-                <small style="color:#c00; font-size:12px">El telefono debe ser numerico, sin espacios.</small>
-              }
+            </div>
+            <div class="form-group">
+              <label class="form-label">Teléfono 2</label>
+              <input class="form-input" name="telTrab2" [(ngModel)]="c.telefonoTrabajo2"
+                     (input)="onlyDigits($event, 'telefonoTrabajo2')"
+                     (keypress)="blockNonDigit($event)"
+                     inputmode="numeric"
+                     placeholder="Solo numeros, sin espacios">
             </div>
             <div class="form-group">
               <label class="form-label">Interno</label>
-              <input class="form-input" name="interno" [(ngModel)]="c.interno" #int="ngModel"
-                     pattern="^[0-9]*$" inputmode="numeric" placeholder="Solo numeros">
-              @if (int.invalid && (int.dirty || int.touched)) {
-                <small style="color:#c00; font-size:12px">El interno debe ser numerico.</small>
-              }
+              <input class="form-input" name="interno" [(ngModel)]="c.interno"
+                     (input)="onlyDigits($event, 'interno')"
+                     (keypress)="blockNonDigit($event)"
+                     inputmode="numeric" placeholder="Solo numeros">
             </div>
             <div class="form-group"><label class="form-label">Departamento</label>
               <select class="form-select" name="depLab" [(ngModel)]="c.departamentoLaboral">
@@ -116,6 +138,19 @@ import { PageTitleService } from '../../core/page-title.service';
             <div class="form-group"><label class="form-label">Email</label><input class="form-input" type="email" name="mailLab" [(ngModel)]="c.mailTrabajo"></div>
             <div class="form-group full-width"><label class="form-label">Datos Secretaría</label><input class="form-input" name="sec" [(ngModel)]="c.datosSecretaria"></div>
           </div>
+
+          @if (editingId) {
+            <div class="form-section"><div class="form-section-title">Adhesion</div></div>
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label" style="display:flex; align-items:center; gap:8px">
+                  <input type="checkbox" [checked]="c.adherente" disabled>
+                  Adherente
+                </label>
+                <small style="color:#666; font-size:12px">Calculado automaticamente segun fichas de adhesion confirmadas.</small>
+              </div>
+            </div>
+          }
 
           <div class="form-actions">
             <button class="btn btn-primary" type="submit" [disabled]="f.invalid">Guardar</button>
@@ -142,6 +177,40 @@ export class AgendaNuevoComponent {
   ];
 
   situaciones = ['F', 'M', 'R', 'V', 'S', 'SM', 'CEN', 'ICE', 'PC', 'CA', 'PI', 'FA', 'OOPP'];
+
+  private credencialMap: Record<string, string> = {
+    A: 'Montevideo', B: 'Montevideo', C: 'Canelones', D: 'Maldonado', E: 'Rocha',
+    F: 'Treinta y Tres', G: 'Cerro Largo', H: 'Rivera', I: 'Artigas', J: 'Salto',
+    K: 'Paysandu', L: 'Rio Negro', M: 'Soriano', N: 'Colonia', O: 'San Jose',
+    P: 'Flores', Q: 'Florida', R: 'Durazno', S: 'Lavalleja', T: 'Tacuarembo'
+  };
+
+  onCredencialInput(ev: Event) {
+    const input = ev.target as HTMLInputElement;
+    let v = (input.value || '').toUpperCase().replace(/\s+/g, '');
+    const letters = v.replace(/[^A-Z]/g, '').slice(0, 3);
+    const digits = v.slice(letters.length).replace(/[^0-9]/g, '').slice(0, 6);
+    v = letters + digits;
+    input.value = v;
+    this.c.credencialCivica = v;
+    if (letters.length >= 1) {
+      const dep = this.credencialMap[letters[0]];
+      if (dep) this.c.departamentoCredencial = dep;
+    } else {
+      this.c.departamentoCredencial = '';
+    }
+  }
+
+  onlyDigits(ev: Event, field: keyof Contacto) {
+    const input = ev.target as HTMLInputElement;
+    const cleaned = (input.value || '').replace(/\D/g, '');
+    if (cleaned !== input.value) input.value = cleaned;
+    (this.c as any)[field] = cleaned;
+  }
+
+  blockNonDigit(ev: KeyboardEvent) {
+    if (ev.key.length === 1 && !/[0-9]/.test(ev.key)) ev.preventDefault();
+  }
 
   constructor() {
     const id = this.route.snapshot.paramMap.get('id');
