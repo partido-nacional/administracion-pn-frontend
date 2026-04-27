@@ -1,17 +1,37 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NgForm } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { ContactosService, Contacto } from './contactos.service';
 import { PageTitleService } from '../../core/page-title.service';
+
+const FIELD_LABELS: Record<string, string> = {
+  cortesia: 'Cortesía', nombre: 'Nombre', apellido: 'Apellido', documento: 'Cedula',
+  cred: 'Credencial', depCred: 'Departamento Credencial', fn: 'Fecha Nacimiento',
+  sexo: 'Sexo', ec: 'Estado civil', sit: 'Situación',
+  email: 'Email', tel: 'Teléfono', cel: 'Celular', cel2: 'Celular 2',
+  dep: 'Departamento (dirección)', loc: 'Localidad', dir: 'Dirección',
+  ocu: 'Ocupación', emp: 'Empresa', org: 'Organismo', cargo: 'Cargo',
+  telTrab: 'Teléfono laboral', telTrab2: 'Teléfono laboral 2', interno: 'Interno',
+  depLab: 'Departamento laboral', mailLab: 'Email laboral', sec: 'Datos Secretaría'
+};
+
+function describeError(label: string, errors: any): string {
+  if (errors.required) return `${label}: campo obligatorio`;
+  if (errors.email) return `${label}: email inválido`;
+  if (errors.pattern) return `${label}: formato inválido`;
+  if (errors.minlength) return `${label}: mínimo ${errors.minlength.requiredLength} caracteres`;
+  if (errors.maxlength) return `${label}: máximo ${errors.maxlength.requiredLength} caracteres`;
+  return `${label}: valor inválido`;
+}
 
 @Component({
   selector: 'app-agenda-nuevo',
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <form (ngSubmit)="guardar()" #f="ngForm">
+    <form (ngSubmit)="guardar(f)" #f="ngForm" [class.submitted]="submitted()">
       <div class="card">
         <div class="card-body">
           <div class="form-section"><div class="form-section-title">Datos personales</div></div>
@@ -26,12 +46,11 @@ import { PageTitleService } from '../../core/page-title.service';
             <div class="form-group"><label class="form-label">Apellido *</label><input class="form-input" name="apellido" [(ngModel)]="c.apellido" required></div>
             <div class="form-group">
               <label class="form-label">Cedula</label>
-              <input class="form-input" name="documento" [(ngModel)]="c.documento" #doc="ngModel"
+              <input class="form-input" name="documento" [(ngModel)]="c.documento"
+                     (input)="onlyDigits($event, 'documento')"
+                     (keypress)="blockNonDigit($event)"
                      pattern="^[0-9]{7,8}$" inputmode="numeric" maxlength="8"
                      placeholder="Solo numeros, 7 u 8 digitos">
-              @if (doc.invalid && (doc.dirty || doc.touched)) {
-                <small style="color:#c00; font-size:12px">La cedula debe ser numerica de 7 u 8 digitos.</small>
-              }
             </div>
             <div class="form-group">
               <label class="form-label">Credencial</label>
@@ -153,13 +172,64 @@ import { PageTitleService } from '../../core/page-title.service';
           }
 
           <div class="form-actions">
-            <button class="btn btn-primary" type="submit" [disabled]="f.invalid">Guardar</button>
+            <button class="btn btn-primary" type="submit">Guardar</button>
             <button class="btn btn-secondary" type="button" (click)="cancelar()">Cancelar</button>
           </div>
         </div>
       </div>
     </form>
-  `
+
+    @if (errores().length > 0) {
+      <div class="modal-backdrop" (click)="errores.set([])">
+        <div class="modal" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <h3>No se pudo guardar</h3>
+            <button class="modal-close" (click)="errores.set([])">×</button>
+          </div>
+          <div class="modal-body">
+            <p style="margin-top:0; color:#666">Revisa los siguientes campos:</p>
+            <ul class="error-list">
+              @for (e of errores(); track e) { <li>{{ e }}</li> }
+            </ul>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-primary" (click)="errores.set([])">Entendido</button>
+          </div>
+        </div>
+      </div>
+    }
+  `,
+  styles: [`
+    .modal-backdrop {
+      position:fixed; inset:0; background:rgba(0,0,0,.5);
+      display:flex; align-items:center; justify-content:center; z-index:1000;
+    }
+    .modal {
+      background:#fff; border-radius:8px; width:min(560px, 92vw);
+      max-height:90vh; display:flex; flex-direction:column;
+      box-shadow:0 10px 40px rgba(0,0,0,.25);
+    }
+    .modal-header {
+      display:flex; justify-content:space-between; align-items:center;
+      padding:16px 20px; border-bottom:1px solid #eee;
+    }
+    .modal-header h3 { margin:0; font-size:18px; color:#c00; }
+    .modal-close {
+      background:none; border:none; font-size:24px; line-height:1;
+      cursor:pointer; color:#666; padding:0; width:32px; height:32px;
+    }
+    .modal-body { padding:16px 20px; overflow-y:auto; flex:1; }
+    .modal-footer {
+      padding:12px 20px; border-top:1px solid #eee;
+      display:flex; gap:8px; justify-content:flex-end;
+    }
+    .error-list { margin:0; padding-left:20px; color:#333; }
+    .error-list li { padding:4px 0; }
+    form.submitted .form-input.ng-invalid,
+    form.submitted .form-select.ng-invalid {
+      border-color:#c00 !important; background:#fff5f5;
+    }
+  `]
 })
 export class AgendaNuevoComponent {
   private svc = inject(ContactosService);
@@ -169,6 +239,8 @@ export class AgendaNuevoComponent {
 
   c: Partial<Contacto> = { activo: true };
   editingId?: number;
+  submitted = signal(false);
+  errores = signal<string[]>([]);
 
   departamentos = [
     'Artigas', 'Canelones', 'Cerro Largo', 'Colonia', 'Durazno', 'Flores',
@@ -221,7 +293,20 @@ export class AgendaNuevoComponent {
     }
   }
 
-  guardar() {
+  guardar(form: NgForm) {
+    this.submitted.set(true);
+    if (form.invalid) {
+      Object.values(form.controls).forEach(ctrl => ctrl.markAsTouched());
+      const errs: string[] = [];
+      Object.entries(form.controls).forEach(([name, ctrl]) => {
+        if (ctrl.invalid && ctrl.errors) {
+          const label = FIELD_LABELS[name] ?? name;
+          errs.push(describeError(label, ctrl.errors));
+        }
+      });
+      this.errores.set(errs.length ? errs : ['Hay campos con valores inválidos.']);
+      return;
+    }
     const req: Observable<unknown> = this.editingId
       ? this.svc.update(this.c as Contacto)
       : this.svc.create(this.c);
