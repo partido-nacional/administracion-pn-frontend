@@ -10,7 +10,7 @@ import { ContactosService, Contacto } from './contactos.service';
 interface ContactoListado {
   id: number; nombre: string; apellido: string; cedula?: string;
   departamento?: string; telefono?: string; email?: string; adhesion?: string;
-  adherente?: boolean; tieneFicha?: boolean;
+  adherente?: boolean; tieneFicha?: boolean; tieneIntegranteOrganismo?: boolean;
 }
 
 type Tab = 'todos' | 'padron' | 'duplicados' | 'exportar';
@@ -98,6 +98,9 @@ type Tab = 'todos' | 'padron' | 'duplicados' | 'exportar';
                         <a [routerLink]="['/agenda', c.id, 'fichas']" class="btn btn-sm btn-success">Ficha Adhesion</a>
                       } @else {
                         <a [routerLink]="['/agenda', c.id, 'fichas', 'nueva']" class="btn btn-sm btn-success">Pasar a Adhesion</a>
+                      }
+                      @if (c.tieneIntegranteOrganismo) {
+                        <a [routerLink]="['/agenda', c.id, 'organismos']" class="btn btn-sm btn-secondary">Int. Organismo</a>
                       }
                     </div>
                   </td>

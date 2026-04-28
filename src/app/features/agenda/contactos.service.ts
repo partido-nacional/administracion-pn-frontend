@@ -39,6 +39,25 @@ export interface Contacto {
   adherente?: boolean;
 }
 
+export interface IntegranteOrganismo {
+  id: number;
+  contactoId: number;
+  nombres: string;
+  nombreCompania?: string;
+  nombreAbreviado?: string;
+  nombreOrganismo?: string;
+  partidoSector?: string;
+  posicionOrganismo?: string;
+  orden?: number;
+  orden2?: number;
+  cargo?: string;
+  condicion?: string;
+  nota?: string;
+  fechaInicio?: string;
+  fechaFin?: string;
+  fechaDesignacion?: string;
+}
+
 export interface FichaAdhesion {
   id: number;
   sector?: string;
@@ -92,4 +111,6 @@ export class ContactosService {
   update(c: Contacto) { return this.http.put<void>(`${this.base}/${c.id}`, c); }
   delete(id: number) { return this.http.delete<void>(`${this.base}/${id}`); }
   fichasAdhesion(id: number) { return this.http.get<FichaAdhesion[]>(`${this.base}/${id}/fichas-adhesion`); }
+  integrantesOrganismo(id: number) { return this.http.get<IntegranteOrganismo[]>(`${this.base}/${id}/integrantes-organismo`); }
+  eliminarIntegranteOrganismo(id: number) { return this.http.delete<void>(`${environment.apiUrl}/integrantes-organismo/${id}`); }
 }
