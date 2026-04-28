@@ -5,7 +5,7 @@ import { HttpClient } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 import { environment } from '../../../environments/environment';
 import { PageTitleService } from '../../core/page-title.service';
-import { ContactosService, Contacto, FichaAdhesion } from './contactos.service';
+import { ContactosService, Contacto } from './contactos.service';
 
 interface ContactoListado {
   id: number; nombre: string; apellido: string; cedula?: string;
@@ -110,7 +110,7 @@ type Tab = 'todos' | 'padron' | 'duplicados' | 'exportar';
                     <div class="action-group">
                       <button class="btn btn-sm btn-secondary" (click)="ver(c.id)">Ver</button>
                       <a [routerLink]="['/agenda', c.id]" class="btn btn-sm btn-primary">Editar</a>
-                      <button class="btn btn-sm btn-info" (click)="verFichas(c.id, c.apellido + ', ' + c.nombre)">Ficha Adhesion</button>
+                      <a [routerLink]="['/agenda', c.id, 'fichas']" class="btn btn-sm btn-info">Ficha Adhesion</a>
                     </div>
                   </td>
                 </tr>
@@ -166,51 +166,6 @@ type Tab = 'todos' | 'padron' | 'duplicados' | 'exportar';
       </div>
     }
 
-    @if (fichasContactoId() !== null) {
-      <div class="modal-backdrop" (click)="cerrarFichas()">
-        <div class="modal" (click)="$event.stopPropagation()" style="width:min(900px, 95vw)">
-          <div class="modal-header">
-            <h3>Fichas de Adhesion — {{ fichasContactoNombre() }}</h3>
-            <button class="modal-close" (click)="cerrarFichas()">×</button>
-          </div>
-          <div class="modal-body">
-            @if (fichas().length === 0) {
-              <div class="empty-state"><div class="empty-state-text">Sin fichas de adhesion para este contacto</div></div>
-            } @else {
-              <table class="table">
-                <thead>
-                  <tr>
-                    <th>ID</th><th>Sector</th><th>Sist. Contrib.</th><th>Aporte</th>
-                    <th>Fecha Adhesion</th><th>Fecha Salida</th><th>Confirmado</th>
-                    <th>Art. 46</th><th>Titular Resp.</th><th>Estado</th><th>Origen</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (f of fichas(); track f.id) {
-                    <tr>
-                      <td>{{ f.id }}</td>
-                      <td>{{ f.sector || '—' }}</td>
-                      <td>{{ f.sistContrib || '—' }}</td>
-                      <td>{{ f.aporte ?? '—' }}</td>
-                      <td>{{ f.fechaAdhesion || '—' }}</td>
-                      <td>{{ f.fechaSalida || '—' }}</td>
-                      <td>{{ f.aporteConfirmado ? 'S' : 'N' }}</td>
-                      <td>{{ f.art46 ? 'S' : 'N' }}</td>
-                      <td>{{ f.titularResponsable || '—' }}</td>
-                      <td>{{ f.estado }}</td>
-                      <td>{{ f.origen || '—' }}</td>
-                    </tr>
-                  }
-                </tbody>
-              </table>
-            }
-          </div>
-          <div class="modal-footer">
-            <button class="btn btn-secondary" (click)="cerrarFichas()">Cerrar</button>
-          </div>
-        </div>
-      </div>
-    }
   `,
   styles: [`
     .topbar-inline { display:flex; justify-content:flex-end; margin-bottom:16px; }
@@ -258,20 +213,6 @@ export class AgendaListadoComponent {
   deptos = ['Montevideo', 'Canelones', 'Maldonado', 'Salto'];
   contactos = signal<ContactoListado[]>([]);
   verContacto = signal<Contacto | null>(null);
-  fichasContactoId = signal<number | null>(null);
-  fichasContactoNombre = signal<string>('');
-  fichas = signal<FichaAdhesion[]>([]);
-
-  verFichas(id: number, nombre: string) {
-    this.fichasContactoId.set(id);
-    this.fichasContactoNombre.set(nombre);
-    this.svc.fichasAdhesion(id).subscribe(x => this.fichas.set(x));
-  }
-
-  cerrarFichas() {
-    this.fichasContactoId.set(null);
-    this.fichas.set([]);
-  }
 
   verRows = computed(() => {
     const c = this.verContacto();

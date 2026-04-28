@@ -31,7 +31,7 @@ function describeError(label: string, errors: any): string {
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <form (ngSubmit)="guardar(f)" #f="ngForm" [class.submitted]="submitted()">
+    <form (ngSubmit)="guardar(f)" #f="ngForm" novalidate [class.submitted]="submitted()">
       <div class="card">
         <div class="card-body">
           <div class="form-section"><div class="form-section-title">Datos personales</div></div>

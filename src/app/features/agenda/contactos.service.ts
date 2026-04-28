@@ -52,6 +52,43 @@ export interface FichaAdhesion {
   estado: string;
   origen?: string;
   observaciones?: string;
+  aporteTodoAlPartido: boolean;
+}
+
+export interface FichaAdhesionDetalle {
+  id: number;
+  contactoId: number;
+  contactoNombre?: string;
+  sector?: string;
+  sistContrib?: string;
+  aporte?: number;
+  fechaAdhesion?: string;
+  fechaSalida?: string;
+  aporteConfirmado: boolean;
+  art46: boolean;
+  titularResponsable?: string;
+  estado: string;
+  origen?: string;
+  observaciones?: string;
+  aporteTodoAlPartido: boolean;
+  aporteSecretariaAgrupacion?: string;
+  aporteAgrupacion?: string;
+  departamentoAgrupacion?: string;
+  departamental: boolean;
+  cedulaResponsable?: string;
+  codigoAgrupacion?: string;
+  telefonoAntel?: string;
+  fechaVencimiento?: string;
+  fechaUltimoPago?: string;
+  cercaUsuario?: string;
+  cercaContrasena?: string;
+  cercaFoja?: string;
+  cercaUsuarioActivo: boolean;
+  cercaActivoEnApp: boolean;
+  cercaConLogueo: boolean;
+  cercaTelefono?: string;
+  cercaCelular?: string;
+  cercaMail?: string;
 }
 
 @Injectable({ providedIn: 'root' })
