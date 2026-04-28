@@ -101,6 +101,8 @@ type Tab = 'todos' | 'padron' | 'duplicados' | 'exportar';
                       }
                       @if (c.tieneIntegranteOrganismo) {
                         <a [routerLink]="['/agenda', c.id, 'organismos']" class="btn btn-sm btn-secondary">Int. Organismo</a>
+                      } @else {
+                        <button class="btn btn-sm btn-secondary" disabled title="El contacto no pertenece a ningún organismo">Int. Organismo</button>
                       }
                     </div>
                   </td>
@@ -209,6 +211,7 @@ type Tab = 'todos' | 'padron' | 'duplicados' | 'exportar';
   `,
   styles: [`
     .topbar-inline { display:flex; justify-content:flex-end; margin-bottom:16px; }
+    .action-group .btn:disabled { opacity:.5; cursor:not-allowed; pointer-events:none; }
     tr.clickable { cursor:pointer; }
     tr.clickable:hover { background:#f5f8ff; }
     tr.selected { background:#e6efff !important; }
