@@ -10,6 +10,7 @@ import { ContactosService, Contacto } from './contactos.service';
 interface ContactoListado {
   id: number; nombre: string; apellido: string; cedula?: string;
   departamento?: string; telefono?: string; email?: string; adhesion?: string;
+  adherente?: boolean; tieneFicha?: boolean;
 }
 
 const FIELD_LABELS: Record<string, string> = {
@@ -110,7 +111,11 @@ type Tab = 'todos' | 'padron' | 'duplicados' | 'exportar';
                     <div class="action-group">
                       <button class="btn btn-sm btn-secondary" (click)="ver(c.id)">Ver</button>
                       <a [routerLink]="['/agenda', c.id]" class="btn btn-sm btn-primary">Editar</a>
-                      <a [routerLink]="['/agenda', c.id, 'fichas']" class="btn btn-sm btn-success">Ficha Adhesion</a>
+                      @if (c.tieneFicha) {
+                        <a [routerLink]="['/agenda', c.id, 'fichas']" class="btn btn-sm btn-success">Ficha Adhesion</a>
+                      } @else {
+                        <a [routerLink]="['/agenda', c.id, 'fichas', 'nueva']" class="btn btn-sm btn-success">Pasar a Adhesion</a>
+                      }
                     </div>
                   </td>
                 </tr>

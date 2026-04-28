@@ -12,6 +12,7 @@ export const routes: Routes = [
       { path: 'inicio', loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent) },
       { path: 'agenda', loadComponent: () => import('./features/agenda/agenda-listado.component').then(m => m.AgendaListadoComponent) },
       { path: 'agenda/nuevo', loadComponent: () => import('./features/agenda/agenda-nuevo.component').then(m => m.AgendaNuevoComponent) },
+      { path: 'agenda/:contactoId/fichas/nueva', loadComponent: () => import('./features/adhesiones/nueva-ficha.component').then(m => m.NuevaFichaComponent) },
       { path: 'agenda/:contactoId/fichas', loadComponent: () => import('./features/adhesiones/fichas-contacto.component').then(m => m.FichasContactoComponent) },
       { path: 'agenda/:id', loadComponent: () => import('./features/agenda/agenda-nuevo.component').then(m => m.AgendaNuevoComponent) },
       { path: 'adhesiones', loadComponent: () => import('./features/adhesiones/adhesiones-listado.component').then(m => m.AdhesionesListadoComponent) },

@@ -13,6 +13,7 @@ import { PageTitleService } from '../../core/page-title.service';
   template: `
     <div class="topbar-inline">
       <a routerLink="/agenda" class="btn btn-secondary">← Volver a contactos</a>
+      <a [routerLink]="['/agenda', contactoId, 'fichas', 'nueva']" class="btn btn-primary">+ Nueva Ficha</a>
     </div>
 
     <div class="card">
@@ -166,7 +167,7 @@ import { PageTitleService } from '../../core/page-title.service';
     </div>
   `,
   styles: [`
-    .topbar-inline { display:flex; justify-content:flex-start; margin-bottom:16px; }
+    .topbar-inline { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
     tr.clickable { cursor:pointer; }
     tr.clickable:hover { background:#f5f8ff; }
     tr.selected { background:#e6efff !important; }

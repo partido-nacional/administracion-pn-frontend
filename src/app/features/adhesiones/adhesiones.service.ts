@@ -10,4 +10,5 @@ export class AdhesionesService {
 
   getLocal(id: number) { return this.http.get<FichaAdhesionDetalle>(`${this.base}/locales/${id}`); }
   updateLocal(f: FichaAdhesionDetalle) { return this.http.put<void>(`${this.base}/locales/${f.id}`, f); }
+  createLocal(f: Partial<FichaAdhesionDetalle>) { return this.http.post<FichaAdhesionDetalle>(`${this.base}/locales`, f); }
 }
