@@ -80,15 +80,6 @@ export interface FichaAdhesionDetalle {
   telefonoAntel?: string;
   fechaVencimiento?: string;
   fechaUltimoPago?: string;
-  cercaUsuario?: string;
-  cercaContrasena?: string;
-  cercaFoja?: string;
-  cercaUsuarioActivo: boolean;
-  cercaActivoEnApp: boolean;
-  cercaConLogueo: boolean;
-  cercaTelefono?: string;
-  cercaCelular?: string;
-  cercaMail?: string;
 }
 
 @Injectable({ providedIn: 'root' })
