@@ -13,22 +13,6 @@ interface ContactoListado {
   adherente?: boolean; tieneFicha?: boolean;
 }
 
-const FIELD_LABELS: Record<string, string> = {
-  id: 'ID', cortesia: 'Cortesía', nombre: 'Nombre', apellido: 'Apellido',
-  documento: 'Cedula', credencialCivica: 'Credencial',
-  fechaNacimiento: 'Fecha Nacimiento', sexo: 'Sexo', estadoCivil: 'Estado civil',
-  telefono: 'Teléfono', celular: 'Celular', celular2: 'Celular 2', email: 'Email',
-  departamento: 'Departamento (dirección)', departamentoCredencial: 'Departamento Credencial',
-  localidad: 'Localidad', direccion: 'Dirección', situacion: 'Situación',
-  ocupacion: 'Ocupación', empresa: 'Empresa', organismo: 'Organismo', cargoLaboral: 'Cargo',
-  telefonoTrabajo: 'Teléfono laboral', telefonoTrabajo2: 'Teléfono laboral 2',
-  interno: 'Interno',
-  datosSecretaria: 'Datos Secretaría', departamentoLaboral: 'Departamento laboral',
-  mailTrabajo: 'Email laboral', observaciones: 'Observaciones',
-  fechaCreado: 'Fecha de creación', fechaUltimaModificacion: 'Última modificación',
-  activo: 'Activo', adherente: 'Adherente'
-};
-
 type Tab = 'todos' | 'padron' | 'duplicados' | 'exportar';
 
 @Component({
@@ -87,7 +71,7 @@ type Tab = 'todos' | 'padron' | 'duplicados' | 'exportar';
             </thead>
             <tbody>
               @for (c of filtrados(); track c.id) {
-                <tr>
+                <tr class="clickable" [class.selected]="expandedId() === c.id" (click)="toggle(c.id)">
                   <td>{{ c.id }}</td>
                   <td><strong>{{ c.apellido }}, {{ c.nombre }}</strong></td>
                   <td>{{ c.cedula || '—' }}</td>
@@ -107,9 +91,8 @@ type Tab = 'todos' | 'padron' | 'duplicados' | 'exportar';
                       <span class="badge status-rejected">Baja</span>
                     } @else { -- }
                   </td>
-                  <td>
+                  <td (click)="$event.stopPropagation()">
                     <div class="action-group">
-                      <button class="btn btn-sm btn-secondary" (click)="ver(c.id)">Ver</button>
                       <a [routerLink]="['/agenda', c.id]" class="btn btn-sm btn-primary">Editar</a>
                       @if (c.tieneFicha) {
                         <a [routerLink]="['/agenda', c.id, 'fichas']" class="btn btn-sm btn-success">Ficha Adhesion</a>
@@ -119,6 +102,81 @@ type Tab = 'todos' | 'padron' | 'duplicados' | 'exportar';
                     </div>
                   </td>
                 </tr>
+                @if (expandedId() === c.id && detalle()) {
+                  <tr class="detalle-row">
+                    <td colspan="8">
+                      <div class="detalle-wrap">
+                        <div class="detalle-section">
+                          <div class="detalle-section-title">Datos personales</div>
+                          <div class="detalle-grid">
+                            <div class="kv"><span class="k">Cortesía</span><span class="v">{{ fmt(detalle()!.cortesia) }}</span></div>
+                            <div class="kv"><span class="k">Nombre</span><span class="v">{{ fmt(detalle()!.nombre) }}</span></div>
+                            <div class="kv"><span class="k">Apellido</span><span class="v">{{ fmt(detalle()!.apellido) }}</span></div>
+                            <div class="kv"><span class="k">Cedula</span><span class="v">{{ fmt(detalle()!.documento) }}</span></div>
+                            <div class="kv"><span class="k">Credencial</span><span class="v">{{ fmt(detalle()!.credencialCivica) }}</span></div>
+                            <div class="kv"><span class="k">Departamento Credencial</span><span class="v">{{ fmt(detalle()!.departamentoCredencial) }}</span></div>
+                            <div class="kv"><span class="k">Fecha Nacimiento</span><span class="v">{{ fmtDate(detalle()!.fechaNacimiento) }}</span></div>
+                            <div class="kv"><span class="k">Sexo</span><span class="v">{{ fmt(detalle()!.sexo) }}</span></div>
+                            <div class="kv"><span class="k">Estado civil</span><span class="v">{{ fmt(detalle()!.estadoCivil) }}</span></div>
+                            <div class="kv"><span class="k">Situación</span><span class="v">{{ fmt(detalle()!.situacion) }}</span></div>
+                          </div>
+                        </div>
+
+                        <div class="detalle-section">
+                          <div class="detalle-section-title">Contacto</div>
+                          <div class="detalle-grid">
+                            <div class="kv"><span class="k">Email</span><span class="v">{{ fmt(detalle()!.email) }}</span></div>
+                            <div class="kv"><span class="k">Teléfono</span><span class="v">{{ fmt(detalle()!.telefono) }}</span></div>
+                            <div class="kv"><span class="k">Celular</span><span class="v">{{ fmt(detalle()!.celular) }}</span></div>
+                            <div class="kv"><span class="k">Celular 2</span><span class="v">{{ fmt(detalle()!.celular2) }}</span></div>
+                          </div>
+                        </div>
+
+                        <div class="detalle-section">
+                          <div class="detalle-section-title">Dirección</div>
+                          <div class="detalle-grid">
+                            <div class="kv"><span class="k">Departamento</span><span class="v">{{ fmt(detalle()!.departamento) }}</span></div>
+                            <div class="kv"><span class="k">Localidad</span><span class="v">{{ fmt(detalle()!.localidad) }}</span></div>
+                            <div class="kv full"><span class="k">Dirección</span><span class="v">{{ fmt(detalle()!.direccion) }}</span></div>
+                          </div>
+                        </div>
+
+                        <div class="detalle-section">
+                          <div class="detalle-section-title">Laboral</div>
+                          <div class="detalle-grid">
+                            <div class="kv"><span class="k">Ocupación</span><span class="v">{{ fmt(detalle()!.ocupacion) }}</span></div>
+                            <div class="kv"><span class="k">Empresa</span><span class="v">{{ fmt(detalle()!.empresa) }}</span></div>
+                            <div class="kv"><span class="k">Organismo</span><span class="v">{{ fmt(detalle()!.organismo) }}</span></div>
+                            <div class="kv full"><span class="k">Cargo</span><span class="v">{{ fmt(detalle()!.cargoLaboral) }}</span></div>
+                            <div class="kv"><span class="k">Teléfono</span><span class="v">{{ fmt(detalle()!.telefonoTrabajo) }}</span></div>
+                            <div class="kv"><span class="k">Teléfono 2</span><span class="v">{{ fmt(detalle()!.telefonoTrabajo2) }}</span></div>
+                            <div class="kv"><span class="k">Interno</span><span class="v">{{ fmt(detalle()!.interno) }}</span></div>
+                            <div class="kv"><span class="k">Departamento</span><span class="v">{{ fmt(detalle()!.departamentoLaboral) }}</span></div>
+                            <div class="kv"><span class="k">Email</span><span class="v">{{ fmt(detalle()!.mailTrabajo) }}</span></div>
+                            <div class="kv full"><span class="k">Datos Secretaría</span><span class="v">{{ fmt(detalle()!.datosSecretaria) }}</span></div>
+                          </div>
+                        </div>
+
+                        <div class="detalle-section">
+                          <div class="detalle-section-title">Adhesion</div>
+                          <div class="detalle-grid">
+                            <div class="kv"><span class="k">Adherente</span><span class="v">{{ detalle()!.adherente ? 'Sí' : 'No' }}</span></div>
+                          </div>
+                        </div>
+
+                        <div class="detalle-section">
+                          <div class="detalle-section-title">Otros</div>
+                          <div class="detalle-grid">
+                            <div class="kv full"><span class="k">Observaciones</span><span class="v">{{ fmt(detalle()!.observaciones) }}</span></div>
+                            <div class="kv"><span class="k">Fecha de creación</span><span class="v">{{ fmtDate(detalle()!.fechaCreado) }}</span></div>
+                            <div class="kv"><span class="k">Última modificación</span><span class="v">{{ fmtDate(detalle()!.fechaUltimaModificacion) }}</span></div>
+                            <div class="kv"><span class="k">Activo</span><span class="v">{{ detalle()!.activo ? 'Sí' : 'No' }}</span></div>
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                }
               } @empty {
                 <tr><td colspan="8"><div class="empty-state"><div class="empty-state-text">Sin contactos</div></div></td></tr>
               }
@@ -145,68 +203,29 @@ type Tab = 'todos' | 'padron' | 'duplicados' | 'exportar';
     @if (tab() === 'exportar') {
       <div class="card"><div class="card-body"><div class="empty-state"><div class="empty-state-text">Exportar — proximamente</div></div></div></div>
     }
-
-    @if (verContacto()) {
-      <div class="modal-backdrop" (click)="verContacto.set(null)">
-        <div class="modal" (click)="$event.stopPropagation()">
-          <div class="modal-header">
-            <h3>Contacto #{{ verContacto()!.id }}</h3>
-            <button class="modal-close" (click)="verContacto.set(null)">×</button>
-          </div>
-          <div class="modal-body">
-            <table class="detalle-table">
-              @for (row of verRows(); track row.key) {
-                <tr>
-                  <th>{{ row.label }}</th>
-                  <td>{{ row.value }}</td>
-                </tr>
-              }
-            </table>
-          </div>
-          <div class="modal-footer">
-            <a [routerLink]="['/agenda', verContacto()!.id]" class="btn btn-primary">Editar</a>
-            <button class="btn btn-secondary" (click)="verContacto.set(null)">Cerrar</button>
-          </div>
-        </div>
-      </div>
-    }
-
   `,
   styles: [`
     .topbar-inline { display:flex; justify-content:flex-end; margin-bottom:16px; }
-    .modal-backdrop {
-      position:fixed; inset:0; background:rgba(0,0,0,.5);
-      display:flex; align-items:center; justify-content:center; z-index:1000;
+    tr.clickable { cursor:pointer; }
+    tr.clickable:hover { background:#f5f8ff; }
+    tr.selected { background:#e6efff !important; }
+    tr.detalle-row > td { padding:0; background:#fafbfd; }
+    .detalle-wrap { padding:20px 24px; border-top:1px solid #d6dde6; display:flex; flex-direction:column; gap:18px; }
+    .detalle-section { background:#fff; border:1px solid #e6eaf0; border-radius:6px; padding:14px 18px; }
+    .detalle-section-title {
+      font-size:13px; font-weight:600; color:#4a5568; text-transform:uppercase;
+      letter-spacing:.5px; margin-bottom:10px; padding-bottom:6px;
+      border-bottom:1px solid #eef1f5;
     }
-    .modal {
-      background:#fff; border-radius:8px; width:min(720px, 92vw);
-      max-height:90vh; display:flex; flex-direction:column;
-      box-shadow:0 10px 40px rgba(0,0,0,.25);
+    .detalle-grid {
+      display:grid; grid-template-columns:repeat(3, 1fr); gap:10px 24px;
     }
-    .modal-header {
-      display:flex; justify-content:space-between; align-items:center;
-      padding:16px 20px; border-bottom:1px solid #eee;
-    }
-    .modal-header h3 { margin:0; font-size:18px; }
-    .modal-close {
-      background:none; border:none; font-size:24px; line-height:1;
-      cursor:pointer; color:#666; padding:0; width:32px; height:32px;
-    }
-    .modal-body { padding:16px 20px; overflow-y:auto; flex:1; }
-    .modal-footer {
-      padding:12px 20px; border-top:1px solid #eee;
-      display:flex; gap:8px; justify-content:flex-end;
-    }
-    .detalle-table { width:100%; border-collapse:collapse; }
-    .detalle-table th {
-      text-align:left; padding:8px 12px 8px 0; width:38%;
-      color:#666; font-weight:600; font-size:13px;
-      border-bottom:1px solid #f0f0f0;
-    }
-    .detalle-table td {
-      padding:8px 0; font-size:14px; border-bottom:1px solid #f0f0f0;
-      word-break:break-word;
-    }
+    @media (max-width: 900px) { .detalle-grid { grid-template-columns:repeat(2, 1fr); } }
+    @media (max-width: 600px) { .detalle-grid { grid-template-columns:1fr; } }
+    .kv { display:flex; flex-direction:column; min-width:0; }
+    .kv.full { grid-column:1 / -1; }
+    .kv .k { font-size:11px; color:#888; text-transform:uppercase; letter-spacing:.4px; }
+    .kv .v { font-size:14px; color:#222; word-break:break-word; }
   `]
 })
 export class AgendaListadoComponent {
@@ -217,27 +236,33 @@ export class AgendaListadoComponent {
   tab = signal<Tab>('todos');
   deptos = ['Montevideo', 'Canelones', 'Maldonado', 'Salto'];
   contactos = signal<ContactoListado[]>([]);
-  verContacto = signal<Contacto | null>(null);
+  expandedId = signal<number | null>(null);
+  detalle = signal<Contacto | null>(null);
 
-  verRows = computed(() => {
-    const c = this.verContacto();
-    if (!c) return [];
-    const fmt = (v: any) => {
-      if (v == null || v === '') return '—';
-      if (typeof v === 'boolean') return v ? 'Sí' : 'No';
-      if (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}/.test(v)) {
-        const d = new Date(v);
-        return isNaN(d.getTime()) ? v : d.toLocaleString('es-UY');
-      }
-      return String(v);
-    };
-    return Object.keys(FIELD_LABELS)
-      .filter(k => k in c)
-      .map(k => ({ key: k, label: FIELD_LABELS[k], value: fmt((c as any)[k]) }));
-  });
+  toggle(id: number) {
+    if (this.expandedId() === id) {
+      this.expandedId.set(null);
+      this.detalle.set(null);
+      return;
+    }
+    this.expandedId.set(id);
+    this.detalle.set(null);
+    this.svc.get(id).subscribe(c => this.detalle.set(c));
+  }
 
-  ver(id: number) {
-    this.svc.get(id).subscribe(c => this.verContacto.set(c));
+  fmt(v: any): string {
+    if (v == null || v === '') return '—';
+    return String(v);
+  }
+
+  fmtDate(v: any): string {
+    if (!v) return '—';
+    const s = String(v);
+    if (/^\d{4}-\d{2}-\d{2}/.test(s)) {
+      const d = new Date(s);
+      return isNaN(d.getTime()) ? s : d.toLocaleString('es-UY');
+    }
+    return s;
   }
 
   fId = signal('');
