@@ -26,6 +26,7 @@ import { PageTitleService } from '../../core/page-title.service';
               <tr>
                 <th>Id Adhesion</th>
                 <th>Fecha</th>
+                <th>Fecha Salida</th>
                 <th>Sector</th>
                 <th>Sist. Contrib.</th>
                 <th>Importe</th>
@@ -38,6 +39,7 @@ import { PageTitleService } from '../../core/page-title.service';
                 <tr class="clickable" [class.selected]="expandedId() === f.id" (click)="toggle(f.id)">
                   <td>{{ f.id }}</td>
                   <td>{{ f.fechaAdhesion || '—' }}</td>
+                  <td>{{ f.fechaSalida || '—' }}</td>
                   <td>{{ f.sector || '—' }}</td>
                   <td>{{ f.sistContrib || '—' }}</td>
                   <td>{{ f.aporte ?? '—' }}</td>
@@ -46,7 +48,7 @@ import { PageTitleService } from '../../core/page-title.service';
                 </tr>
                 @if (expandedId() === f.id && detalle()) {
                   <tr class="detalle-row">
-                    <td colspan="7">
+                    <td colspan="8">
                       <div class="detalle-wrap">
                         <div class="detalle-header">
                           <h3>Ficha #{{ detalle()!.id }}</h3>

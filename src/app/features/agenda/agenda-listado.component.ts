@@ -110,7 +110,7 @@ type Tab = 'todos' | 'padron' | 'duplicados' | 'exportar';
                     <div class="action-group">
                       <button class="btn btn-sm btn-secondary" (click)="ver(c.id)">Ver</button>
                       <a [routerLink]="['/agenda', c.id]" class="btn btn-sm btn-primary">Editar</a>
-                      <a [routerLink]="['/agenda', c.id, 'fichas']" class="btn btn-sm btn-info">Ficha Adhesion</a>
+                      <a [routerLink]="['/agenda', c.id, 'fichas']" class="btn btn-sm btn-success">Ficha Adhesion</a>
                     </div>
                   </td>
                 </tr>
