@@ -216,6 +216,7 @@ type Tab = 'todos' | 'padron' | 'duplicados' | 'exportar';
       font-family:inherit; font-size:13px; line-height:1.3;
       box-sizing:border-box; text-align:center; white-space:normal;
     }
+    .action-group .btn-success { min-width:120px; }
     .action-group .btn:disabled { opacity:.5; cursor:not-allowed; pointer-events:none; }
     tr.clickable { cursor:pointer; }
     tr.clickable:hover { background:#f5f8ff; }
