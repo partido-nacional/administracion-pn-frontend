@@ -10,7 +10,8 @@ const FIELD_LABELS: Record<string, string> = {
   cortesia: 'Cortesía', nombre: 'Nombre', apellido: 'Apellido', documento: 'Cedula',
   cred: 'Credencial', depCred: 'Departamento Credencial', fn: 'Fecha Nacimiento',
   sexo: 'Sexo', ec: 'Estado civil', sit: 'Situación',
-  email: 'Email', tel: 'Teléfono', cel: 'Celular', cel2: 'Celular 2',
+  email: 'Email', tel: 'Teléfono', tel2: 'Teléfono 2', cel: 'Celular', cel2: 'Celular 2',
+  internoContacto: 'Interno',
   dep: 'Departamento (dirección)', loc: 'Localidad', dir: 'Dirección',
   ocu: 'Ocupación', emp: 'Empresa', org: 'Organismo', cargo: 'Cargo',
   telTrab: 'Teléfono laboral', telTrab2: 'Teléfono laboral 2', interno: 'Interno',
@@ -92,6 +93,14 @@ function describeError(label: string, errors: any): string {
                      placeholder="Solo numeros, sin espacios">
             </div>
             <div class="form-group">
+              <label class="form-label">Teléfono 2</label>
+              <input class="form-input" name="tel2" [(ngModel)]="c.telefono2"
+                     (input)="onlyDigits($event, 'telefono2')"
+                     (keypress)="blockNonDigit($event)"
+                     inputmode="numeric"
+                     placeholder="Solo numeros, sin espacios">
+            </div>
+            <div class="form-group">
               <label class="form-label">Celular</label>
               <input class="form-input" name="cel" [(ngModel)]="c.celular"
                      (input)="onlyDigits($event, 'celular')"
@@ -106,6 +115,13 @@ function describeError(label: string, errors: any): string {
                      (keypress)="blockNonDigit($event)"
                      inputmode="numeric"
                      placeholder="Solo numeros, sin espacios">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Interno</label>
+              <input class="form-input" name="internoContacto" [(ngModel)]="c.interno"
+                     (input)="onlyDigits($event, 'interno')"
+                     (keypress)="blockNonDigit($event)"
+                     inputmode="numeric" placeholder="Solo numeros">
             </div>
           </div>
 
@@ -141,13 +157,6 @@ function describeError(label: string, errors: any): string {
                      (keypress)="blockNonDigit($event)"
                      inputmode="numeric"
                      placeholder="Solo numeros, sin espacios">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Interno</label>
-              <input class="form-input" name="interno" [(ngModel)]="c.interno"
-                     (input)="onlyDigits($event, 'interno')"
-                     (keypress)="blockNonDigit($event)"
-                     inputmode="numeric" placeholder="Solo numeros">
             </div>
             <div class="form-group"><label class="form-label">Departamento</label>
               <select class="form-select" name="depLab" [(ngModel)]="c.departamentoLaboral">

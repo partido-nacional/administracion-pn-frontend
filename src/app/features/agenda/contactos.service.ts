@@ -14,6 +14,7 @@ export interface Contacto {
   sexo?: string;
   estadoCivil?: string;
   telefono?: string;
+  telefono2?: string;
   celular?: string;
   celular2?: string;
   email?: string;
