@@ -75,8 +75,7 @@ import { PageTitleService } from '../../core/page-title.service';
                           </div>
                           <div class="form-group">
                             <label class="form-label">Sistema de Contribución</label>
-                            <select class="form-select" [(ngModel)]="detalle()!.sistContrib" name="sistContrib" [disabled]="!editMode()">
-                              <option [ngValue]="undefined">—</option>
+                            <select class="form-select" [ngModel]="detalle()!.sistContrib" (ngModelChange)="onSistContribChange($event)" name="sistContrib" [disabled]="!editMode()">
                               @for (s of sistemas; track s) { <option [ngValue]="s">{{ s }}</option> }
                             </select>
                           </div>
@@ -84,22 +83,28 @@ import { PageTitleService } from '../../core/page-title.service';
                             <label class="form-label">Observaciones</label>
                             <input class="form-input" [(ngModel)]="detalle()!.observaciones" name="observaciones" [disabled]="!editMode()">
                           </div>
-                          <div class="form-group">
-                            <label class="form-label">Cédula responsable</label>
-                            <input class="form-input" [(ngModel)]="detalle()!.cedulaResponsable" name="cedResp" [disabled]="!editMode()">
-                          </div>
-                          <div class="form-group">
-                            <label class="form-label">Teléfono Antel</label>
-                            <input class="form-input" [(ngModel)]="detalle()!.telefonoAntel" name="telAntel" [disabled]="!editMode()">
-                          </div>
-                          <div class="form-group">
-                            <label class="form-label">Fecha Vencimiento</label>
-                            <input class="form-input" type="date" [(ngModel)]="detalle()!.fechaVencimiento" name="fechaVenc" [disabled]="!editMode()">
-                          </div>
-                          <div class="form-group">
-                            <label class="form-label">Fecha Ult. Pago</label>
-                            <input class="form-input" type="date" [(ngModel)]="detalle()!.fechaUltimoPago" name="fechaUltPago" [disabled]="!editMode()">
-                          </div>
+                          @if (showCedula(detalle()!.sistContrib)) {
+                            <div class="form-group">
+                              <label class="form-label">Cédula responsable</label>
+                              <input class="form-input" [(ngModel)]="detalle()!.cedulaResponsable" name="cedResp" [disabled]="!editMode()">
+                            </div>
+                          }
+                          @if (showTelefonoAntel(detalle()!.sistContrib)) {
+                            <div class="form-group">
+                              <label class="form-label">Teléfono Antel</label>
+                              <input class="form-input" [(ngModel)]="detalle()!.telefonoAntel" name="telAntel" [disabled]="!editMode()">
+                            </div>
+                          }
+                          @if (showFechasPago(detalle()!.sistContrib)) {
+                            <div class="form-group">
+                              <label class="form-label">Fecha Vencimiento</label>
+                              <input class="form-input" type="date" [(ngModel)]="detalle()!.fechaVencimiento" name="fechaVenc" [disabled]="!editMode()">
+                            </div>
+                            <div class="form-group">
+                              <label class="form-label">Fecha Ult. Pago</label>
+                              <input class="form-input" type="date" [(ngModel)]="detalle()!.fechaUltimoPago" name="fechaUltPago" [disabled]="!editMode()">
+                            </div>
+                          }
                           <div class="form-group">
                             <label class="form-label">Aporte Todo al Partido</label>
                             <select class="form-select" [(ngModel)]="detalle()!.aporteTodoAlPartido" name="aporteTodo" [disabled]="!editMode()">
@@ -203,6 +208,20 @@ export class FichasContactoComponent {
     'Lavalleja', 'Maldonado', 'Montevideo', 'Paysandú', 'Río Negro', 'Rivera', 'Rocha',
     'Salto', 'San José', 'Soriano', 'Tacuarembó', 'Treinta y Tres', 'Nacional'
   ];
+
+  showTelefonoAntel(s?: string) { return s === 'Antel'; }
+  showCedula(s?: string) { return s === 'OCA' || s === 'VISA' || s === 'MASTER' || s === 'EBROU'; }
+  showFechasPago(s?: string) { return s === 'ANUAL'; }
+
+  onSistContribChange(s: string) {
+    const f = this.detalle();
+    if (!f) return;
+    f.sistContrib = s;
+    if (!this.showTelefonoAntel(s)) f.telefonoAntel = undefined;
+    if (!this.showCedula(s)) f.cedulaResponsable = undefined;
+    if (!this.showFechasPago(s)) { f.fechaVencimiento = undefined; f.fechaUltimoPago = undefined; }
+    this.detalle.set({ ...f });
+  }
 
   constructor() {
     this.titleSvc.set('Fichas de Adhesión');

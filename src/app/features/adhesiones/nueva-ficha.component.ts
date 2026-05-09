@@ -40,8 +40,7 @@ const DEPARTAMENTOS = [
             </div>
             <div class="form-group">
               <label class="form-label">Sistema de Contribución</label>
-              <select class="form-select" [(ngModel)]="ficha()!.sistContrib" name="sistContrib">
-                <option [ngValue]="undefined">—</option>
+              <select class="form-select" [ngModel]="ficha()!.sistContrib" (ngModelChange)="onSistContribChange($event)" name="sistContrib">
                 @for (s of sistemas; track s) { <option [ngValue]="s">{{ s }}</option> }
               </select>
             </div>
@@ -49,22 +48,28 @@ const DEPARTAMENTOS = [
               <label class="form-label">Observaciones</label>
               <input class="form-input" [(ngModel)]="ficha()!.observaciones" name="observaciones">
             </div>
-            <div class="form-group">
-              <label class="form-label">Cédula responsable</label>
-              <input class="form-input" [(ngModel)]="ficha()!.cedulaResponsable" name="cedResp">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Teléfono Antel</label>
-              <input class="form-input" [(ngModel)]="ficha()!.telefonoAntel" name="telAntel">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Fecha Vencimiento</label>
-              <input class="form-input" type="date" [(ngModel)]="ficha()!.fechaVencimiento" name="fechaVenc">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Fecha Ult. Pago</label>
-              <input class="form-input" type="date" [(ngModel)]="ficha()!.fechaUltimoPago" name="fechaUltPago">
-            </div>
+            @if (showCedula(ficha()!.sistContrib)) {
+              <div class="form-group">
+                <label class="form-label">Cédula responsable</label>
+                <input class="form-input" [(ngModel)]="ficha()!.cedulaResponsable" name="cedResp">
+              </div>
+            }
+            @if (showTelefonoAntel(ficha()!.sistContrib)) {
+              <div class="form-group">
+                <label class="form-label">Teléfono Antel</label>
+                <input class="form-input" [(ngModel)]="ficha()!.telefonoAntel" name="telAntel">
+              </div>
+            }
+            @if (showFechasPago(ficha()!.sistContrib)) {
+              <div class="form-group">
+                <label class="form-label">Fecha Vencimiento</label>
+                <input class="form-input" type="date" [(ngModel)]="ficha()!.fechaVencimiento" name="fechaVenc">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Fecha Ult. Pago</label>
+                <input class="form-input" type="date" [(ngModel)]="ficha()!.fechaUltimoPago" name="fechaUltPago">
+              </div>
+            }
             <div class="form-group">
               <label class="form-label">Aporte Todo al Partido</label>
               <select class="form-select" [(ngModel)]="ficha()!.aporteTodoAlPartido" name="aporteTodo">
@@ -150,6 +155,20 @@ export class NuevaFichaComponent {
 
   sistemas = SISTEMAS;
   departamentos = DEPARTAMENTOS;
+
+  showTelefonoAntel(s?: string) { return s === 'Antel'; }
+  showCedula(s?: string) { return s === 'OCA' || s === 'VISA' || s === 'MASTER' || s === 'EBROU'; }
+  showFechasPago(s?: string) { return s === 'ANUAL'; }
+
+  onSistContribChange(s: string) {
+    const f = this.ficha();
+    if (!f) return;
+    f.sistContrib = s;
+    if (!this.showTelefonoAntel(s)) f.telefonoAntel = undefined;
+    if (!this.showCedula(s)) f.cedulaResponsable = undefined;
+    if (!this.showFechasPago(s)) { f.fechaVencimiento = undefined; f.fechaUltimoPago = undefined; }
+    this.ficha.set({ ...f });
+  }
 
   constructor() {
     this.titleSvc.set('Nueva Ficha de Adhesión');
