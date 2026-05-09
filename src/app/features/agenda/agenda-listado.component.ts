@@ -8,8 +8,8 @@ import { PageTitleService } from '../../core/page-title.service';
 import { ContactosService, Contacto } from './contactos.service';
 
 interface ContactoListado {
-  id: number; nombre: string; apellido: string; cedula?: string;
-  departamento?: string; telefono?: string; email?: string; adhesion?: string;
+  id: number; nombre: string; apellido: string; cedula?: string; credencial?: string;
+  departamento?: string; celular?: string; email?: string; adhesion?: string;
   adherente?: boolean; tieneFicha?: boolean; tieneIntegranteOrganismo?: boolean;
 }
 
@@ -40,8 +40,9 @@ type Tab = 'todos' | 'padron' | 'duplicados' | 'exportar';
                 <th>ID</th>
                 <th>Nombre</th>
                 <th>Cedula</th>
+                <th>Credencial</th>
                 <th>Departamento</th>
-                <th>Telefono</th>
+                <th>Celular</th>
                 <th>Email</th>
                 <th>Adhesion</th>
                 <th></th>
@@ -50,13 +51,14 @@ type Tab = 'todos' | 'padron' | 'duplicados' | 'exportar';
                 <th><input class="column-filter" [ngModel]="fId()"     (ngModelChange)="fId.set($event)"     placeholder="Filtrar..."></th>
                 <th><input class="column-filter" [ngModel]="fNombre()" (ngModelChange)="fNombre.set($event)" placeholder="Filtrar..."></th>
                 <th><input class="column-filter" [ngModel]="fCedula()" (ngModelChange)="fCedula.set($event)" placeholder="Filtrar..."></th>
+                <th><input class="column-filter" [ngModel]="fCred()"   (ngModelChange)="fCred.set($event)"   placeholder="Filtrar..."></th>
                 <th>
                   <select class="column-filter" [ngModel]="fDepto()" (ngModelChange)="fDepto.set($event)">
                     <option value="">Todos</option>
                     @for (d of deptos; track d) { @if (d) { <option>{{ d }}</option> } }
                   </select>
                 </th>
-                <th><input class="column-filter" [ngModel]="fTel()"   (ngModelChange)="fTel.set($event)"   placeholder="Filtrar..."></th>
+                <th><input class="column-filter" [ngModel]="fCel()"   (ngModelChange)="fCel.set($event)"   placeholder="Filtrar..."></th>
                 <th><input class="column-filter" [ngModel]="fEmail()" (ngModelChange)="fEmail.set($event)" placeholder="Filtrar..."></th>
                 <th>
                   <select class="column-filter" [ngModel]="fAdh()" (ngModelChange)="fAdh.set($event)">
@@ -75,12 +77,13 @@ type Tab = 'todos' | 'padron' | 'duplicados' | 'exportar';
                   <td>{{ c.id }}</td>
                   <td><strong>{{ c.apellido }}, {{ c.nombre }}</strong></td>
                   <td>{{ c.cedula || '—' }}</td>
+                  <td>{{ c.credencial || '—' }}</td>
                   <td>
                     @if (c.departamento) {
                       <span class="badge dept">{{ c.departamento }}</span>
                     } @else { — }
                   </td>
-                  <td>{{ c.telefono || '—' }}</td>
+                  <td>{{ c.celular || '—' }}</td>
                   <td>{{ c.email || '—' }}</td>
                   <td>
                     @if (c.adhesion === 'Activa') {
@@ -109,7 +112,7 @@ type Tab = 'todos' | 'padron' | 'duplicados' | 'exportar';
                 </tr>
                 @if (expandedId() === c.id && detalle()) {
                   <tr class="detalle-row">
-                    <td colspan="8">
+                    <td colspan="9">
                       <div class="detalle-wrap">
                         <div class="detalle-section">
                           <div class="detalle-section-title">Datos personales</div>
@@ -183,7 +186,7 @@ type Tab = 'todos' | 'padron' | 'duplicados' | 'exportar';
                   </tr>
                 }
               } @empty {
-                <tr><td colspan="8"><div class="empty-state"><div class="empty-state-text">Sin contactos</div></div></td></tr>
+                <tr><td colspan="9"><div class="empty-state"><div class="empty-state-text">Sin contactos</div></div></td></tr>
               }
             </tbody>
           </table>
@@ -280,22 +283,24 @@ export class AgendaListadoComponent {
   fId = signal('');
   fNombre = signal('');
   fCedula = signal('');
+  fCred = signal('');
   fDepto = signal('');
-  fTel = signal('');
+  fCel = signal('');
   fEmail = signal('');
   fAdh = signal('');
 
   filtrados = computed(() => {
     const norm = (s: any) => (s ?? '').toString().toLowerCase();
     const m = (val: any, q: string) => !q || norm(val).includes(q.toLowerCase());
-    const fId = this.fId(), fNom = this.fNombre(), fCed = this.fCedula(),
-          fDep = this.fDepto(), fTel = this.fTel(), fMail = this.fEmail(), fAdh = this.fAdh();
+    const fId = this.fId(), fNom = this.fNombre(), fCed = this.fCedula(), fCre = this.fCred(),
+          fDep = this.fDepto(), fCel = this.fCel(), fMail = this.fEmail(), fAdh = this.fAdh();
     return this.contactos().filter(c =>
       m(c.id, fId) &&
       m(`${c.apellido}, ${c.nombre}`, fNom) &&
       m(c.cedula, fCed) &&
+      m(c.credencial, fCre) &&
       (!fDep || c.departamento === fDep) &&
-      m(c.telefono, fTel) &&
+      m(c.celular, fCel) &&
       m(c.email, fMail) &&
       (!fAdh || (c.adhesion ?? '') === fAdh)
     );
