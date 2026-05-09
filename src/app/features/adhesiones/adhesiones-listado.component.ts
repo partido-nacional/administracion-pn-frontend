@@ -15,8 +15,8 @@ interface AdhesionLocalDto {
   id: number; idContacto: number; nombre: string; apellido: string; cedula?: string;
   sector?: string; sistContrib?: string; aporte?: number;
   fechaAlta?: string; fechaSalida?: string;
-  aporteConfirmado: boolean; art46: boolean;
-  titularResp?: string; observaciones?: string; estado: string;
+  aporteConfirmado: boolean | null; art46: boolean;
+  titularResp?: string; observaciones?: string;
 }
 interface StatsDto { locales: number; web: number; total: number; duplicados: number; }
 
@@ -322,7 +322,7 @@ export class AdhesionesListadoComponent {
   crearLocal() {
     if (!this.form.contactoId) { alert('Falta el ID de contacto'); return; }
     this.http.post(`${environment.apiUrl}/adhesiones/locales`, {
-      ...this.form, estado: 'Activa'
+      ...this.form
     }).subscribe(() => {
       this.form = { contactoId: null, sector: '', sistContrib: '', aporte: null, titularResponsable: '', observaciones: '' };
       this.tab.set('locales');

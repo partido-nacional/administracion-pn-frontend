@@ -32,7 +32,6 @@ import { PageTitleService } from '../../core/page-title.service';
                 <th>Sist. Contrib.</th>
                 <th>Importe</th>
                 <th>Confirmado</th>
-                <th>Estado</th>
               </tr>
             </thead>
             <tbody>
@@ -44,12 +43,11 @@ import { PageTitleService } from '../../core/page-title.service';
                   <td>{{ f.sector || '—' }}</td>
                   <td>{{ f.sistContrib || '—' }}</td>
                   <td>{{ f.aporte ?? '—' }}</td>
-                  <td>{{ f.aporteConfirmado ? 'S' : 'N' }}</td>
-                  <td>{{ f.estado }}</td>
+                  <td>{{ f.aporteConfirmado === true ? 'S' : f.aporteConfirmado === false ? 'N' : '-' }}</td>
                 </tr>
                 @if (expandedId() === f.id && detalle()) {
                   <tr class="detalle-row">
-                    <td colspan="8">
+                    <td colspan="7">
                       <div class="detalle-wrap">
                         <div class="detalle-header">
                           <h3>Ficha #{{ detalle()!.id }}</h3>
@@ -78,8 +76,8 @@ import { PageTitleService } from '../../core/page-title.service';
                           <div class="form-group">
                             <label class="form-label">Sistema de Contribución</label>
                             <select class="form-select" [(ngModel)]="detalle()!.sistContrib" name="sistContrib" [disabled]="!editMode()">
-                              <option value="">—</option>
-                              @for (s of sistemas; track s) { <option>{{ s }}</option> }
+                              <option [ngValue]="undefined">—</option>
+                              @for (s of sistemas; track s) { <option [ngValue]="s">{{ s }}</option> }
                             </select>
                           </div>
                           <div class="form-group full-width">
@@ -97,6 +95,10 @@ import { PageTitleService } from '../../core/page-title.service';
                           <div class="form-group">
                             <label class="form-label">Fecha Vencimiento</label>
                             <input class="form-input" type="date" [(ngModel)]="detalle()!.fechaVencimiento" name="fechaVenc" [disabled]="!editMode()">
+                          </div>
+                          <div class="form-group">
+                            <label class="form-label">Fecha Ult. Pago</label>
+                            <input class="form-input" type="date" [(ngModel)]="detalle()!.fechaUltimoPago" name="fechaUltPago" [disabled]="!editMode()">
                           </div>
                           <div class="form-group">
                             <label class="form-label">Aporte Todo al Partido</label>
@@ -119,22 +121,26 @@ import { PageTitleService } from '../../core/page-title.service';
                           </div>
                           <div class="form-group">
                             <label class="form-label">Departamento Agrupación</label>
-                            <input class="form-input" [(ngModel)]="detalle()!.departamentoAgrupacion" name="depAgr" [disabled]="!editMode()">
+                            <select class="form-select" [(ngModel)]="detalle()!.departamentoAgrupacion" name="depAgr" [disabled]="!editMode()">
+                              <option [ngValue]="undefined">-</option>
+                              @for (d of departamentos; track d) { <option [ngValue]="d">{{ d }}</option> }
+                            </select>
                           </div>
                           <div class="form-group">
                             <label class="form-label">Código de Agrupación</label>
                             <input class="form-input" [(ngModel)]="detalle()!.codigoAgrupacion" name="codAgr" [disabled]="!editMode()">
                           </div>
                           <div class="form-group">
-                            <label class="form-label">Fecha Ult. Pago</label>
-                            <input class="form-input" type="date" [(ngModel)]="detalle()!.fechaUltimoPago" name="fechaUltPago" [disabled]="!editMode()">
-                          </div>
-                          <div class="form-group">
                             <label class="form-label">Confirmado</label>
                             <select class="form-select" [(ngModel)]="detalle()!.aporteConfirmado" name="confirmado" [disabled]="!editMode()">
-                              <option [ngValue]="true">S</option>
+                              <option [ngValue]="null">-</option>
                               <option [ngValue]="false">N</option>
+                              <option [ngValue]="true">S</option>
                             </select>
+                          </div>
+                          <div class="form-group">
+                            <label class="form-label">Carnet Entregado</label>
+                            <input class="form-input" type="date" [(ngModel)]="detalle()!.carnetEntregado" name="carnetEntregado" [disabled]="!editMode()">
                           </div>
                           <div class="form-group">
                             <label class="form-label">Art. 46</label>
@@ -191,7 +197,12 @@ export class FichasContactoComponent {
   editMode = signal(false);
   private original: FichaAdhesionDetalle | null = null;
 
-  sistemas = ['Antel', 'Visa', 'Master', 'OCA', 'Ebrou'];
+  sistemas = ['Antel', 'OCA', 'VISA', 'MASTER', 'EBROU', 'ANUAL', 'Otro'];
+  departamentos = [
+    'Artigas', 'Canelones', 'Cerro Largo', 'Colonia', 'Durazno', 'Flores', 'Florida',
+    'Lavalleja', 'Maldonado', 'Montevideo', 'Paysandú', 'Río Negro', 'Rivera', 'Rocha',
+    'Salto', 'San José', 'Soriano', 'Tacuarembó', 'Treinta y Tres', 'Nacional'
+  ];
 
   constructor() {
     this.titleSvc.set('Fichas de Adhesión');
@@ -220,6 +231,7 @@ export class FichasContactoComponent {
     f.fechaSalida = f.fechaSalida?.slice(0, 10);
     f.fechaVencimiento = f.fechaVencimiento?.slice(0, 10);
     f.fechaUltimoPago = f.fechaUltimoPago?.slice(0, 10);
+    f.carnetEntregado = f.carnetEntregado?.slice(0, 10);
   }
 
   cancelar() {

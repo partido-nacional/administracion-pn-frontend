@@ -65,11 +65,9 @@ export interface FichaAdhesion {
   aporte?: number;
   fechaAdhesion?: string;
   fechaSalida?: string;
-  aporteConfirmado: boolean;
+  aporteConfirmado: boolean | null;
   art46: boolean;
   titularResponsable?: string;
-  estado: string;
-  origen?: string;
   observaciones?: string;
   aporteTodoAlPartido: boolean;
 }
@@ -83,11 +81,9 @@ export interface FichaAdhesionDetalle {
   aporte?: number;
   fechaAdhesion?: string;
   fechaSalida?: string;
-  aporteConfirmado: boolean;
+  aporteConfirmado: boolean | null;
   art46: boolean;
   titularResponsable?: string;
-  estado: string;
-  origen?: string;
   observaciones?: string;
   aporteTodoAlPartido: boolean;
   aporteSecretariaAgrupacion?: string;
@@ -99,6 +95,7 @@ export interface FichaAdhesionDetalle {
   telefonoAntel?: string;
   fechaVencimiento?: string;
   fechaUltimoPago?: string;
+  carnetEntregado?: string;
 }
 
 @Injectable({ providedIn: 'root' })

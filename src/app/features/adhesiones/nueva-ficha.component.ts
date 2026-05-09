@@ -6,6 +6,13 @@ import { ContactosService, FichaAdhesionDetalle } from '../agenda/contactos.serv
 import { AdhesionesService } from './adhesiones.service';
 import { PageTitleService } from '../../core/page-title.service';
 
+const SISTEMAS = ['Antel', 'OCA', 'VISA', 'MASTER', 'EBROU', 'ANUAL', 'Otro'];
+const DEPARTAMENTOS = [
+  'Artigas', 'Canelones', 'Cerro Largo', 'Colonia', 'Durazno', 'Flores', 'Florida',
+  'Lavalleja', 'Maldonado', 'Montevideo', 'Paysandú', 'Río Negro', 'Rivera', 'Rocha',
+  'Salto', 'San José', 'Soriano', 'Tacuarembó', 'Treinta y Tres', 'Nacional'
+];
+
 @Component({
   selector: 'app-nueva-ficha',
   standalone: true,
@@ -34,8 +41,8 @@ import { PageTitleService } from '../../core/page-title.service';
             <div class="form-group">
               <label class="form-label">Sistema de Contribución</label>
               <select class="form-select" [(ngModel)]="ficha()!.sistContrib" name="sistContrib">
-                <option value="">—</option>
-                @for (s of sistemas; track s) { <option>{{ s }}</option> }
+                <option [ngValue]="undefined">—</option>
+                @for (s of sistemas; track s) { <option [ngValue]="s">{{ s }}</option> }
               </select>
             </div>
             <div class="form-group full-width">
@@ -53,6 +60,10 @@ import { PageTitleService } from '../../core/page-title.service';
             <div class="form-group">
               <label class="form-label">Fecha Vencimiento</label>
               <input class="form-input" type="date" [(ngModel)]="ficha()!.fechaVencimiento" name="fechaVenc">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Fecha Ult. Pago</label>
+              <input class="form-input" type="date" [(ngModel)]="ficha()!.fechaUltimoPago" name="fechaUltPago">
             </div>
             <div class="form-group">
               <label class="form-label">Aporte Todo al Partido</label>
@@ -75,22 +86,26 @@ import { PageTitleService } from '../../core/page-title.service';
             </div>
             <div class="form-group">
               <label class="form-label">Departamento Agrupación</label>
-              <input class="form-input" [(ngModel)]="ficha()!.departamentoAgrupacion" name="depAgr">
+              <select class="form-select" [(ngModel)]="ficha()!.departamentoAgrupacion" name="depAgr">
+                <option [ngValue]="undefined">-</option>
+                @for (d of departamentos; track d) { <option [ngValue]="d">{{ d }}</option> }
+              </select>
             </div>
             <div class="form-group">
               <label class="form-label">Código de Agrupación</label>
               <input class="form-input" [(ngModel)]="ficha()!.codigoAgrupacion" name="codAgr">
             </div>
             <div class="form-group">
-              <label class="form-label">Fecha Ult. Pago</label>
-              <input class="form-input" type="date" [(ngModel)]="ficha()!.fechaUltimoPago" name="fechaUltPago">
-            </div>
-            <div class="form-group">
               <label class="form-label">Confirmado</label>
               <select class="form-select" [(ngModel)]="ficha()!.aporteConfirmado" name="confirmado">
+                <option [ngValue]="null">-</option>
                 <option [ngValue]="false">N</option>
                 <option [ngValue]="true">S</option>
               </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Carnet Entregado</label>
+              <input class="form-input" type="date" [(ngModel)]="ficha()!.carnetEntregado" name="carnetEntregado">
             </div>
             <div class="form-group">
               <label class="form-label">Art. 46</label>
@@ -105,18 +120,6 @@ import { PageTitleService } from '../../core/page-title.service';
                 <input type="checkbox" [(ngModel)]="ficha()!.departamental" name="departamental">
                 <span>Sí</span>
               </label>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Estado</label>
-              <select class="form-select" [(ngModel)]="ficha()!.estado" name="estado">
-                <option>Pendiente</option>
-                <option>Activa</option>
-                <option>Baja</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Origen</label>
-              <input class="form-input" [(ngModel)]="ficha()!.origen" name="origen">
             </div>
           </div>
 
@@ -145,7 +148,8 @@ export class NuevaFichaComponent {
   contactoNombre = signal<string>('');
   ficha = signal<FichaAdhesionDetalle | null>(null);
 
-  sistemas = ['Antel', 'Visa', 'Master', 'OCA', 'Ebrou'];
+  sistemas = SISTEMAS;
+  departamentos = DEPARTAMENTOS;
 
   constructor() {
     this.titleSvc.set('Nueva Ficha de Adhesión');
@@ -153,6 +157,7 @@ export class NuevaFichaComponent {
     this.contactosSvc.get(this.contactoId).subscribe(c => {
       this.contactoNombre.set(`${c.apellido}, ${c.nombre}`);
       const today = new Date().toISOString().slice(0, 10);
+      const dep = c.departamento && DEPARTAMENTOS.includes(c.departamento) ? c.departamento : undefined;
       this.ficha.set({
         id: 0,
         contactoId: this.contactoId,
@@ -162,22 +167,21 @@ export class NuevaFichaComponent {
         aporte: undefined,
         fechaAdhesion: today,
         fechaSalida: undefined,
-        aporteConfirmado: false,
+        aporteConfirmado: null,
         art46: false,
         titularResponsable: `${c.nombre} ${c.apellido}`,
-        estado: 'Pendiente',
-        origen: 'Manual',
         observaciones: undefined,
         aporteTodoAlPartido: true,
         aporteSecretariaAgrupacion: undefined,
         aporteAgrupacion: undefined,
-        departamentoAgrupacion: c.departamento,
+        departamentoAgrupacion: dep,
         departamental: false,
         cedulaResponsable: c.documento,
         codigoAgrupacion: undefined,
         telefonoAntel: c.telefono ?? c.celular,
         fechaVencimiento: undefined,
-        fechaUltimoPago: undefined
+        fechaUltimoPago: undefined,
+        carnetEntregado: undefined
       });
     });
   }
