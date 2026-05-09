@@ -72,34 +72,36 @@ const DEPARTAMENTOS = [
             }
             <div class="form-group">
               <label class="form-label">Aporte Todo al Partido</label>
-              <select class="form-select" [(ngModel)]="ficha()!.aporteTodoAlPartido" name="aporteTodo">
+              <select class="form-select" [ngModel]="ficha()!.aporteTodoAlPartido" (ngModelChange)="onAporteTodoChange($event)" name="aporteTodo">
                 <option [ngValue]="true">SI</option>
                 <option [ngValue]="false">NO</option>
               </select>
             </div>
-            <div class="form-group">
-              <label class="form-label">Aporte a un Sector</label>
-              <input class="form-input" [(ngModel)]="ficha()!.sector" name="sector">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Aporte a Secretaría/Agrupación</label>
-              <input class="form-input" [(ngModel)]="ficha()!.aporteSecretariaAgrupacion" name="aporteSec">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Aporte Agrupación</label>
-              <input class="form-input" [(ngModel)]="ficha()!.aporteAgrupacion" name="aporteAgr">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Departamento Agrupación</label>
-              <select class="form-select" [(ngModel)]="ficha()!.departamentoAgrupacion" name="depAgr">
-                <option [ngValue]="undefined">-</option>
-                @for (d of departamentos; track d) { <option [ngValue]="d">{{ d }}</option> }
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Código de Agrupación</label>
-              <input class="form-input" [(ngModel)]="ficha()!.codigoAgrupacion" name="codAgr">
-            </div>
+            @if (!ficha()!.aporteTodoAlPartido) {
+              <div class="form-group">
+                <label class="form-label">Aporte a un Sector</label>
+                <input class="form-input" [(ngModel)]="ficha()!.sector" name="sector">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Aporte a Secretaría/Agrupación</label>
+                <input class="form-input" [(ngModel)]="ficha()!.aporteSecretariaAgrupacion" name="aporteSec">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Aporte Agrupación</label>
+                <input class="form-input" [(ngModel)]="ficha()!.aporteAgrupacion" name="aporteAgr">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Departamento Agrupación</label>
+                <select class="form-select" [(ngModel)]="ficha()!.departamentoAgrupacion" name="depAgr">
+                  <option [ngValue]="undefined">-</option>
+                  @for (d of departamentos; track d) { <option [ngValue]="d">{{ d }}</option> }
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Código de Agrupación</label>
+                <input class="form-input" [(ngModel)]="ficha()!.codigoAgrupacion" name="codAgr">
+              </div>
+            }
             <div class="form-group">
               <label class="form-label">Confirmado</label>
               <select class="form-select" [(ngModel)]="ficha()!.aporteConfirmado" name="confirmado">
@@ -167,6 +169,20 @@ export class NuevaFichaComponent {
     if (!this.showTelefonoAntel(s)) f.telefonoAntel = undefined;
     if (!this.showCedula(s)) f.cedulaResponsable = undefined;
     if (!this.showFechasPago(s)) { f.fechaVencimiento = undefined; f.fechaUltimoPago = undefined; }
+    this.ficha.set({ ...f });
+  }
+
+  onAporteTodoChange(v: boolean) {
+    const f = this.ficha();
+    if (!f) return;
+    f.aporteTodoAlPartido = v;
+    if (v) {
+      f.sector = undefined;
+      f.aporteSecretariaAgrupacion = undefined;
+      f.aporteAgrupacion = undefined;
+      f.departamentoAgrupacion = undefined;
+      f.codigoAgrupacion = undefined;
+    }
     this.ficha.set({ ...f });
   }
 

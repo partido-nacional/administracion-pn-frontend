@@ -107,34 +107,36 @@ import { PageTitleService } from '../../core/page-title.service';
                           }
                           <div class="form-group">
                             <label class="form-label">Aporte Todo al Partido</label>
-                            <select class="form-select" [(ngModel)]="detalle()!.aporteTodoAlPartido" name="aporteTodo" [disabled]="!editMode()">
+                            <select class="form-select" [ngModel]="detalle()!.aporteTodoAlPartido" (ngModelChange)="onAporteTodoChange($event)" name="aporteTodo" [disabled]="!editMode()">
                               <option [ngValue]="true">SI</option>
                               <option [ngValue]="false">NO</option>
                             </select>
                           </div>
-                          <div class="form-group">
-                            <label class="form-label">Aporte a un Sector</label>
-                            <input class="form-input" [(ngModel)]="detalle()!.sector" name="sector" [disabled]="!editMode()">
-                          </div>
-                          <div class="form-group">
-                            <label class="form-label">Aporte a Secretaría/Agrupación</label>
-                            <input class="form-input" [(ngModel)]="detalle()!.aporteSecretariaAgrupacion" name="aporteSec" [disabled]="!editMode()">
-                          </div>
-                          <div class="form-group">
-                            <label class="form-label">Aporte Agrupación</label>
-                            <input class="form-input" [(ngModel)]="detalle()!.aporteAgrupacion" name="aporteAgr" [disabled]="!editMode()">
-                          </div>
-                          <div class="form-group">
-                            <label class="form-label">Departamento Agrupación</label>
-                            <select class="form-select" [(ngModel)]="detalle()!.departamentoAgrupacion" name="depAgr" [disabled]="!editMode()">
-                              <option [ngValue]="undefined">-</option>
-                              @for (d of departamentos; track d) { <option [ngValue]="d">{{ d }}</option> }
-                            </select>
-                          </div>
-                          <div class="form-group">
-                            <label class="form-label">Código de Agrupación</label>
-                            <input class="form-input" [(ngModel)]="detalle()!.codigoAgrupacion" name="codAgr" [disabled]="!editMode()">
-                          </div>
+                          @if (!detalle()!.aporteTodoAlPartido) {
+                            <div class="form-group">
+                              <label class="form-label">Aporte a un Sector</label>
+                              <input class="form-input" [(ngModel)]="detalle()!.sector" name="sector" [disabled]="!editMode()">
+                            </div>
+                            <div class="form-group">
+                              <label class="form-label">Aporte a Secretaría/Agrupación</label>
+                              <input class="form-input" [(ngModel)]="detalle()!.aporteSecretariaAgrupacion" name="aporteSec" [disabled]="!editMode()">
+                            </div>
+                            <div class="form-group">
+                              <label class="form-label">Aporte Agrupación</label>
+                              <input class="form-input" [(ngModel)]="detalle()!.aporteAgrupacion" name="aporteAgr" [disabled]="!editMode()">
+                            </div>
+                            <div class="form-group">
+                              <label class="form-label">Departamento Agrupación</label>
+                              <select class="form-select" [(ngModel)]="detalle()!.departamentoAgrupacion" name="depAgr" [disabled]="!editMode()">
+                                <option [ngValue]="undefined">-</option>
+                                @for (d of departamentos; track d) { <option [ngValue]="d">{{ d }}</option> }
+                              </select>
+                            </div>
+                            <div class="form-group">
+                              <label class="form-label">Código de Agrupación</label>
+                              <input class="form-input" [(ngModel)]="detalle()!.codigoAgrupacion" name="codAgr" [disabled]="!editMode()">
+                            </div>
+                          }
                           <div class="form-group">
                             <label class="form-label">Confirmado</label>
                             <select class="form-select" [(ngModel)]="detalle()!.aporteConfirmado" name="confirmado" [disabled]="!editMode()">
@@ -220,6 +222,20 @@ export class FichasContactoComponent {
     if (!this.showTelefonoAntel(s)) f.telefonoAntel = undefined;
     if (!this.showCedula(s)) f.cedulaResponsable = undefined;
     if (!this.showFechasPago(s)) { f.fechaVencimiento = undefined; f.fechaUltimoPago = undefined; }
+    this.detalle.set({ ...f });
+  }
+
+  onAporteTodoChange(v: boolean) {
+    const f = this.detalle();
+    if (!f) return;
+    f.aporteTodoAlPartido = v;
+    if (v) {
+      f.sector = undefined;
+      f.aporteSecretariaAgrupacion = undefined;
+      f.aporteAgrupacion = undefined;
+      f.departamentoAgrupacion = undefined;
+      f.codigoAgrupacion = undefined;
+    }
     this.detalle.set({ ...f });
   }
 
