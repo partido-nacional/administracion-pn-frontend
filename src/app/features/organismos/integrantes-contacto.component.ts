@@ -27,7 +27,6 @@ import { PageTitleService } from '../../core/page-title.service';
                 <th>Id Int.Org.</th>
                 <th>Id C.</th>
                 <th>Nom. Comp.</th>
-                <th>Nom. Ab.</th>
                 <th>Nombres</th>
                 <th>P.-S.</th>
                 <th>Pos. Org.</th>
@@ -43,7 +42,6 @@ import { PageTitleService } from '../../core/page-title.service';
                   <td>{{ i.id }}</td>
                   <td>{{ i.contactoId }}</td>
                   <td>{{ i.nombreCompania || '—' }}</td>
-                  <td>{{ i.nombreAbreviado || '—' }}</td>
                   <td>{{ i.nombres }}</td>
                   <td>{{ i.partidoSector || '—' }}</td>
                   <td>{{ i.posicionOrganismo || '—' }}</td>
@@ -56,7 +54,7 @@ import { PageTitleService } from '../../core/page-title.service';
                 </tr>
                 @if (expandedId() === i.id) {
                   <tr class="detalle-row">
-                    <td colspan="11">
+                    <td colspan="10">
                       <div class="detalle-wrap">
                         <div class="detalle-section">
                           <div class="detalle-section-title">Detalle del integrante</div>
@@ -64,7 +62,6 @@ import { PageTitleService } from '../../core/page-title.service';
                             <div class="kv"><span class="k">Id Integrante</span><span class="v">{{ i.id }}</span></div>
                             <div class="kv"><span class="k">Contacto</span><span class="v">{{ i.nombres }} (#{{ i.contactoId }})</span></div>
                             <div class="kv"><span class="k">Nombre Compañía</span><span class="v">{{ i.nombreCompania || '—' }}</span></div>
-                            <div class="kv"><span class="k">Nombre Abreviado</span><span class="v">{{ i.nombreAbreviado || '—' }}</span></div>
                             <div class="kv"><span class="k">Nombre Organismo</span><span class="v">{{ i.nombreOrganismo || '—' }}</span></div>
                             <div class="kv"><span class="k">Partido-Sector</span><span class="v">{{ i.partidoSector || '—' }}</span></div>
                             <div class="kv full"><span class="k">Posición</span><span class="v">{{ i.posicionOrganismo || '—' }}</span></div>
@@ -73,7 +70,6 @@ import { PageTitleService } from '../../core/page-title.service';
                             <div class="kv"><span class="k">Cargo</span><span class="v">{{ i.cargo || '—' }}</span></div>
                             <div class="kv"><span class="k">Condición</span><span class="v">{{ i.condicion || '—' }}</span></div>
                             <div class="kv"><span class="k">Fecha Designación</span><span class="v">{{ i.fechaDesignacion || '—' }}</span></div>
-                            <div class="kv"><span class="k">Fecha Inicio</span><span class="v">{{ i.fechaInicio || '—' }}</span></div>
                             <div class="kv"><span class="k">Fecha Fin</span><span class="v">{{ i.fechaFin || '—' }}</span></div>
                             <div class="kv full"><span class="k">Nota</span><span class="v">{{ i.nota || '—' }}</span></div>
                           </div>

@@ -44,7 +44,6 @@ export interface IntegranteOrganismo {
   contactoId: number;
   nombres: string;
   nombreCompania?: string;
-  nombreAbreviado?: string;
   nombreOrganismo?: string;
   partidoSector?: string;
   posicionOrganismo?: string;
@@ -53,7 +52,6 @@ export interface IntegranteOrganismo {
   cargo?: string;
   condicion?: string;
   nota?: string;
-  fechaInicio?: string;
   fechaFin?: string;
   fechaDesignacion?: string;
 }
