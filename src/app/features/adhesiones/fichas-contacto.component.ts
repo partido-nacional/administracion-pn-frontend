@@ -119,7 +119,10 @@ import { PageTitleService } from '../../core/page-title.service';
                             </div>
                             <div class="form-group">
                               <label class="form-label">Aporte a Secretaría/Agrupación</label>
-                              <input class="form-input" [(ngModel)]="detalle()!.aporteSecretariaAgrupacion" name="aporteSec" [disabled]="!editMode()">
+                              <select class="form-select" [(ngModel)]="detalle()!.aporteSecretariaAgrupacion" name="aporteSec" [disabled]="!editMode()">
+                                <option [ngValue]="undefined">-</option>
+                                @for (a of aportesSecAgr; track a) { <option [ngValue]="a">{{ a }}</option> }
+                              </select>
                             </div>
                             <div class="form-group">
                               <label class="form-label">Aporte Agrupación</label>
@@ -209,6 +212,10 @@ export class FichasContactoComponent {
     'Artigas', 'Canelones', 'Cerro Largo', 'Colonia', 'Durazno', 'Flores', 'Florida',
     'Lavalleja', 'Maldonado', 'Montevideo', 'Paysandú', 'Río Negro', 'Rivera', 'Rocha',
     'Salto', 'San José', 'Soriano', 'Tacuarembó', 'Treinta y Tres', 'Nacional'
+  ];
+  aportesSecAgr = [
+    'Agrupacion', 'SAS', 'CNJ', 'Centro Josefa Oribe', 'CEPN',
+    'Comision Departamental', 'C. Cultura', 'Movimiento Afro-Nacionalista (MAN)'
   ];
 
   showTelefonoAntel(s?: string) { return s === 'Antel'; }
