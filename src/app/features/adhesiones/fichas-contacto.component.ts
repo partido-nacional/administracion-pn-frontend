@@ -115,7 +115,10 @@ import { PageTitleService } from '../../core/page-title.service';
                           @if (!detalle()!.aporteTodoAlPartido) {
                             <div class="form-group">
                               <label class="form-label">Aporte a un Sector</label>
-                              <input class="form-input" [(ngModel)]="detalle()!.sector" name="sector" [disabled]="!editMode()">
+                              <select class="form-select" [(ngModel)]="detalle()!.sector" name="sector" [disabled]="!editMode()">
+                                <option [ngValue]="undefined">-</option>
+                                @for (s of sectores; track s) { <option [ngValue]="s">{{ s }}</option> }
+                              </select>
                             </div>
                             <div class="form-group">
                               <label class="form-label">Aporte a Secretaría/Agrupación</label>
@@ -216,6 +219,10 @@ export class FichasContactoComponent {
   aportesSecAgr = [
     'Agrupacion', 'SAS', 'CNJ', 'Centro Josefa Oribe', 'CEPN',
     'Comision Departamental', 'C. Cultura', 'Movimiento Afro-Nacionalista (MAN)'
+  ];
+  sectores = [
+    'ALIANZA NACIONAL', 'TODO POR EL PUEBLO', 'AIRE FRESCO', 'MEJOR PAIS',
+    'D CENTRO', 'ESPACIO 40', 'HERRERISMO', 'POR LA PATRIA'
   ];
 
   showTelefonoAntel(s?: string) { return s === 'Antel'; }

@@ -16,6 +16,10 @@ const APORTES_SEC_AGR = [
   'Agrupacion', 'SAS', 'CNJ', 'Centro Josefa Oribe', 'CEPN',
   'Comision Departamental', 'C. Cultura', 'Movimiento Afro-Nacionalista (MAN)'
 ];
+const SECTORES = [
+  'ALIANZA NACIONAL', 'TODO POR EL PUEBLO', 'AIRE FRESCO', 'MEJOR PAIS',
+  'D CENTRO', 'ESPACIO 40', 'HERRERISMO', 'POR LA PATRIA'
+];
 
 @Component({
   selector: 'app-nueva-ficha',
@@ -84,7 +88,10 @@ const APORTES_SEC_AGR = [
             @if (!ficha()!.aporteTodoAlPartido) {
               <div class="form-group">
                 <label class="form-label">Aporte a un Sector</label>
-                <input class="form-input" [(ngModel)]="ficha()!.sector" name="sector">
+                <select class="form-select" [(ngModel)]="ficha()!.sector" name="sector">
+                  <option [ngValue]="undefined">-</option>
+                  @for (s of sectores; track s) { <option [ngValue]="s">{{ s }}</option> }
+                </select>
               </div>
               <div class="form-group">
                 <label class="form-label">Aporte a Secretaría/Agrupación</label>
@@ -165,6 +172,7 @@ export class NuevaFichaComponent {
   sistemas = SISTEMAS;
   departamentos = DEPARTAMENTOS;
   aportesSecAgr = APORTES_SEC_AGR;
+  sectores = SECTORES;
 
   showTelefonoAntel(s?: string) { return s === 'Antel'; }
   showCedula(s?: string) { return s === 'OCA' || s === 'VISA' || s === 'MASTER' || s === 'EBROU'; }
