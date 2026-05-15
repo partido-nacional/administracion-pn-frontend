@@ -319,7 +319,13 @@ export class AgendaNuevoComponent {
     const req: Observable<unknown> = this.editingId
       ? this.svc.update(this.c as Contacto)
       : this.svc.create(this.c);
-    req.subscribe(() => this.router.navigate(['/agenda']));
+    req.subscribe({
+      next: () => this.router.navigate(['/agenda']),
+      error: (err) => {
+        const msg = err?.error?.message || err?.error || 'No se pudo guardar el contacto.';
+        this.errores.set([typeof msg === 'string' ? msg : 'No se pudo guardar el contacto.']);
+      }
+    });
   }
 
   cancelar() { this.router.navigate(['/agenda']); }

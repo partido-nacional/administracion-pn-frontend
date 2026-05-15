@@ -44,7 +44,7 @@ import { PageTitleService } from '../../core/page-title.service';
                   <td>{{ f.aporteTodoAlPartido ? 'SI' : 'NO' }}</td>
                   <td>{{ f.sistContrib || '—' }}</td>
                   <td>{{ f.aporte ?? '—' }}</td>
-                  <td>{{ f.aporteConfirmado === true ? 'S' : f.aporteConfirmado === false ? 'N' : '-' }}</td>
+                  <td>{{ f.aporteConfirmado === true ? 'S' : f.aporteConfirmado === false ? 'D' : '-' }}</td>
                   <td>{{ f.art46 ? 'SI' : 'NO' }}</td>
                 </tr>
                 @if (expandedId() === f.id && detalle()) {
@@ -147,12 +147,18 @@ import { PageTitleService } from '../../core/page-title.service';
                           }
                           <div class="form-group">
                             <label class="form-label">Confirmado</label>
-                            <select class="form-select" [(ngModel)]="detalle()!.aporteConfirmado" name="confirmado" [disabled]="!editMode()">
+                            <select class="form-select" [ngModel]="detalle()!.aporteConfirmado" (ngModelChange)="onConfirmadoChange($event)" name="confirmado" [disabled]="!editMode()">
                               <option [ngValue]="null">-</option>
-                              <option [ngValue]="false">N</option>
+                              <option [ngValue]="false">D</option>
                               <option [ngValue]="true">S</option>
                             </select>
                           </div>
+                          @if (detalle()!.aporteConfirmado === false) {
+                            <div class="form-group">
+                              <label class="form-label">Fecha de salida</label>
+                              <input class="form-input" type="date" [(ngModel)]="detalle()!.fechaSalida" name="fechaSalidaCond" [disabled]="!editMode()">
+                            </div>
+                          }
                           <div class="form-group">
                             <label class="form-label">Carnet Entregado</label>
                             <input class="form-input" type="date" [(ngModel)]="detalle()!.carnetEntregado" name="carnetEntregado" [disabled]="!editMode()">
@@ -170,10 +176,6 @@ import { PageTitleService } from '../../core/page-title.service';
                               <input type="checkbox" [(ngModel)]="detalle()!.departamental" name="departamental" [disabled]="!editMode()">
                               <span>Sí</span>
                             </label>
-                          </div>
-                          <div class="form-group">
-                            <label class="form-label">Fecha de salida</label>
-                            <input class="form-input" type="date" [(ngModel)]="detalle()!.fechaSalida" name="fechaSalida" [disabled]="!editMode()">
                           </div>
                         </div>
                       </div>
@@ -251,6 +253,24 @@ export class FichasContactoComponent {
       f.aporteAgrupacion = undefined;
       f.departamentoAgrupacion = undefined;
       f.codigoAgrupacion = undefined;
+    }
+    this.detalle.set({ ...f });
+  }
+
+  onConfirmadoChange(v: boolean | null) {
+    const f = this.detalle();
+    if (!f) return;
+    if (v === false) {
+      const today = new Date().toISOString().slice(0, 10);
+      const fecha = window.prompt('Ingrese la fecha de salida (YYYY-MM-DD):', f.fechaSalida || today);
+      if (!fecha || !/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
+        return;
+      }
+      f.aporteConfirmado = false;
+      f.fechaSalida = fecha;
+    } else {
+      f.aporteConfirmado = v;
+      f.fechaSalida = undefined;
     }
     this.detalle.set({ ...f });
   }

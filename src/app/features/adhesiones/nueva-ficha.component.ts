@@ -118,12 +118,18 @@ const SECTORES = [
             }
             <div class="form-group">
               <label class="form-label">Confirmado</label>
-              <select class="form-select" [(ngModel)]="ficha()!.aporteConfirmado" name="confirmado">
+              <select class="form-select" [ngModel]="ficha()!.aporteConfirmado" (ngModelChange)="onConfirmadoChange($event)" name="confirmado">
                 <option [ngValue]="null">-</option>
-                <option [ngValue]="false">N</option>
+                <option [ngValue]="false">D</option>
                 <option [ngValue]="true">S</option>
               </select>
             </div>
+            @if (ficha()!.aporteConfirmado === false) {
+              <div class="form-group">
+                <label class="form-label">Fecha de salida</label>
+                <input class="form-input" type="date" [(ngModel)]="ficha()!.fechaSalida" name="fechaSalidaCreate">
+              </div>
+            }
             <div class="form-group">
               <label class="form-label">Carnet Entregado</label>
               <input class="form-input" type="date" [(ngModel)]="ficha()!.carnetEntregado" name="carnetEntregado">
@@ -198,6 +204,24 @@ export class NuevaFichaComponent {
       f.aporteAgrupacion = undefined;
       f.departamentoAgrupacion = undefined;
       f.codigoAgrupacion = undefined;
+    }
+    this.ficha.set({ ...f });
+  }
+
+  onConfirmadoChange(v: boolean | null) {
+    const f = this.ficha();
+    if (!f) return;
+    if (v === false) {
+      const today = new Date().toISOString().slice(0, 10);
+      const fecha = window.prompt('Ingrese la fecha de salida (YYYY-MM-DD):', f.fechaSalida || today);
+      if (!fecha || !/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
+        return;
+      }
+      f.aporteConfirmado = false;
+      f.fechaSalida = fecha;
+    } else {
+      f.aporteConfirmado = v;
+      f.fechaSalida = undefined;
     }
     this.ficha.set({ ...f });
   }
