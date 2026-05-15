@@ -6,6 +6,7 @@ import { RouterLink } from '@angular/router';
 import { environment } from '../../../environments/environment';
 import { PageTitleService } from '../../core/page-title.service';
 import { ContactosService, Contacto } from './contactos.service';
+import { DuplicadosContactosComponent } from './duplicados-contactos.component';
 
 interface ContactoListado {
   id: number; nombre: string; apellido: string; cedula?: string; credencial?: string;
@@ -18,7 +19,7 @@ type Tab = 'todos' | 'padron' | 'duplicados' | 'exportar';
 @Component({
   selector: 'app-agenda-listado',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, DuplicadosContactosComponent],
   template: `
     <div class="topbar-inline">
       <a routerLink="/agenda/nuevo" class="btn btn-primary">+ Nuevo Contacto</a>
@@ -26,8 +27,8 @@ type Tab = 'todos' | 'padron' | 'duplicados' | 'exportar';
 
     <div class="tabs">
       <a class="tab" [class.active]="tab()==='todos'"      (click)="tab.set('todos')">Todos los contactos</a>
-      <a class="tab" [class.active]="tab()==='padron'"     (click)="tab.set('padron')">Padron Electoral</a>
       <a class="tab" [class.active]="tab()==='duplicados'" (click)="tab.set('duplicados')">Duplicados</a>
+      <a class="tab" [class.active]="tab()==='padron'"     (click)="tab.set('padron')">Padron Electoral</a>
       <a class="tab" [class.active]="tab()==='exportar'"   (click)="tab.set('exportar')">Exportar</a>
     </div>
 
@@ -207,7 +208,7 @@ type Tab = 'todos' | 'padron' | 'duplicados' | 'exportar';
       <div class="card"><div class="card-body"><div class="empty-state"><div class="empty-state-text">Padron Electoral — proximamente</div></div></div></div>
     }
     @if (tab() === 'duplicados') {
-      <div class="card"><div class="card-body"><div class="empty-state"><div class="empty-state-text">Duplicados — proximamente</div></div></div></div>
+      <app-duplicados-contactos></app-duplicados-contactos>
     }
     @if (tab() === 'exportar') {
       <div class="card"><div class="card-body"><div class="empty-state"><div class="empty-state-text">Exportar — proximamente</div></div></div></div>

@@ -6,6 +6,7 @@
     </div>
     <nav class="nav">
       <a routerLink="/inicio" routerLinkActive="active" class="nav-item"><span class="nav-icon">&#9632;</span> Inicio</a>
+      <a routerLink="/agenda" routerLinkActive="active" class="nav-item"><span class="nav-icon">&#9786;</span> Agenda</a>
 
       <a class="nav-item nav-parent" [class.open]="isOpen('listados')" (click)="toggle('listados')">
         <span class="nav-icon">&#9776;</span> Listados <span class="nav-arrow">&#9662;</span>
@@ -24,7 +25,6 @@
       </div>
 
       <a routerLink="/productos" routerLinkActive="active" class="nav-item"><span class="nav-icon">&#9744;</span> Productos</a>
-      <a routerLink="/agenda" routerLinkActive="active" class="nav-item"><span class="nav-icon">&#9786;</span> Agenda</a>
       <a routerLink="/adhesiones" routerLinkActive="active" class="nav-item"><span class="nav-icon">&#9733;</span> Adhesiones</a>
       <a routerLink="/debitos" routerLinkActive="active" class="nav-item"><span class="nav-icon">&#9632;</span> Débitos</a>
 

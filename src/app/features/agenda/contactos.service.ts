@@ -109,4 +109,11 @@ export class ContactosService {
   fichasAdhesion(id: number) { return this.http.get<FichaAdhesion[]>(`${this.base}/${id}/fichas-adhesion`); }
   integrantesOrganismo(id: number) { return this.http.get<IntegranteOrganismo[]>(`${this.base}/${id}/integrantes-organismo`); }
   eliminarIntegranteOrganismo(id: number) { return this.http.delete<void>(`${environment.apiUrl}/integrantes-organismo/${id}`); }
+  duplicados() { return this.http.get<DuplicadoPar[]>(`${this.base}/duplicados`); }
+}
+
+export interface DuplicadoPar {
+  a: Contacto;
+  b: Contacto;
+  matches: string[];
 }
