@@ -4,23 +4,28 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { PageTitleService } from '../../core/page-title.service';
+import { FichasAgrupacionComponent } from './fichas-agrupacion.component';
 
 interface Agrupacion { id: number; codAgrup: string; codDepto: string; pendiente: boolean; tipo: string; solic: number; nombre: string; depto: string; }
 interface Integrante { agrupacion: string; agrupActual: string; cargo: string; idContacto: number; representante: boolean; delegado: boolean; orden: number; ci: string; }
 interface PadronItem { serie: string; nro: number; primerNombre: string; segundoNombre: string; primerApellido: string; segundoApellido: string; }
 
-type Tab = 'todas' | 'integrantes' | 'padron' | 'nueva';
+type Tab = 'todas' | 'pendientes' | 'integrantes' | 'padron';
 
 @Component({
   selector: 'app-agrupaciones',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, FichasAgrupacionComponent],
   template: `
+    <div class="topbar-inline">
+      <button class="btn btn-primary" (click)="abrirNueva()">+ Nueva Agrupación</button>
+    </div>
+
     <div class="tabs">
-      <a class="tab" [class.active]="tab()==='todas'" (click)="setTab('todas')">Todas</a>
+      <a class="tab" [class.active]="tab()==='todas'"       (click)="setTab('todas')">Todas</a>
+      <a class="tab" [class.active]="tab()==='pendientes'"  (click)="setTab('pendientes')">Agrupaciones Pendientes</a>
       <a class="tab" [class.active]="tab()==='integrantes'" (click)="setTab('integrantes')">Integrantes por Agrupación</a>
-      <a class="tab" [class.active]="tab()==='padron'" (click)="setTab('padron')">Padrón Electoral</a>
-      <a class="tab" [class.active]="tab()==='nueva'" (click)="setTab('nueva')">+ Nueva Agrupación</a>
+      <a class="tab" [class.active]="tab()==='padron'"      (click)="setTab('padron')">Padrón Electoral</a>
     </div>
 
     @if (tab()==='todas') {
@@ -51,6 +56,10 @@ type Tab = 'todas' | 'integrantes' | 'padron' | 'nueva';
           </tbody>
         </table>
       </div></div>
+    }
+
+    @if (tab()==='pendientes') {
+      <app-fichas-agrupacion></app-fichas-agrupacion>
     }
 
     @if (tab()==='integrantes') {
@@ -103,47 +112,10 @@ type Tab = 'todas' | 'integrantes' | 'padron' | 'nueva';
         </table>
       </div></div>
     }
-
-    @if (tab()==='nueva') {
-      <div class="card">
-        <div class="card-header"><h2 class="card-title">Nueva Agrupación</h2></div>
-        <div class="card-body">
-          <div class="form-grid">
-            <div class="form-group"><label class="form-label">Cod. Agrupación</label><input class="form-input" [(ngModel)]="form.codAgrup" name="codAgrup"></div>
-            <div class="form-group"><label class="form-label">Nombre *</label><input class="form-input" [(ngModel)]="form.nombre" name="nombre"></div>
-            <div class="form-group"><label class="form-label">Departamento</label>
-              <select class="form-select" [(ngModel)]="form.depto" name="depto">
-                <option value="">Seleccione</option>
-                @for (d of deptos; track d) { <option>{{ d }}</option> }
-              </select>
-            </div>
-            <div class="form-group"><label class="form-label">Tipo</label>
-              <select class="form-select" [(ngModel)]="form.tipo" name="tipo">
-                <option>D</option><option>N</option>
-              </select>
-            </div>
-            <div class="form-group"><label class="form-label">Pendiente</label>
-              <select class="form-select" [(ngModel)]="form.pendiente" name="pendiente">
-                <option [ngValue]="false">No</option>
-                <option [ngValue]="true">Sí</option>
-              </select>
-            </div>
-            <div class="form-group"><label class="form-label">Representante</label><input class="form-input" [(ngModel)]="form.representante" name="rep"></div>
-            <div class="form-group"><label class="form-label">Domicilio Legal</label><input class="form-input" [(ngModel)]="form.domicilio" name="dom"></div>
-            <div class="form-group"><label class="form-label">Ciudad</label><input class="form-input" [(ngModel)]="form.ciudad" name="ciu"></div>
-            <div class="form-group"><label class="form-label">Teléfono 1</label><input class="form-input" [(ngModel)]="form.tel1" name="tel1"></div>
-            <div class="form-group"><label class="form-label">Teléfono 2</label><input class="form-input" [(ngModel)]="form.tel2" name="tel2"></div>
-            <div class="form-group"><label class="form-label">Email</label><input class="form-input" type="email" [(ngModel)]="form.email" name="email"></div>
-            <div class="form-group full-width"><label class="form-label">Observaciones</label><textarea class="form-textarea" [(ngModel)]="form.obs" name="obs"></textarea></div>
-          </div>
-          <div class="form-actions">
-            <button class="btn btn-primary" (click)="guardar()">Agregar</button>
-            <button class="btn btn-secondary" (click)="setTab('todas')">Cancelar</button>
-          </div>
-        </div>
-      </div>
-    }
-  `
+  `,
+  styles: [`
+    .topbar-inline { display:flex; justify-content:flex-end; margin-bottom:16px; }
+  `]
 })
 export class AgrupacionesComponent {
   private http = inject(HttpClient);
@@ -154,9 +126,6 @@ export class AgrupacionesComponent {
   integrantes = signal<Integrante[]>([]);
   padron = signal<PadronItem[]>([]);
 
-  deptos = ['Artigas','Canelones','Cerro Largo','Colonia','Durazno','Flores','Florida','Lavalleja','Maldonado','Montevideo','Paysandu','Rio Negro','Rivera','Rocha','Salto','San Jose','Soriano','Tacuarembo','Treinta y Tres'];
-  form: any = { pendiente: false, tipo: 'D' };
-
   constructor() {
     this.titleSvc.set('Agrupaciones');
     this.loadTodas();
@@ -166,16 +135,19 @@ export class AgrupacionesComponent {
     this.tab.set(t);
     if (t === 'integrantes' && this.integrantes().length === 0) this.loadIntegrantes();
     if (t === 'padron' && this.padron().length === 0) this.loadPadron();
-    this.titleSvc.set(t === 'todas' ? 'Agrupaciones' : t === 'integrantes' ? 'Agrupaciones — Integrantes' : t === 'padron' ? 'Agrupaciones — Padrón Electoral' : 'Agrupaciones — Nueva Agrupación');
+    const label =
+      t === 'todas' ? 'Agrupaciones' :
+      t === 'pendientes' ? 'Agrupaciones — Pendientes' :
+      t === 'integrantes' ? 'Agrupaciones — Integrantes' :
+      'Agrupaciones — Padrón Electoral';
+    this.titleSvc.set(label);
+  }
+
+  abrirNueva() {
+    alert('Nueva agrupacion (formulario proximamente)');
   }
 
   loadTodas() { this.http.get<Agrupacion[]>(`${environment.apiUrl}/agrupaciones`).subscribe(x => this.agrupaciones.set(x)); }
   loadIntegrantes() { this.http.get<Integrante[]>(`${environment.apiUrl}/agrupaciones/integrantes`).subscribe(x => this.integrantes.set(x)); }
   loadPadron() { this.http.get<PadronItem[]>(`${environment.apiUrl}/agrupaciones/padron`).subscribe(x => this.padron.set(x)); }
-
-  guardar() {
-    alert('Agrupación agregada (demo)');
-    this.form = { pendiente: false, tipo: 'D' };
-    this.setTab('todas');
-  }
 }
