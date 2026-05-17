@@ -28,24 +28,8 @@
       <a routerLink="/adhesiones" routerLinkActive="active" class="nav-item"><span class="nav-icon">&#9733;</span> Adhesiones</a>
       <a routerLink="/debitos" routerLinkActive="active" class="nav-item"><span class="nav-icon">&#9632;</span> Débitos</a>
 
-      <a class="nav-item nav-parent" [class.open]="isOpen('orgs')" (click)="toggle('orgs')">
-        <span class="nav-icon">&#9881;</span> Organismos <span class="nav-arrow">&#9662;</span>
-      </a>
-      <div class="nav-submenu" [class.open]="isOpen('orgs')">
-        <a routerLink="/organismos" class="nav-subitem">Todos los Organismos</a>
-        <a routerLink="/organismos" class="nav-subitem">Info de la Organizacion</a>
-        <a routerLink="/organismos" class="nav-subitem">Integrantes</a>
-        <a routerLink="/organismos" class="nav-subitem">Ref. Partidarias</a>
-      </div>
-
-      <a class="nav-item nav-parent" [class.open]="isOpen('agrup')" (click)="toggle('agrup')">
-        <span class="nav-icon">&#9670;</span> Agrupaciones <span class="nav-arrow">&#9662;</span>
-      </a>
-      <div class="nav-submenu" [class.open]="isOpen('agrup')">
-        <a routerLink="/agrupaciones" class="nav-subitem">Todas</a>
-        <a routerLink="/agrupaciones" class="nav-subitem">Integrantes por Agrupacion</a>
-        <a routerLink="/agrupaciones" class="nav-subitem">Padron Electoral</a>
-      </div>
+      <a routerLink="/organismos" routerLinkActive="active" class="nav-item"><span class="nav-icon">&#9881;</span> Organismos</a>
+      <a routerLink="/agrupaciones" routerLinkActive="active" class="nav-item"><span class="nav-icon">&#9670;</span> Agrupaciones</a>
     </nav>
     <div class="sidebar-footer">
       <div class="user-badge">
