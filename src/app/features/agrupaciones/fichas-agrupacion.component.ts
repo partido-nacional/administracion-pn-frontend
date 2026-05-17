@@ -218,7 +218,7 @@ export interface FichaAgrupacion {
 
             <div class="wa-field">
               <label class="wa-label">Mensaje</label>
-              <textarea class="wa-textarea" rows="7" [(ngModel)]="waMensaje" name="waMensaje"
+              <textarea class="wa-textarea" [(ngModel)]="waMensaje" name="waMensaje"
                         placeholder="Escribí tu mensaje aquí..."></textarea>
               <div class="wa-char-count">{{ waMensaje.length }} caracteres</div>
             </div>
@@ -292,8 +292,9 @@ export interface FichaAgrupacion {
       padding:20px;
     }
     .wa-modal {
-      background:#fff; border-radius:10px; width:min(520px, 100%);
-      max-height:90vh; display:flex; flex-direction:column;
+      background:#fff; border-radius:10px;
+      width:min(560px, 100%); height:min(640px, 92vh);
+      display:flex; flex-direction:column;
       box-shadow:0 20px 50px rgba(0,0,0,.3); overflow:hidden;
     }
     .wa-modal-header {
@@ -307,8 +308,8 @@ export interface FichaAgrupacion {
     }
     .wa-close:hover { background:rgba(255,255,255,.18); }
     .wa-modal-body {
-      padding:18px 20px; overflow-y:auto; flex:1;
-      display:flex; flex-direction:column; gap:16px;
+      padding:18px 20px; flex:1; min-height:0;
+      display:flex; flex-direction:column; gap:14px;
     }
     .wa-recipient {
       display:flex; gap:12px; align-items:center;
@@ -323,15 +324,21 @@ export interface FichaAgrupacion {
     .wa-name { font-weight:600; font-size:15px; color:#222; }
     .wa-phone { font-family:monospace; color:#1ebe57; font-size:13px; margin-top:2px; }
     .wa-context { font-size:12px; color:#666; margin-top:4px; }
-    .wa-field { display:flex; flex-direction:column; gap:6px; }
+    .wa-field {
+      display:flex; flex-direction:column; gap:6px;
+      flex:1; min-height:0;
+    }
     .wa-label {
       font-size:11px; font-weight:600; color:#666;
       text-transform:uppercase; letter-spacing:.4px;
+      display:block;
     }
     .wa-textarea {
-      width:100%; box-sizing:border-box; padding:10px 12px; font-size:14px;
+      display:block; width:100%; box-sizing:border-box;
+      flex:1; min-height:0;
+      padding:10px 12px; font-size:14px;
       font-family:inherit; line-height:1.45; border:1px solid #cfd6e0; border-radius:6px;
-      resize:vertical; min-height:130px; outline:none;
+      resize:none; outline:none;
     }
     .wa-textarea:focus { border-color:#25D366; box-shadow:0 0 0 3px rgba(37,211,102,.15); }
     .wa-char-count { font-size:11px; color:#888; text-align:right; }
