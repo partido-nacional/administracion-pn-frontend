@@ -188,26 +188,51 @@ export interface FichaAgrupacion {
 
     @if (waFicha()) {
       <div class="modal-backdrop" (click)="cerrarWhatsapp()">
-        <div class="modal" (click)="$event.stopPropagation()">
-          <div class="modal-header">
-            <h3>Enviar WhatsApp</h3>
-            <button class="modal-close" (click)="cerrarWhatsapp()">×</button>
-          </div>
-          <div class="modal-body">
-            <div class="wa-dest">
-              <div><strong>{{ waFicha()!.nombreResponsable || '—' }} {{ waFicha()!.apellidoResponsable || '' }}</strong></div>
-              <div class="wa-num">+{{ waPhone() }}</div>
+        <div class="wa-modal" (click)="$event.stopPropagation()">
+          <div class="wa-modal-header">
+            <div class="wa-modal-title">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true">
+                <path d="M.057 24l1.687-6.163a11.867 11.867 0 01-1.62-5.964C.122 5.335 5.46 0 12.05 0a11.82 11.82 0 018.412 3.488 11.82 11.82 0 013.48 8.413c-.003 6.557-5.338 11.892-11.892 11.892a11.9 11.9 0 01-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884a9.86 9.86 0 001.51 5.26l-.999 3.648 3.978-1.607zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.149-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413z"/>
+              </svg>
+              <span>Enviar WhatsApp</span>
             </div>
-            <label class="form-label" style="margin-top:14px">Mensaje</label>
-            <textarea class="form-input" rows="6" [(ngModel)]="waMensaje" name="waMensaje"></textarea>
-            <small style="display:block; margin-top:8px; color:#666">
-              Esto abre WhatsApp Web/App con el mensaje precargado al número del responsable.
-              Tenés que tocar <strong>Enviar</strong> manualmente en WhatsApp.
-            </small>
+            <button class="wa-close" (click)="cerrarWhatsapp()" aria-label="Cerrar">×</button>
           </div>
-          <div class="modal-footer">
+
+          <div class="wa-modal-body">
+            <div class="wa-recipient">
+              <div class="wa-avatar">{{ waIniciales() }}</div>
+              <div class="wa-recipient-info">
+                <div class="wa-name">{{ waFicha()!.nombreResponsable }} {{ waFicha()!.apellidoResponsable }}</div>
+                <div class="wa-phone">
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" style="vertical-align:-2px; margin-right:4px">
+                    <path d="M.057 24l1.687-6.163a11.867 11.867 0 01-1.62-5.964C.122 5.335 5.46 0 12.05 0a11.82 11.82 0 018.412 3.488 11.82 11.82 0 013.48 8.413c-.003 6.557-5.338 11.892-11.892 11.892a11.9 11.9 0 01-5.688-1.448L.057 24z"/>
+                  </svg>
+                  +{{ waPhone() }}
+                </div>
+                <div class="wa-context">
+                  Ficha: <strong>{{ waFicha()!.nombreAgrupacion }}</strong>
+                </div>
+              </div>
+            </div>
+
+            <div class="wa-field">
+              <label class="wa-label">Mensaje</label>
+              <textarea class="wa-textarea" rows="7" [(ngModel)]="waMensaje" name="waMensaje"
+                        placeholder="Escribí tu mensaje aquí..."></textarea>
+              <div class="wa-char-count">{{ waMensaje.length }} caracteres</div>
+            </div>
+
+            <div class="wa-hint">
+              <span class="wa-hint-icon">ⓘ</span>
+              Al continuar se abre <strong>WhatsApp Web</strong> en una pestaña nueva, con la conversación
+              y el mensaje precargado. Tenés que tocar <strong>Enviar</strong> ahí para que llegue.
+            </div>
+          </div>
+
+          <div class="wa-modal-footer">
             <button class="btn btn-secondary" (click)="cerrarWhatsapp()">Cancelar</button>
-            <button class="btn btn-wa-primary" (click)="enviarWhatsapp()">
+            <button class="btn-wa-primary" (click)="enviarWhatsapp()" [disabled]="!waMensaje.trim()">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="vertical-align:-3px; margin-right:6px">
                 <path d="M.057 24l1.687-6.163a11.867 11.867 0 01-1.62-5.964C.122 5.335 5.46 0 12.05 0a11.82 11.82 0 018.412 3.488 11.82 11.82 0 013.48 8.413c-.003 6.557-5.338 11.892-11.892 11.892a11.9 11.9 0 01-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884a9.86 9.86 0 001.51 5.26l-.999 3.648 3.978-1.607zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.149-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413z"/>
               </svg>
@@ -253,32 +278,73 @@ export interface FichaAgrupacion {
     .btn-wa:hover:not(:disabled) { background:#1ebe57; }
     .btn-wa:disabled { background:#bcd; cursor:not-allowed; }
     .btn-wa-primary {
-      background:#25D366; color:#fff; border:none; padding:8px 16px;
-      border-radius:4px; font-size:14px; cursor:pointer; display:inline-flex; align-items:center;
+      background:#25D366; color:#fff; border:none; padding:9px 18px;
+      border-radius:6px; font-size:14px; font-weight:600; cursor:pointer;
+      display:inline-flex; align-items:center; box-shadow:0 1px 2px rgba(0,0,0,.08);
     }
-    .btn-wa-primary:hover { background:#1ebe57; }
+    .btn-wa-primary:hover:not(:disabled) { background:#1ebe57; }
+    .btn-wa-primary:disabled { background:#9bd9b3; cursor:not-allowed; }
+
+    /* WhatsApp modal */
     .modal-backdrop {
-      position:fixed; inset:0; background:rgba(0,0,0,.5);
+      position:fixed; inset:0; background:rgba(15,23,42,.55);
       display:flex; align-items:center; justify-content:center; z-index:1000;
+      padding:20px;
     }
-    .modal {
-      background:#fff; border-radius:8px; width:min(520px, 92vw);
+    .wa-modal {
+      background:#fff; border-radius:10px; width:min(520px, 100%);
       max-height:90vh; display:flex; flex-direction:column;
-      box-shadow:0 10px 40px rgba(0,0,0,.25);
+      box-shadow:0 20px 50px rgba(0,0,0,.3); overflow:hidden;
     }
-    .modal-header {
+    .wa-modal-header {
       display:flex; justify-content:space-between; align-items:center;
-      padding:14px 18px; border-bottom:1px solid #eee;
+      padding:14px 20px; background:#25D366; color:#fff;
     }
-    .modal-header h3 { margin:0; font-size:17px; color:#1ebe57; }
-    .modal-close { background:none; border:none; font-size:24px; cursor:pointer; color:#666; }
-    .modal-body { padding:14px 18px; overflow-y:auto; flex:1; }
-    .modal-footer {
-      padding:12px 18px; border-top:1px solid #eee;
-      display:flex; gap:8px; justify-content:flex-end;
+    .wa-modal-title { display:flex; align-items:center; gap:10px; font-size:16px; font-weight:600; }
+    .wa-close {
+      background:transparent; border:none; color:#fff; font-size:24px; line-height:1;
+      cursor:pointer; padding:0; width:28px; height:28px; border-radius:4px;
     }
-    .wa-dest { background:#f5f8ff; border:1px solid #e6eaf0; border-radius:6px; padding:10px 12px; }
-    .wa-num { font-family:monospace; color:#1a4f8a; }
+    .wa-close:hover { background:rgba(255,255,255,.18); }
+    .wa-modal-body {
+      padding:18px 20px; overflow-y:auto; flex:1;
+      display:flex; flex-direction:column; gap:16px;
+    }
+    .wa-recipient {
+      display:flex; gap:12px; align-items:center;
+      background:#f5fbf7; border:1px solid #d6efdf; border-radius:8px; padding:12px 14px;
+    }
+    .wa-avatar {
+      width:42px; height:42px; border-radius:50%; background:#25D366; color:#fff;
+      display:flex; align-items:center; justify-content:center; font-weight:600; font-size:15px;
+      flex-shrink:0;
+    }
+    .wa-recipient-info { min-width:0; flex:1; }
+    .wa-name { font-weight:600; font-size:15px; color:#222; }
+    .wa-phone { font-family:monospace; color:#1ebe57; font-size:13px; margin-top:2px; }
+    .wa-context { font-size:12px; color:#666; margin-top:4px; }
+    .wa-field { display:flex; flex-direction:column; gap:6px; }
+    .wa-label {
+      font-size:11px; font-weight:600; color:#666;
+      text-transform:uppercase; letter-spacing:.4px;
+    }
+    .wa-textarea {
+      width:100%; box-sizing:border-box; padding:10px 12px; font-size:14px;
+      font-family:inherit; line-height:1.45; border:1px solid #cfd6e0; border-radius:6px;
+      resize:vertical; min-height:130px; outline:none;
+    }
+    .wa-textarea:focus { border-color:#25D366; box-shadow:0 0 0 3px rgba(37,211,102,.15); }
+    .wa-char-count { font-size:11px; color:#888; text-align:right; }
+    .wa-hint {
+      display:flex; gap:8px; align-items:flex-start;
+      background:#f0f6ff; border:1px solid #d6e4f5; border-radius:6px;
+      padding:10px 12px; font-size:12px; color:#3d4f6b; line-height:1.45;
+    }
+    .wa-hint-icon { color:#1a4f8a; font-weight:bold; flex-shrink:0; }
+    .wa-modal-footer {
+      padding:12px 20px; border-top:1px solid #eef1f5; background:#fafbfd;
+      display:flex; gap:10px; justify-content:flex-end;
+    }
   `]
 })
 export class FichasAgrupacionComponent {
@@ -347,6 +413,14 @@ export class FichasAgrupacionComponent {
     const f = this.waFicha();
     if (!f?.celularResponsable) return '';
     return this.formatoUy(f.celularResponsable);
+  }
+
+  waIniciales(): string {
+    const f = this.waFicha();
+    if (!f) return '?';
+    const n = (f.nombreResponsable || '').trim().charAt(0).toUpperCase();
+    const a = (f.apellidoResponsable || '').trim().charAt(0).toUpperCase();
+    return (n + a) || '?';
   }
 
   enviarWhatsapp() {
