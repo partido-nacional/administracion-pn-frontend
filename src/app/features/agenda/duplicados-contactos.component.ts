@@ -103,9 +103,9 @@ interface ParEstado {
                           </thead>
                           <tbody>
                             @for (campo of campos; track campo.key) {
-                              <tr [class.diff]="diff(est.par, campo.key)" [class.locked]="!ambosCargados(est.par, campo.key)">
+                              <tr [class.diff]="diff(est.par, campo.key)" [class.locked]="!diff(est.par, campo.key)">
                                 <td class="campo-col">{{ campo.label }}</td>
-                                @if (ambosCargados(est.par, campo.key)) {
+                                @if (diff(est.par, campo.key)) {
                                   <td>
                                     <label class="opt">
                                       <input type="radio" [name]="'f-' + idx + '-' + campo.key" value="A" [(ngModel)]="est.seleccion[campo.key]">
@@ -234,10 +234,6 @@ export class DuplicadosContactosComponent {
   private norm(v: any): string {
     if (v == null) return '';
     return String(v).trim();
-  }
-
-  ambosCargados(par: DuplicadoPar, key: keyof Contacto): boolean {
-    return !!this.norm(par.a[key]) && !!this.norm(par.b[key]);
   }
 
   diff(par: DuplicadoPar, key: keyof Contacto): boolean {
