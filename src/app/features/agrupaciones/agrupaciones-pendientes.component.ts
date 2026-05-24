@@ -1,18 +1,16 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
-import { PageTitleService } from '../../core/page-title.service';
-import { FichasAgrupacionComponent } from './fichas-agrupacion.component';
-import { AgrupacionesPendientesComponent } from './agrupaciones-pendientes.component';
 
-interface Agrupacion {
-  id: number; codAgrup: string; codDepto: string; pendiente: boolean; tipo: string; solic: number;
-  nombre: string; depto: string;
+interface AgrupacionPendiente {
+  id: number;
+  fichaAgrupacionOrigenId?: number;
+  nombre: string;
+  codAgrup?: string; codDepto?: string; pendiente: boolean; tipo?: string; solic: number; depto?: string;
   clasificacion?: string; solicita?: string; sector?: string;
-  fechaSolicitud?: string; codAnt?: string; sublemaRenunciado?: string;
-  nombreAnt?: string; domicilioLegal?: string; ciudad?: string;
+  fechaSolicitud?: string; codAnt?: string; sublemaRenunciado?: string; nombreAnt?: string;
+  domicilioLegal?: string; ciudad?: string;
   tel1?: string; tel2?: string; fax?: string; email?: string;
   formaRepresentacion?: string; representante?: string; delegadoCE?: string; formaActuacion?: string;
   fechaIngComis?: string; fechaRecAgrup?: string; fechaEntrCE?: string; fechaCircCE?: string;
@@ -20,74 +18,64 @@ interface Agrupacion {
   antecedentes?: string; resolucionComision?: string;
   sublema1?: string; sublema2?: string; sublema3?: string; sublema4?: string; sublema5?: string;
 }
-interface Integrante { agrupacion: string; agrupActual: string; cargo: string; idContacto: number; representante: boolean; delegado: boolean; orden: number; ci: string; }
-interface PadronItem { serie: string; nro: number; primerNombre: string; segundoNombre: string; primerApellido: string; segundoApellido: string; }
-
-type Tab = 'todas' | 'pendientes' | 'fichas' | 'integrantes' | 'padron';
 
 @Component({
-  selector: 'app-agrupaciones',
+  selector: 'app-agrupaciones-pendientes',
   standalone: true,
-  imports: [CommonModule, FormsModule, FichasAgrupacionComponent, AgrupacionesPendientesComponent],
+  imports: [CommonModule],
   template: `
-    <div class="topbar-inline">
-      <button class="btn btn-primary" (click)="abrirNueva()">+ Nueva Agrupación</button>
-    </div>
-
-    <div class="tabs">
-      <a class="tab" [class.active]="tab()==='todas'"       (click)="setTab('todas')">Todas</a>
-      <a class="tab" [class.active]="tab()==='pendientes'"  (click)="setTab('pendientes')">Agrupaciones Pendientes</a>
-      <a class="tab" [class.active]="tab()==='fichas'"      (click)="setTab('fichas')">Fichas de Agrupación Web</a>
-      <a class="tab" [class.active]="tab()==='integrantes'" (click)="setTab('integrantes')">Integrantes por Agrupación</a>
-      <a class="tab" [class.active]="tab()==='padron'"      (click)="setTab('padron')">Padrón Electoral</a>
-    </div>
-
-    @if (tab()==='todas') {
-      <div class="card"><div class="card-body" style="padding:0;overflow-x:auto">
+    @if (loading()) {
+      <div class="card"><div class="card-body"><div class="empty-state"><div class="empty-state-text">Cargando agrupaciones pendientes…</div></div></div></div>
+    } @else if (items().length === 0) {
+      <div class="card"><div class="card-body"><div class="empty-state"><div class="empty-state-text">No hay agrupaciones pendientes. Promové una desde la pestaña Fichas de Agrupación Web.</div></div></div></div>
+    } @else {
+      <div class="card"><div class="card-body" style="padding:0; overflow-x:auto">
         <table class="table">
           <thead>
             <tr>
               <th style="width:34px"></th>
-              <th>Id</th><th>Cod. Agrup.</th><th>Cod. Depto.</th><th>Pendiente</th>
-              <th>Tipo</th><th>Solic.</th><th>Nombre</th><th>Depto.</th><th></th>
+              <th>Id</th><th>Cod. Agrup.</th><th>Cod. Depto.</th>
+              <th>Tipo</th><th>Nombre</th><th>Depto.</th>
+              <th>Origen</th><th></th>
             </tr>
           </thead>
           <tbody>
-            @for (a of agrupaciones(); track a.id) {
-              <tr class="clickable" [class.selected]="expandido() === a.id" (click)="toggleRow(a.id)">
+            @for (a of items(); track a.id) {
+              <tr class="clickable" [class.selected]="expandido() === a.id" (click)="toggle(a.id)">
                 <td class="caret">{{ expandido() === a.id ? '▾' : '▸' }}</td>
                 <td>{{ a.id }}</td>
-                <td>{{ a.codAgrup }}</td>
-                <td>{{ a.codDepto }}</td>
-                <td>{{ a.pendiente ? '☑' : '☐' }}</td>
-                <td>{{ a.tipo }}</td>
-                <td>{{ a.solic }}</td>
+                <td>{{ a.codAgrup || '—' }}</td>
+                <td>{{ a.codDepto || '—' }}</td>
+                <td>{{ a.tipo === 'DEPARTAMENTAL' ? 'D' : a.tipo === 'NACIONAL' ? 'N' : (a.tipo || '—') }}</td>
                 <td><strong>{{ a.nombre }}</strong></td>
-                <td><span class="badge dept">{{ a.depto }}</span></td>
-                <td (click)="$event.stopPropagation()"><a class="action-link">Editar</a></td>
+                <td><span class="badge dept">{{ a.depto || '—' }}</span></td>
+                <td>{{ a.fichaAgrupacionOrigenId ? 'Ficha #' + a.fichaAgrupacionOrigenId : '—' }}</td>
+                <td (click)="$event.stopPropagation()">
+                  <button class="btn btn-sm btn-danger" (click)="eliminar(a.id)">Eliminar</button>
+                </td>
               </tr>
               @if (expandido() === a.id) {
                 <tr class="detalle-row">
-                  <td colspan="10">
+                  <td colspan="9">
                     <div class="detalle-wrap">
                       <div class="seccion">
                         <div class="seccion-title">Datos de la Agrupación</div>
                         <div class="grid">
-                          <div class="kv"><span class="k">ID Agrupación</span><span class="v">{{ a.id }}</span></div>
+                          <div class="kv"><span class="k">ID</span><span class="v">{{ a.id }}</span></div>
                           <div class="kv"><span class="k">Cod. Agrupación</span><span class="v">{{ a.codAgrup || '—' }}</span></div>
                           <div class="kv"><span class="k">Cod. Depto.</span><span class="v">{{ a.codDepto || '—' }}</span></div>
                           <div class="kv"><span class="k">Pendiente</span><span class="v">{{ a.pendiente ? 'Sí' : 'No' }}</span></div>
-                          <div class="kv"><span class="k">Tipo</span><span class="v">{{ a.tipo === 'D' ? 'DEPARTAMENTAL' : a.tipo === 'N' ? 'NACIONAL' : a.tipo }}</span></div>
+                          <div class="kv"><span class="k">Tipo</span><span class="v">{{ a.tipo || '—' }}</span></div>
                           <div class="kv"><span class="k">Clasificación</span><span class="v">{{ a.clasificacion || '—' }}</span></div>
                           <div class="kv"><span class="k">Solicita</span><span class="v">{{ a.solicita || '—' }}</span></div>
                           <div class="kv"><span class="k">Sector</span><span class="v">{{ a.sector || '—' }}</span></div>
+                          <div class="kv"><span class="k">Solic.</span><span class="v">{{ a.solic ?? '—' }}</span></div>
                           <div class="kv"><span class="k">Fecha Solicitud</span><span class="v">{{ a.fechaSolicitud || '—' }}</span></div>
                           <div class="kv"><span class="k">Cod. Ant.</span><span class="v">{{ a.codAnt || '—' }}</span></div>
                           <div class="kv"><span class="k">Sublema Renunciado</span><span class="v">{{ a.sublemaRenunciado || '—' }}</span></div>
                           <div class="kv"><span class="k">Nombre Ant.</span><span class="v">{{ a.nombreAnt || '—' }}</span></div>
                         </div>
                       </div>
-
                       <div class="seccion">
                         <div class="seccion-title">Domicilio y Contacto</div>
                         <div class="grid">
@@ -100,7 +88,6 @@ type Tab = 'todas' | 'pendientes' | 'fichas' | 'integrantes' | 'padron';
                           <div class="kv full"><span class="k">Email</span><span class="v">{{ a.email || '—' }}</span></div>
                         </div>
                       </div>
-
                       <div class="seccion">
                         <div class="seccion-title">Comisión Electoral</div>
                         <div class="grid">
@@ -114,7 +101,6 @@ type Tab = 'todas' | 'pendientes' | 'fichas' | 'integrantes' | 'padron';
                           <div class="kv"><span class="k">Fecha Circ. C.E.</span><span class="v">{{ a.fechaCircCE || '—' }}</span></div>
                         </div>
                       </div>
-
                       <div class="seccion">
                         <div class="seccion-title">Sublemas</div>
                         <div class="grid">
@@ -125,7 +111,6 @@ type Tab = 'todas' | 'pendientes' | 'fichas' | 'integrantes' | 'padron';
                           <div class="kv"><span class="k">Sublema 5</span><span class="v">{{ a.sublema5 || '—' }}</span></div>
                         </div>
                       </div>
-
                       <div class="seccion">
                         <div class="seccion-title">Observaciones</div>
                         <div class="grid">
@@ -140,67 +125,6 @@ type Tab = 'todas' | 'pendientes' | 'fichas' | 'integrantes' | 'padron';
                   </td>
                 </tr>
               }
-            } @empty {
-              <tr><td colspan="10"><div class="empty-state"><div class="empty-state-text">Sin agrupaciones</div></div></td></tr>
-            }
-          </tbody>
-        </table>
-      </div></div>
-    }
-
-    @if (tab()==='pendientes') {
-      <app-agrupaciones-pendientes></app-agrupaciones-pendientes>
-    }
-
-    @if (tab()==='fichas') {
-      <app-fichas-agrupacion></app-fichas-agrupacion>
-    }
-
-    @if (tab()==='integrantes') {
-      <div class="card"><div class="card-body" style="padding:0;overflow-x:auto">
-        <table class="table" style="min-width:1100px">
-          <thead>
-            <tr>
-              <th>Agrupación</th><th>Agrup. Actual</th><th>Cargo</th><th>ID C.</th>
-              <th>Repr.</th><th>Delegado</th><th>Orden</th><th>C.I</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (i of integrantes(); track i.idContacto) {
-              <tr>
-                <td>{{ i.agrupacion }}</td>
-                <td>{{ i.agrupActual }}</td>
-                <td>{{ i.cargo }}</td>
-                <td>{{ i.idContacto }}</td>
-                <td>{{ i.representante ? '☑' : '☐' }}</td>
-                <td>{{ i.delegado ? '☑' : '☐' }}</td>
-                <td>{{ i.orden }}</td>
-                <td>{{ i.ci }}</td>
-              </tr>
-            } @empty {
-              <tr><td colspan="8"><div class="empty-state"><div class="empty-state-text">Sin integrantes</div></div></td></tr>
-            }
-          </tbody>
-        </table>
-      </div></div>
-    }
-
-    @if (tab()==='padron') {
-      <div class="card"><div class="card-body" style="padding:0;overflow-x:auto">
-        <table class="table">
-          <thead>
-            <tr><th>Serie</th><th>Nro.</th><th>Primer Nombre</th><th>Segundo Nombre</th><th>Primer Apellido</th><th>Segundo Apellido</th></tr>
-          </thead>
-          <tbody>
-            @for (p of padron(); track $index) {
-              <tr>
-                <td>{{ p.serie }}</td>
-                <td>{{ p.nro }}</td>
-                <td>{{ p.primerNombre }}</td>
-                <td>{{ p.segundoNombre }}</td>
-                <td><strong>{{ p.primerApellido }}</strong></td>
-                <td>{{ p.segundoApellido }}</td>
-              </tr>
             }
           </tbody>
         </table>
@@ -208,68 +132,49 @@ type Tab = 'todas' | 'pendientes' | 'fichas' | 'integrantes' | 'padron';
     }
   `,
   styles: [`
-    .topbar-inline { display:flex; justify-content:flex-end; margin-bottom:16px; }
     tr.clickable { cursor:pointer; }
     tr.clickable:hover { background:#f5f8ff; }
     tr.selected { background:#e6efff !important; }
     tr.detalle-row > td { padding:0; background:#fafbfd; }
     .caret { color:#888; font-weight:bold; }
-    .detalle-wrap {
-      padding:18px 22px; border-top:1px solid #d6dde6;
-      display:flex; flex-direction:column; gap:16px;
-    }
+    .detalle-wrap { padding:18px 22px; border-top:1px solid #d6dde6; display:flex; flex-direction:column; gap:16px; }
     .seccion { background:#fff; border:1px solid #e6eaf0; border-radius:6px; padding:14px 18px; }
-    .seccion-title {
-      font-size:13px; font-weight:600; color:#4a5568; text-transform:uppercase;
-      letter-spacing:.5px; margin-bottom:10px; padding-bottom:6px;
-      border-bottom:1px solid #eef1f5;
-    }
+    .seccion-title { font-size:13px; font-weight:600; color:#4a5568; text-transform:uppercase; letter-spacing:.5px; margin-bottom:10px; padding-bottom:6px; border-bottom:1px solid #eef1f5; }
     .grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:10px 24px; }
     @media (max-width: 900px) { .grid { grid-template-columns:repeat(2, 1fr); } }
-    @media (max-width: 600px) { .grid { grid-template-columns:1fr; } }
     .kv { display:flex; flex-direction:column; min-width:0; }
     .kv.full { grid-column:1 / -1; }
     .kv .k { font-size:11px; color:#888; text-transform:uppercase; letter-spacing:.4px; }
     .kv .v { font-size:14px; color:#222; word-break:break-word; }
   `]
 })
-export class AgrupacionesComponent {
+export class AgrupacionesPendientesComponent {
   private http = inject(HttpClient);
-  private titleSvc = inject(PageTitleService);
+  private base = `${environment.apiUrl}/agrupaciones-pendientes`;
 
-  tab = signal<Tab>('todas');
-  agrupaciones = signal<Agrupacion[]>([]);
-  integrantes = signal<Integrante[]>([]);
-  padron = signal<PadronItem[]>([]);
+  items = signal<AgrupacionPendiente[]>([]);
+  loading = signal(true);
   expandido = signal<number | null>(null);
 
-  toggleRow(id: number) {
+  constructor() { this.cargar(); }
+
+  cargar() {
+    this.loading.set(true);
+    this.http.get<AgrupacionPendiente[]>(this.base).subscribe({
+      next: (x) => { this.items.set(x); this.loading.set(false); },
+      error: () => { this.items.set([]); this.loading.set(false); }
+    });
+  }
+
+  toggle(id: number) {
     this.expandido.set(this.expandido() === id ? null : id);
   }
 
-  constructor() {
-    this.titleSvc.set('Agrupaciones');
-    this.loadTodas();
+  eliminar(id: number) {
+    if (!confirm('Eliminar esta agrupación pendiente?')) return;
+    this.http.delete(`${this.base}/${id}`).subscribe(() => {
+      if (this.expandido() === id) this.expandido.set(null);
+      this.cargar();
+    });
   }
-
-  setTab(t: Tab) {
-    this.tab.set(t);
-    if (t === 'integrantes' && this.integrantes().length === 0) this.loadIntegrantes();
-    if (t === 'padron' && this.padron().length === 0) this.loadPadron();
-    const label =
-      t === 'todas' ? 'Agrupaciones' :
-      t === 'pendientes' ? 'Agrupaciones — Pendientes' :
-      t === 'fichas' ? 'Agrupaciones — Fichas Web' :
-      t === 'integrantes' ? 'Agrupaciones — Integrantes' :
-      'Agrupaciones — Padrón Electoral';
-    this.titleSvc.set(label);
-  }
-
-  abrirNueva() {
-    alert('Nueva agrupacion (formulario proximamente)');
-  }
-
-  loadTodas() { this.http.get<Agrupacion[]>(`${environment.apiUrl}/agrupaciones`).subscribe(x => this.agrupaciones.set(x)); }
-  loadIntegrantes() { this.http.get<Integrante[]>(`${environment.apiUrl}/agrupaciones/integrantes`).subscribe(x => this.integrantes.set(x)); }
-  loadPadron() { this.http.get<PadronItem[]>(`${environment.apiUrl}/agrupaciones/padron`).subscribe(x => this.padron.set(x)); }
 }

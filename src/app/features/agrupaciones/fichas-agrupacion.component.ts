@@ -97,6 +97,11 @@ export interface FichaAgrupacion {
                         <path d="M.057 24l1.687-6.163a11.867 11.867 0 01-1.62-5.964C.122 5.335 5.46 0 12.05 0a11.82 11.82 0 018.412 3.488 11.82 11.82 0 013.48 8.413c-.003 6.557-5.338 11.892-11.892 11.892a11.9 11.9 0 01-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884a9.86 9.86 0 001.51 5.26l-.999 3.648 3.978-1.607zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.149-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413z"/>
                       </svg>
                     </button>
+                    <button class="btn btn-sm btn-primary" (click)="abrirPromover(f)" [disabled]="countErrores(f) > 0"
+                            [title]="countErrores(f) > 0 ? 'No se puede pasar a pendiente: la ficha tiene errores' : 'Pasar a Agrupación Pendiente'"
+                            style="margin-left:6px">
+                      Pasar a pendiente
+                    </button>
                     <button class="btn btn-sm btn-danger" (click)="eliminar(f.id)" style="margin-left:6px">Eliminar</button>
                   </td>
                 </tr>
@@ -242,6 +247,58 @@ export interface FichaAgrupacion {
         </div>
       </div>
     }
+
+    @if (promFicha()) {
+      <div class="modal-backdrop" (click)="cerrarPromover()">
+        <div class="prom-modal" (click)="$event.stopPropagation()">
+          <div class="prom-header">
+            <div class="prom-title">Pasar a Agrupación Pendiente</div>
+            <button class="wa-close" (click)="cerrarPromover()">×</button>
+          </div>
+          <div class="prom-body">
+            <p class="prom-sub">
+              Los siguientes campos no vienen en la ficha web. Podés completarlos ahora o dejarlos vacíos
+              y editarlos después en <strong>Agrupaciones Pendientes</strong>.
+            </p>
+            <p class="prom-from">
+              Desde ficha: <strong>{{ promFicha()!.nombreAgrupacion }}</strong>
+            </p>
+
+            <div class="prom-grid">
+              <div class="fg"><label>Cod. Agrupación</label><input [(ngModel)]="prom.codAgrup" name="codAgrup"></div>
+              <div class="fg"><label>Cod. Depto.</label><input [(ngModel)]="prom.codDepto" name="codDepto"></div>
+              <div class="fg"><label>Solic.</label><input type="number" [(ngModel)]="prom.solic" name="solic"></div>
+              <div class="fg"><label>Clasificación</label><input [(ngModel)]="prom.clasificacion" name="clasificacion"></div>
+              <div class="fg"><label>Solicita</label><input [(ngModel)]="prom.solicita" name="solicita"></div>
+              <div class="fg"><label>Sector</label><input [(ngModel)]="prom.sector" name="sector"></div>
+              <div class="fg"><label>Cod. Ant.</label><input [(ngModel)]="prom.codAnt" name="codAnt"></div>
+              <div class="fg"><label>Sublema Renunciado</label><input [(ngModel)]="prom.sublemaRenunciado" name="sublemaRenunciado"></div>
+              <div class="fg"><label>Nombre Ant.</label><input [(ngModel)]="prom.nombreAnt" name="nombreAnt"></div>
+              <div class="fg"><label>Fax</label><input [(ngModel)]="prom.fax" name="fax"></div>
+              <div class="fg"><label>Representante</label><input [(ngModel)]="prom.representante" name="representante"></div>
+              <div class="fg"><label>Delegado C.E.</label><input [(ngModel)]="prom.delegadoCE" name="delegadoCE"></div>
+              <div class="fg"><label>Fecha Ing. Comis.</label><input type="date" [(ngModel)]="prom.fechaIngComis" name="fechaIngComis"></div>
+              <div class="fg"><label>Fecha Rec. Agrup.</label><input type="date" [(ngModel)]="prom.fechaRecAgrup" name="fechaRecAgrup"></div>
+              <div class="fg"><label>Fecha Entr. C.E.</label><input type="date" [(ngModel)]="prom.fechaEntrCE" name="fechaEntrCE"></div>
+              <div class="fg"><label>Fecha Circ. C.E.</label><input type="date" [(ngModel)]="prom.fechaCircCE" name="fechaCircCE"></div>
+              <div class="fg full"><label>Antecedentes</label><textarea rows="2" [(ngModel)]="prom.antecedentes" name="antecedentes"></textarea></div>
+              <div class="fg full"><label>Resolución de la Comisión</label><textarea rows="2" [(ngModel)]="prom.resolucionComision" name="resolucionComision"></textarea></div>
+              <div class="fg"><label>Observaciones</label><input [(ngModel)]="prom.observaciones" name="observaciones"></div>
+              <div class="fg"><label>Obs. C.E.</label><input [(ngModel)]="prom.obsCE" name="obsCE"></div>
+              <div class="fg full"><label>Nota</label><input [(ngModel)]="prom.nota" name="nota"></div>
+            </div>
+
+            @if (promError()) { <div class="prom-err">{{ promError() }}</div> }
+          </div>
+          <div class="prom-footer">
+            <button class="btn btn-secondary" (click)="cerrarPromover()">Cancelar</button>
+            <button class="btn btn-primary" (click)="confirmarPromover()" [disabled]="promBusy()">
+              {{ promBusy() ? 'Pasando…' : 'Pasar a pendiente' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
   `,
   styles: [`
     .topbar-inline { display:flex; justify-content:flex-end; margin-bottom:16px; }
@@ -352,6 +409,39 @@ export interface FichaAgrupacion {
       padding:12px 20px; border-top:1px solid #eef1f5; background:#fafbfd;
       display:flex; gap:10px; justify-content:flex-end;
     }
+
+    .prom-modal {
+      background:#fff; border-radius:10px; width:min(820px, 96vw);
+      height:min(720px, 92vh); display:flex; flex-direction:column;
+      box-shadow:0 20px 50px rgba(0,0,0,.3); overflow:hidden;
+    }
+    .prom-header {
+      display:flex; justify-content:space-between; align-items:center;
+      padding:14px 20px; background:#1e3a8a; color:#fff;
+    }
+    .prom-title { font-size:16px; font-weight:600; }
+    .prom-body { padding:18px 20px; overflow-y:auto; flex:1; }
+    .prom-sub { margin:0 0 4px 0; color:#444; font-size:13px; }
+    .prom-from { margin:0 0 14px 0; color:#666; font-size:13px; }
+    .prom-grid { display:grid; grid-template-columns:repeat(2, 1fr); gap:10px 16px; }
+    @media (max-width:700px) { .prom-grid { grid-template-columns:1fr; } }
+    .fg { display:flex; flex-direction:column; gap:4px; }
+    .fg.full { grid-column:1 / -1; }
+    .fg label { font-size:11px; font-weight:600; color:#666; text-transform:uppercase; letter-spacing:.4px; }
+    .fg input, .fg textarea {
+      padding:8px 10px; font-size:13px; font-family:inherit;
+      border:1px solid #cfd6e0; border-radius:5px; outline:none;
+    }
+    .fg input:focus, .fg textarea:focus { border-color:#1e3a8a; box-shadow:0 0 0 3px rgba(30,58,138,.12); }
+    .fg textarea { resize:vertical; }
+    .prom-err {
+      margin-top:12px; padding:8px 12px; background:#fdecea; color:#a8261b;
+      border-radius:5px; font-size:13px;
+    }
+    .prom-footer {
+      padding:12px 20px; border-top:1px solid #eef1f5; background:#fafbfd;
+      display:flex; gap:10px; justify-content:flex-end;
+    }
   `]
 })
 export class FichasAgrupacionComponent {
@@ -447,5 +537,59 @@ export class FichasAgrupacionComponent {
     if (digits.startsWith('598')) return digits;
     if (digits.startsWith('0')) return '598' + digits.slice(1);
     return '598' + digits;
+  }
+
+  // ─── Pasar a pendiente ──────────────────────────────────────
+  promFicha = signal<FichaAgrupacion | null>(null);
+  promBusy = signal(false);
+  promError = signal<string>('');
+  prom: any = {};
+
+  abrirPromover(f: FichaAgrupacion) {
+    if (this.countErrores(f) > 0) return;
+    this.prom = {
+      codAgrup: '', codDepto: '', solic: null,
+      clasificacion: '', solicita: '', sector: '',
+      codAnt: '', sublemaRenunciado: '', nombreAnt: '',
+      fax: '', representante: '', delegadoCE: '',
+      fechaIngComis: '', fechaRecAgrup: '', fechaEntrCE: '', fechaCircCE: '',
+      observaciones: '', obsCE: '', nota: '',
+      antecedentes: '', resolucionComision: ''
+    };
+    this.promError.set('');
+    this.promFicha.set(f);
+  }
+
+  cerrarPromover() {
+    this.promFicha.set(null);
+    this.promError.set('');
+  }
+
+  confirmarPromover() {
+    const f = this.promFicha();
+    if (!f) return;
+    this.promBusy.set(true);
+    this.promError.set('');
+    const body = {
+      fichaId: f.id,
+      ...this.prom,
+      solic: this.prom.solic === '' || this.prom.solic == null ? null : Number(this.prom.solic),
+      fechaIngComis: this.prom.fechaIngComis || null,
+      fechaRecAgrup: this.prom.fechaRecAgrup || null,
+      fechaEntrCE: this.prom.fechaEntrCE || null,
+      fechaCircCE: this.prom.fechaCircCE || null
+    };
+    this.http.post(`${environment.apiUrl}/agrupaciones-pendientes/promover`, body).subscribe({
+      next: () => {
+        this.promBusy.set(false);
+        this.cerrarPromover();
+        this.cargar();
+      },
+      error: (err) => {
+        this.promBusy.set(false);
+        const msg = err?.error?.message || 'No se pudo pasar la ficha a pendiente.';
+        this.promError.set(msg);
+      }
+    });
   }
 }
