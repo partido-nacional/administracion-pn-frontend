@@ -98,7 +98,7 @@ export interface FichaAgrupacion {
                       </svg>
                     </button>
                     <button class="btn-edit" (click)="abrirEditar(f)" title="Editar ficha" style="margin-left:6px">
-                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <path d="M12 20h9"/>
                         <path d="M16.5 3.5a2.121 2.121 0 113 3L7 19l-4 1 1-4 12.5-12.5z"/>
                       </svg>
@@ -540,11 +540,13 @@ export interface FichaAgrupacion {
     }
 
     .btn-edit {
-      background:#1f6f3b; color:#fff; border:none; border-radius:50%;
+      background:#2563eb; color:#fff; border:none; border-radius:50%;
       width:34px; height:34px; display:inline-flex; align-items:center; justify-content:center;
-      cursor:pointer; vertical-align:middle;
+      cursor:pointer; vertical-align:middle; padding:0; line-height:1;
+      box-shadow:0 1px 2px rgba(0,0,0,.15);
     }
-    .btn-edit:hover { background:#1a5d33; }
+    .btn-edit:hover { background:#1d4ed8; }
+    .btn-edit svg { display:block; }
     .sec-h {
       margin:16px 0 8px 0; font-size:13px; font-weight:600; color:#4a5568;
       text-transform:uppercase; letter-spacing:.5px;
