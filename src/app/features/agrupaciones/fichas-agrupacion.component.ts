@@ -97,6 +97,12 @@ export interface FichaAgrupacion {
                         <path d="M.057 24l1.687-6.163a11.867 11.867 0 01-1.62-5.964C.122 5.335 5.46 0 12.05 0a11.82 11.82 0 018.412 3.488 11.82 11.82 0 013.48 8.413c-.003 6.557-5.338 11.892-11.892 11.892a11.9 11.9 0 01-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884a9.86 9.86 0 001.51 5.26l-.999 3.648 3.978-1.607zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.149-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413z"/>
                       </svg>
                     </button>
+                    <button class="btn-edit" (click)="abrirEditar(f)" title="Editar ficha" style="margin-left:6px">
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M12 20h9"/>
+                        <path d="M16.5 3.5a2.121 2.121 0 113 3L7 19l-4 1 1-4 12.5-12.5z"/>
+                      </svg>
+                    </button>
                     <button class="btn btn-sm btn-primary" (click)="abrirPromover(f)" [disabled]="countErrores(f) > 0"
                             [title]="countErrores(f) > 0 ? 'No se puede pasar a pendiente: la ficha tiene errores' : 'Pasar a Agrupación Pendiente'"
                             style="margin-left:6px">
@@ -299,6 +305,96 @@ export interface FichaAgrupacion {
         </div>
       </div>
     }
+
+    @if (editFicha()) {
+      <div class="modal-backdrop" (click)="cerrarEditar()">
+        <div class="prom-modal" (click)="$event.stopPropagation()">
+          <div class="prom-header" style="background:#1f6f3b">
+            <div class="prom-title">Editar Ficha de Agrupación Web #{{ editFicha()!.id }}</div>
+            <button class="wa-close" (click)="cerrarEditar()">×</button>
+          </div>
+          <div class="prom-body">
+            <h4 class="sec-h">Datos de la agrupación</h4>
+            <div class="prom-grid">
+              <div class="fg full"><label>Nombre Agrupación</label><input [(ngModel)]="edit.nombreAgrupacion" name="nombreAgrupacion"></div>
+              <div class="fg">
+                <label>Tipo</label>
+                <select [(ngModel)]="edit.tipo" name="tipo">
+                  <option value="DEPARTAMENTAL">DEPARTAMENTAL</option>
+                  <option value="NACIONAL">NACIONAL</option>
+                </select>
+              </div>
+              @if (edit.tipo !== 'NACIONAL') {
+                <div class="fg"><label>Departamento</label><input [(ngModel)]="edit.departamento" name="departamento"></div>
+              }
+              <div class="fg full"><label>Domicilio Legal</label><input [(ngModel)]="edit.domicilioLegal" name="domicilioLegal"></div>
+              <div class="fg"><label>Ciudad</label><input [(ngModel)]="edit.ciudad" name="ciudad"></div>
+              <div class="fg"><label>Teléfono 1</label><input [(ngModel)]="edit.telefono1" name="telefono1"></div>
+              <div class="fg"><label>Teléfono 2</label><input [(ngModel)]="edit.telefono2" name="telefono2"></div>
+              <div class="fg"><label>Mail</label><input [(ngModel)]="edit.mail" name="mail"></div>
+              <div class="fg"><label>Forma Representación</label><input [(ngModel)]="edit.formaRepresentacion" name="formaRepresentacion"></div>
+              <div class="fg"><label>Forma Actuación</label><input [(ngModel)]="edit.formaActuacion" name="formaActuacion"></div>
+              <div class="fg"><label>Fecha Solicitud</label><input type="date" [(ngModel)]="edit.fechaSolicitud" name="fechaSolicitud"></div>
+            </div>
+
+            <h4 class="sec-h">Responsable</h4>
+            <div class="prom-grid">
+              <div class="fg"><label>Nombre</label><input [(ngModel)]="edit.nombreResponsable" name="nombreResponsable"></div>
+              <div class="fg"><label>Apellido</label><input [(ngModel)]="edit.apellidoResponsable" name="apellidoResponsable"></div>
+              <div class="fg"><label>CI</label><input [(ngModel)]="edit.ciResponsable" name="ciResponsable"></div>
+              <div class="fg"><label>Celular</label><input [(ngModel)]="edit.celularResponsable" name="celularResponsable"></div>
+            </div>
+
+            <h4 class="sec-h">Sublemas</h4>
+            <div class="prom-grid">
+              <div class="fg"><label>Sublema 1 *</label><input [(ngModel)]="edit.sublema1" name="sublema1"></div>
+              <div class="fg"><label>Sublema 2</label><input [(ngModel)]="edit.sublema2" name="sublema2"></div>
+              <div class="fg"><label>Sublema 3</label><input [(ngModel)]="edit.sublema3" name="sublema3"></div>
+              <div class="fg"><label>Sublema 4</label><input [(ngModel)]="edit.sublema4" name="sublema4"></div>
+              <div class="fg"><label>Sublema 5</label><input [(ngModel)]="edit.sublema5" name="sublema5"></div>
+            </div>
+
+            <h4 class="sec-h">
+              Autoridades
+              <button class="btn btn-sm btn-secondary" (click)="agregarAutoridad()" style="margin-left:10px">+ Agregar</button>
+            </h4>
+            <table class="aut-edit-table">
+              <thead>
+                <tr><th>#</th><th>Nombre</th><th>Apellido</th><th>CI</th><th>Rol</th><th></th></tr>
+              </thead>
+              <tbody>
+                @for (a of edit.autoridades; track $index; let i = $index) {
+                  <tr>
+                    <td><input type="number" [(ngModel)]="a.orden" [name]="'aut-orden-' + i" style="width:60px"></td>
+                    <td><input [(ngModel)]="a.nombre" [name]="'aut-nom-' + i"></td>
+                    <td><input [(ngModel)]="a.apellido" [name]="'aut-ape-' + i"></td>
+                    <td><input [(ngModel)]="a.ci" [name]="'aut-ci-' + i"></td>
+                    <td>
+                      <select [(ngModel)]="a.rol" [name]="'aut-rol-' + i">
+                        <option>Presidente</option>
+                        <option>Vicepresidente</option>
+                        <option>Secretario</option>
+                        <option>Tesorero</option>
+                        <option>Vocal</option>
+                      </select>
+                    </td>
+                    <td><button class="btn btn-sm btn-danger" (click)="quitarAutoridad(i)">×</button></td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+
+            @if (editError()) { <div class="prom-err">{{ editError() }}</div> }
+          </div>
+          <div class="prom-footer">
+            <button class="btn btn-secondary" (click)="cerrarEditar()">Cancelar</button>
+            <button class="btn btn-primary" (click)="confirmarEditar()" [disabled]="editBusy()">
+              {{ editBusy() ? 'Guardando…' : 'Guardar cambios' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
   `,
   styles: [`
     .topbar-inline { display:flex; justify-content:flex-end; margin-bottom:16px; }
@@ -442,6 +538,27 @@ export interface FichaAgrupacion {
       padding:12px 20px; border-top:1px solid #eef1f5; background:#fafbfd;
       display:flex; gap:10px; justify-content:flex-end;
     }
+
+    .btn-edit {
+      background:#1f6f3b; color:#fff; border:none; border-radius:50%;
+      width:34px; height:34px; display:inline-flex; align-items:center; justify-content:center;
+      cursor:pointer; vertical-align:middle;
+    }
+    .btn-edit:hover { background:#1a5d33; }
+    .sec-h {
+      margin:16px 0 8px 0; font-size:13px; font-weight:600; color:#4a5568;
+      text-transform:uppercase; letter-spacing:.5px;
+      padding-bottom:4px; border-bottom:1px solid #eef1f5;
+      display:flex; align-items:center;
+    }
+    .sec-h:first-child { margin-top:0; }
+    .aut-edit-table { width:100%; border-collapse:collapse; font-size:13px; }
+    .aut-edit-table th, .aut-edit-table td { border-bottom:1px solid #eef1f5; padding:6px 6px; text-align:left; }
+    .aut-edit-table th { font-size:11px; color:#666; text-transform:uppercase; letter-spacing:.4px; background:#fafbfd; }
+    .aut-edit-table input, .aut-edit-table select {
+      width:100%; padding:6px 8px; font-size:13px; font-family:inherit;
+      border:1px solid #cfd6e0; border-radius:4px; outline:none; box-sizing:border-box;
+    }
   `]
 })
 export class FichasAgrupacionComponent {
@@ -563,6 +680,103 @@ export class FichasAgrupacionComponent {
   cerrarPromover() {
     this.promFicha.set(null);
     this.promError.set('');
+  }
+
+  // ─── Editar ficha ───────────────────────────────────────────
+  editFicha = signal<FichaAgrupacion | null>(null);
+  editBusy = signal(false);
+  editError = signal<string>('');
+  edit: any = { autoridades: [] };
+
+  abrirEditar(f: FichaAgrupacion) {
+    this.edit = {
+      nombreAgrupacion: f.nombreAgrupacion,
+      tipo: f.tipo,
+      departamento: f.departamento || '',
+      domicilioLegal: f.domicilioLegal || '',
+      ciudad: f.ciudad || '',
+      telefono1: f.telefono1 || '',
+      telefono2: f.telefono2 || '',
+      mail: f.mail || '',
+      formaRepresentacion: f.formaRepresentacion || '',
+      formaActuacion: f.formaActuacion || '',
+      fechaSolicitud: f.fechaSolicitud || '',
+      nombreResponsable: f.nombreResponsable || '',
+      apellidoResponsable: f.apellidoResponsable || '',
+      ciResponsable: f.ciResponsable || '',
+      celularResponsable: f.celularResponsable || '',
+      sublema1: f.sublema1,
+      sublema2: f.sublema2 || '',
+      sublema3: f.sublema3 || '',
+      sublema4: f.sublema4 || '',
+      sublema5: f.sublema5 || '',
+      autoridades: f.autoridades.map(a => ({
+        nombre: a.nombre, apellido: a.apellido, ci: a.ci, rol: a.rol, orden: a.orden
+      }))
+    };
+    this.editError.set('');
+    this.editFicha.set(f);
+  }
+
+  cerrarEditar() {
+    this.editFicha.set(null);
+    this.editError.set('');
+  }
+
+  agregarAutoridad() {
+    const next = (this.edit.autoridades.reduce((m: number, a: any) => Math.max(m, +a.orden || 0), 0) || 0) + 1;
+    this.edit.autoridades.push({ nombre: '', apellido: '', ci: '', rol: 'Vocal', orden: next });
+  }
+
+  quitarAutoridad(i: number) {
+    this.edit.autoridades.splice(i, 1);
+  }
+
+  confirmarEditar() {
+    const f = this.editFicha();
+    if (!f) return;
+    if (!this.edit.sublema1?.trim()) {
+      this.editError.set('Sublema 1 es obligatorio.');
+      return;
+    }
+    if (this.edit.autoridades.length < 5) {
+      this.editError.set('Se requieren al menos 5 autoridades.');
+      return;
+    }
+    const presidentes = this.edit.autoridades.filter((a: any) => a.rol === 'Presidente').length;
+    if (presidentes !== 1) {
+      this.editError.set('Debe haber exactamente 1 Presidente.');
+      return;
+    }
+    const secretarios = this.edit.autoridades.filter((a: any) => a.rol === 'Secretario').length;
+    if (secretarios < 1) {
+      this.editError.set('Debe haber al menos 1 Secretario.');
+      return;
+    }
+
+    this.editBusy.set(true);
+    this.editError.set('');
+    const body = {
+      ...this.edit,
+      fechaSolicitud: this.edit.fechaSolicitud || null,
+      departamento: this.edit.tipo === 'NACIONAL' ? null : this.edit.departamento,
+      autoridades: this.edit.autoridades.map((a: any, i: number) => ({
+        nombre: a.nombre, apellido: a.apellido, ci: a.ci, rol: a.rol,
+        orden: +a.orden || i + 1
+      }))
+    };
+    this.http.put(`${this.base}/${f.id}`, body).subscribe({
+      next: () => {
+        this.editBusy.set(false);
+        this.cerrarEditar();
+        this.cargar();
+      },
+      error: (err) => {
+        this.editBusy.set(false);
+        const msg = err?.error?.message || err?.message || 'No se pudo guardar la ficha.';
+        this.editError.set(msg);
+      }
+    });
   }
 
   confirmarPromover() {
