@@ -363,7 +363,7 @@ export interface FichaAgrupacion {
                 <tr><th>#</th><th>Nombre</th><th>Apellido</th><th>CI</th><th>Rol</th><th></th></tr>
               </thead>
               <tbody>
-                @for (a of edit.autoridades; track $index; let i = $index) {
+                @for (a of edit.autoridades; track a; let i = $index) {
                   <tr>
                     <td><input type="number" [(ngModel)]="a.orden" [name]="'aut-orden-' + i" style="width:60px"></td>
                     <td><input [(ngModel)]="a.nombre" [name]="'aut-nom-' + i"></td>
