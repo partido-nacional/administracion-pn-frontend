@@ -547,6 +547,10 @@ export interface FichaAgrupacion {
     }
     .btn-edit:hover { background:#1d4ed8; }
     .btn-edit svg { display:block; }
+    .btn:disabled, .btn[disabled] {
+      opacity:.5; cursor:not-allowed; pointer-events:none;
+      filter:grayscale(0.4);
+    }
     .sec-h {
       margin:16px 0 8px 0; font-size:13px; font-weight:600; color:#4a5568;
       text-transform:uppercase; letter-spacing:.5px;
