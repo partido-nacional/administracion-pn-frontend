@@ -237,7 +237,7 @@ const DEPARTAMENTOS = [
           <div class="modal-footer">
             <button class="btn btn-secondary" (click)="cerrarModal()">Cancelar</button>
             @if (modal() === 'aprobar') {
-              <button class="btn btn-success" (click)="confirmar()" [disabled]="busy()">
+              <button class="btn btn-success" (click)="confirmar()" [disabled]="busy() || faltantes().length > 0">
                 {{ busy() ? 'Aprobando…' : 'Aprobar' }}
               </button>
             } @else {

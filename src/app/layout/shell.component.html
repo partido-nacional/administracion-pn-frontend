@@ -7,6 +7,7 @@
     <nav class="nav">
       <a routerLink="/inicio" routerLinkActive="active" class="nav-item"><span class="nav-icon">&#9632;</span> Inicio</a>
       <a routerLink="/agenda" routerLinkActive="active" class="nav-item"><span class="nav-icon">&#9786;</span> Agenda</a>
+      <a routerLink="/agrupaciones" routerLinkActive="active" class="nav-item"><span class="nav-icon">&#9670;</span> Agrupaciones</a>
 
       <a class="nav-item nav-parent" [class.open]="isOpen('listados')" (click)="toggle('listados')">
         <span class="nav-icon">&#9776;</span> Listados <span class="nav-arrow">&#9662;</span>
@@ -29,7 +30,6 @@
       <a routerLink="/debitos" routerLinkActive="active" class="nav-item"><span class="nav-icon">&#9632;</span> Débitos</a>
 
       <a routerLink="/organismos" routerLinkActive="active" class="nav-item"><span class="nav-icon">&#9881;</span> Organismos</a>
-      <a routerLink="/agrupaciones" routerLinkActive="active" class="nav-item"><span class="nav-icon">&#9670;</span> Agrupaciones</a>
     </nav>
     <div class="sidebar-footer">
       <div class="user-badge">
