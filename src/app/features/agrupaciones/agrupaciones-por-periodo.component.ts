@@ -4,9 +4,25 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 
-interface Agrupacion {
-  id: number; codAgrup?: string; codDepto?: string; pendiente: boolean; tipo?: string;
-  solic: number; nombre: string; depto?: string; periodo?: string;
+interface AgrupacionPeriodoRow {
+  periodoId: number;
+  periodo: string;
+  pendiente: boolean;
+  agrupacionId: number;
+  codAgrup?: string;
+  codDepto?: string;
+  tipo?: string;
+  nombre: string;
+  depto?: string;
+  solic: number;
+  sector?: string;
+  clasificacion?: string;
+  sublema1?: string;
+  sublema2?: string;
+  sublema3?: string;
+  sublema4?: string;
+  sublema5?: string;
+  sublemaRenunciado?: string;
 }
 
 @Component({
@@ -18,27 +34,36 @@ interface Agrupacion {
       <table class="table">
         <thead>
           <tr>
-            <th>Id</th>
+            <th>Id Per.</th>
+            <th>Período</th>
+            <th>Estado</th>
+            <th>Id Agr.</th>
             <th>Cod. Agrup.</th>
             <th>Cod. Depto.</th>
-            <th>Pendiente</th>
             <th>Tipo</th>
-            <th>Solic.</th>
             <th>Nombre</th>
             <th>Depto.</th>
-            <th>Período</th>
+            <th>Sector</th>
+            <th>Sublemas</th>
           </tr>
           <tr class="filter-row">
             <th><input class="column-filter" [ngModel]="fId()"     (ngModelChange)="fId.set($event)"     placeholder="Filtrar..."></th>
-            <th><input class="column-filter" [ngModel]="fCod()"    (ngModelChange)="fCod.set($event)"    placeholder="Filtrar..."></th>
-            <th><input class="column-filter" [ngModel]="fCodDep()" (ngModelChange)="fCodDep.set($event)" placeholder="Filtrar..."></th>
+            <th>
+              <select class="column-filter" [ngModel]="fPeriodo()" (ngModelChange)="fPeriodo.set($event)">
+                <option value="">Todos</option>
+                @for (p of periodos(); track p) { <option [ngValue]="p">{{ p }}</option> }
+              </select>
+            </th>
             <th>
               <select class="column-filter" [ngModel]="fPend()" (ngModelChange)="fPend.set($event)">
                 <option value="">Todos</option>
-                <option value="si">Sí</option>
-                <option value="no">No</option>
+                <option value="si">Pendiente</option>
+                <option value="no">Aprobada</option>
               </select>
             </th>
+            <th><input class="column-filter" [ngModel]="fAgrId()"  (ngModelChange)="fAgrId.set($event)"  placeholder="Filtrar..."></th>
+            <th><input class="column-filter" [ngModel]="fCod()"    (ngModelChange)="fCod.set($event)"    placeholder="Filtrar..."></th>
+            <th><input class="column-filter" [ngModel]="fCodDep()" (ngModelChange)="fCodDep.set($event)" placeholder="Filtrar..."></th>
             <th>
               <select class="column-filter" [ngModel]="fTipo()" (ngModelChange)="fTipo.set($event)">
                 <option value="">Todos</option>
@@ -48,7 +73,6 @@ interface Agrupacion {
                 <option value="NACIONAL">NACIONAL</option>
               </select>
             </th>
-            <th><input class="column-filter" [ngModel]="fSolic()"  (ngModelChange)="fSolic.set($event)"  placeholder="Filtrar..."></th>
             <th><input class="column-filter" [ngModel]="fNombre()" (ngModelChange)="fNombre.set($event)" placeholder="Filtrar..."></th>
             <th>
               <select class="column-filter" [ngModel]="fDepto()" (ngModelChange)="fDepto.set($event)">
@@ -56,78 +80,86 @@ interface Agrupacion {
                 @for (d of deptos(); track d) { <option [ngValue]="d">{{ d }}</option> }
               </select>
             </th>
-            <th>
-              <select class="column-filter" [ngModel]="fPeriodo()" (ngModelChange)="fPeriodo.set($event)">
-                <option value="">Todos</option>
-                @for (p of periodos(); track p) { <option [ngValue]="p">{{ p }}</option> }
-              </select>
-            </th>
+            <th><input class="column-filter" [ngModel]="fSector()" (ngModelChange)="fSector.set($event)" placeholder="Filtrar..."></th>
+            <th><input class="column-filter" [ngModel]="fSublema()" (ngModelChange)="fSublema.set($event)" placeholder="Filtrar..."></th>
           </tr>
         </thead>
         <tbody>
-          @for (a of filtrados(); track a.id) {
+          @for (r of filtrados(); track r.periodoId) {
             <tr>
-              <td>{{ a.id }}</td>
-              <td>{{ a.codAgrup || '—' }}</td>
-              <td>{{ a.codDepto || '—' }}</td>
-              <td>{{ a.pendiente ? '☑' : '☐' }}</td>
-              <td>{{ a.tipo || '—' }}</td>
-              <td>{{ a.solic ?? '—' }}</td>
-              <td><strong>{{ a.nombre }}</strong></td>
-              <td><span class="badge dept">{{ a.depto || '—' }}</span></td>
+              <td>{{ r.periodoId }}</td>
+              <td><span class="badge periodo">{{ r.periodo }}</span></td>
               <td>
-                @if (a.periodo) {
-                  <span class="badge periodo">{{ a.periodo }}</span>
-                } @else { — }
+                @if (r.pendiente) { <span class="badge st-pend">Pendiente</span> }
+                @else { <span class="badge st-ok">Aprobada</span> }
               </td>
+              <td>{{ r.agrupacionId }}</td>
+              <td>{{ r.codAgrup || '—' }}</td>
+              <td>{{ r.codDepto || '—' }}</td>
+              <td>{{ r.tipo || '—' }}</td>
+              <td><strong>{{ r.nombre }}</strong></td>
+              <td><span class="badge dept">{{ r.depto || '—' }}</span></td>
+              <td>{{ r.sector || '—' }}</td>
+              <td>{{ joinSublemas(r) }}</td>
             </tr>
           } @empty {
-            <tr><td colspan="9"><div class="empty-state"><div class="empty-state-text">No hay agrupaciones que coincidan con el filtro.</div></div></td></tr>
+            <tr><td colspan="11"><div class="empty-state"><div class="empty-state-text">No hay agrupaciones por período que coincidan con el filtro.</div></div></td></tr>
           }
         </tbody>
       </table>
       <div class="footer">
-        Mostrando {{ filtrados().length }} de {{ items().length }} agrupaciones
+        Mostrando {{ filtrados().length }} de {{ items().length }} agrupaciones-período
       </div>
     </div></div>
   `,
   styles: [`
     .badge.periodo { background:#eef5ff; color:#1a4f8a; padding:3px 9px; border-radius:12px; font-size:12px; font-weight:600; }
+    .badge.st-pend { background:#fff3cd; color:#856404; padding:3px 9px; border-radius:12px; font-size:12px; font-weight:600; }
+    .badge.st-ok   { background:#e6f4ea; color:#1f6f3b; padding:3px 9px; border-radius:12px; font-size:12px; font-weight:600; }
     .footer { padding:12px 18px; font-size:13px; color:#666; border-top:1px solid #eef1f5; }
   `]
 })
 export class AgrupacionesPorPeriodoComponent {
   private http = inject(HttpClient);
 
-  items = signal<Agrupacion[]>([]);
+  items = signal<AgrupacionPeriodoRow[]>([]);
 
-  fId = signal(''); fCod = signal(''); fCodDep = signal('');
-  fPend = signal(''); fTipo = signal(''); fSolic = signal('');
-  fNombre = signal(''); fDepto = signal(''); fPeriodo = signal('');
+  fId = signal(''); fPeriodo = signal(''); fPend = signal('');
+  fAgrId = signal(''); fCod = signal(''); fCodDep = signal('');
+  fTipo = signal(''); fNombre = signal(''); fDepto = signal('');
+  fSector = signal(''); fSublema = signal('');
 
-  periodos = computed(() => Array.from(new Set(this.items().map(a => a.periodo).filter((p): p is string => !!p))).sort());
+  periodos = computed(() => Array.from(new Set(this.items().map(a => a.periodo).filter(Boolean))).sort());
   deptos   = computed(() => Array.from(new Set(this.items().map(a => a.depto).filter((d): d is string => !!d))).sort());
+
+  joinSublemas(r: AgrupacionPeriodoRow): string {
+    const s = [r.sublema1, r.sublema2, r.sublema3, r.sublema4, r.sublema5].filter(Boolean);
+    return s.length ? s.join(', ') : '—';
+  }
 
   filtrados = computed(() => {
     const norm = (s: any) => (s ?? '').toString().toLowerCase();
     const m = (val: any, q: string) => !q || norm(val).includes(q.toLowerCase());
-    const fId = this.fId(), fCod = this.fCod(), fCodDep = this.fCodDep(),
-          fPend = this.fPend(), fTipo = this.fTipo(), fSolic = this.fSolic(),
-          fNom = this.fNombre(), fDep = this.fDepto(), fPer = this.fPeriodo();
-    return this.items().filter(a =>
-      m(a.id, fId) &&
-      m(a.codAgrup, fCod) &&
-      m(a.codDepto, fCodDep) &&
-      (!fPend || (fPend === 'si' ? a.pendiente : !a.pendiente)) &&
-      (!fTipo || a.tipo === fTipo) &&
-      m(a.solic, fSolic) &&
-      m(a.nombre, fNom) &&
-      (!fDep || a.depto === fDep) &&
-      (!fPer || a.periodo === fPer)
+    const fId = this.fId(), fPer = this.fPeriodo(), fPend = this.fPend(),
+          fAgrId = this.fAgrId(), fCod = this.fCod(), fCodDep = this.fCodDep(),
+          fTipo = this.fTipo(), fNom = this.fNombre(), fDep = this.fDepto(),
+          fSec = this.fSector(), fSub = this.fSublema();
+    return this.items().filter(r =>
+      m(r.periodoId, fId) &&
+      (!fPer || r.periodo === fPer) &&
+      (!fPend || (fPend === 'si' ? r.pendiente : !r.pendiente)) &&
+      m(r.agrupacionId, fAgrId) &&
+      m(r.codAgrup, fCod) &&
+      m(r.codDepto, fCodDep) &&
+      (!fTipo || r.tipo === fTipo) &&
+      m(r.nombre, fNom) &&
+      (!fDep || r.depto === fDep) &&
+      m(r.sector, fSec) &&
+      m(this.joinSublemas(r), fSub)
     );
   });
 
   constructor() {
-    this.http.get<Agrupacion[]>(`${environment.apiUrl}/agrupaciones`).subscribe(x => this.items.set(x));
+    this.http.get<AgrupacionPeriodoRow[]>(`${environment.apiUrl}/agrupaciones-periodos`).subscribe(x => this.items.set(x));
   }
 }
