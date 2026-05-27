@@ -6,6 +6,7 @@ import { environment } from '../../../environments/environment';
 import { PageTitleService } from '../../core/page-title.service';
 import { FichasAgrupacionComponent } from './fichas-agrupacion.component';
 import { AgrupacionesPendientesComponent } from './agrupaciones-pendientes.component';
+import { AgrupacionesPorPeriodoComponent } from './agrupaciones-por-periodo.component';
 
 interface Agrupacion {
   id: number; codAgrup: string; codDepto: string; pendiente: boolean; tipo: string; solic: number;
@@ -23,12 +24,12 @@ interface Agrupacion {
 interface Integrante { agrupacion: string; agrupActual: string; cargo: string; idContacto: number; representante: boolean; delegado: boolean; orden: number; ci: string; }
 interface PadronItem { serie: string; nro: number; primerNombre: string; segundoNombre: string; primerApellido: string; segundoApellido: string; }
 
-type Tab = 'todas' | 'pendientes' | 'fichas' | 'integrantes' | 'padron';
+type Tab = 'todas' | 'pendientes' | 'fichas' | 'periodo' | 'integrantes' | 'padron';
 
 @Component({
   selector: 'app-agrupaciones',
   standalone: true,
-  imports: [CommonModule, FormsModule, FichasAgrupacionComponent, AgrupacionesPendientesComponent],
+  imports: [CommonModule, FormsModule, FichasAgrupacionComponent, AgrupacionesPendientesComponent, AgrupacionesPorPeriodoComponent],
   template: `
     <div class="topbar-inline">
       <button class="btn btn-primary" (click)="abrirNueva()">+ Nueva Agrupación</button>
@@ -38,6 +39,7 @@ type Tab = 'todas' | 'pendientes' | 'fichas' | 'integrantes' | 'padron';
       <a class="tab" [class.active]="tab()==='todas'"       (click)="setTab('todas')">Todas</a>
       <a class="tab" [class.active]="tab()==='pendientes'"  (click)="setTab('pendientes')">Agrupaciones Pendientes</a>
       <a class="tab" [class.active]="tab()==='fichas'"      (click)="setTab('fichas')">Fichas de Agrupación Web</a>
+      <a class="tab" [class.active]="tab()==='periodo'"     (click)="setTab('periodo')">Agrupaciones por Período</a>
       <a class="tab" [class.active]="tab()==='integrantes'" (click)="setTab('integrantes')">Integrantes por Agrupación</a>
       <a class="tab" [class.active]="tab()==='padron'"      (click)="setTab('padron')">Padrón Electoral</a>
     </div>
@@ -156,6 +158,10 @@ type Tab = 'todas' | 'pendientes' | 'fichas' | 'integrantes' | 'padron';
       <app-fichas-agrupacion></app-fichas-agrupacion>
     }
 
+    @if (tab()==='periodo') {
+      <app-agrupaciones-por-periodo></app-agrupaciones-por-periodo>
+    }
+
     @if (tab()==='integrantes') {
       <div class="card"><div class="card-body" style="padding:0;overflow-x:auto">
         <table class="table" style="min-width:1100px">
@@ -260,6 +266,7 @@ export class AgrupacionesComponent {
       t === 'todas' ? 'Agrupaciones' :
       t === 'pendientes' ? 'Agrupaciones — Pendientes' :
       t === 'fichas' ? 'Agrupaciones — Fichas Web' :
+      t === 'periodo' ? 'Agrupaciones — Por Período' :
       t === 'integrantes' ? 'Agrupaciones — Integrantes' :
       'Agrupaciones — Padrón Electoral';
     this.titleSvc.set(label);
