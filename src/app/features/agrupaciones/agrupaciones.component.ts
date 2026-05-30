@@ -21,7 +21,26 @@ interface Agrupacion {
   antecedentes?: string; resolucionComision?: string;
   sublema1?: string; sublema2?: string; sublema3?: string; sublema4?: string; sublema5?: string;
 }
-interface Integrante { agrupacion: string; agrupActual: string; cargo: string; idContacto: number; representante: boolean; delegado: boolean; orden: number; ci: string; }
+interface Integrante {
+  id: number;
+  contactoId: number;
+  nombre: string;
+  apellido: string;
+  cedula?: string;
+  credencial?: string;
+  telefono?: string;
+  celular?: string;
+  email?: string;
+  agrupacionPeriodoId: number;
+  periodo: string;
+  periodoPendiente: boolean;
+  agrupacionId: number;
+  agrupacion: string;
+  sector?: string;
+  depto?: string;
+  cargo?: string;
+  fechaIngreso?: string;
+}
 interface PadronItem { serie: string; nro: number; primerNombre: string; segundoNombre: string; primerApellido: string; segundoApellido: string; }
 
 type Tab = 'todas' | 'pendientes' | 'fichas' | 'periodo' | 'integrantes' | 'padron';
@@ -164,27 +183,50 @@ type Tab = 'todas' | 'pendientes' | 'fichas' | 'periodo' | 'integrantes' | 'padr
 
     @if (tab()==='integrantes') {
       <div class="card"><div class="card-body" style="padding:0;overflow-x:auto">
-        <table class="table" style="min-width:1100px">
+        <table class="table" style="min-width:1300px">
           <thead>
             <tr>
-              <th>Agrupación</th><th>Agrup. Actual</th><th>Cargo</th><th>ID C.</th>
-              <th>Repr.</th><th>Delegado</th><th>Orden</th><th>C.I</th>
+              <th>Id</th>
+              <th>Id C.</th>
+              <th>Nombre</th>
+              <th>Cédula</th>
+              <th>Credencial</th>
+              <th>Teléfono</th>
+              <th>Celular</th>
+              <th>Agrupación</th>
+              <th>Período</th>
+              <th>Sector</th>
+              <th>Depto.</th>
+              <th>Cargo</th>
+              <th>Fecha Ingreso</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
-            @for (i of integrantes(); track i.idContacto) {
+            @for (i of integrantes(); track i.id) {
               <tr>
+                <td>{{ i.id }}</td>
+                <td>{{ i.contactoId }}</td>
+                <td><strong>{{ i.apellido }}, {{ i.nombre }}</strong></td>
+                <td>{{ i.cedula || '—' }}</td>
+                <td>{{ i.credencial || '—' }}</td>
+                <td>{{ i.telefono || '—' }}</td>
+                <td>{{ i.celular || '—' }}</td>
                 <td>{{ i.agrupacion }}</td>
-                <td>{{ i.agrupActual }}</td>
-                <td>{{ i.cargo }}</td>
-                <td>{{ i.idContacto }}</td>
-                <td>{{ i.representante ? '☑' : '☐' }}</td>
-                <td>{{ i.delegado ? '☑' : '☐' }}</td>
-                <td>{{ i.orden }}</td>
-                <td>{{ i.ci }}</td>
+                <td>
+                  <span class="badge periodo">{{ i.periodo }}</span>
+                  @if (i.periodoPendiente) { <span class="badge st-pend">pend.</span> }
+                </td>
+                <td>{{ i.sector || '—' }}</td>
+                <td><span class="badge dept">{{ i.depto || '—' }}</span></td>
+                <td>{{ i.cargo || '—' }}</td>
+                <td>{{ i.fechaIngreso || '—' }}</td>
+                <td>
+                  <button class="btn btn-sm btn-danger" (click)="eliminarIntegrante(i.id)">Eliminar</button>
+                </td>
               </tr>
             } @empty {
-              <tr><td colspan="8"><div class="empty-state"><div class="empty-state-text">Sin integrantes</div></div></td></tr>
+              <tr><td colspan="14"><div class="empty-state"><div class="empty-state-text">Sin integrantes</div></div></td></tr>
             }
           </tbody>
         </table>
@@ -237,6 +279,8 @@ type Tab = 'todas' | 'pendientes' | 'fichas' | 'periodo' | 'integrantes' | 'padr
     .kv.full { grid-column:1 / -1; }
     .kv .k { font-size:11px; color:#888; text-transform:uppercase; letter-spacing:.4px; }
     .kv .v { font-size:14px; color:#222; word-break:break-word; }
+    .badge.periodo { background:#eef5ff; color:#1a4f8a; padding:3px 9px; border-radius:12px; font-size:12px; font-weight:600; }
+    .badge.st-pend { background:#fff3cd; color:#856404; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:600; margin-left:4px; }
   `]
 })
 export class AgrupacionesComponent {
@@ -278,5 +322,12 @@ export class AgrupacionesComponent {
 
   loadTodas() { this.http.get<Agrupacion[]>(`${environment.apiUrl}/agrupaciones`).subscribe(x => this.agrupaciones.set(x)); }
   loadIntegrantes() { this.http.get<Integrante[]>(`${environment.apiUrl}/agrupaciones/integrantes`).subscribe(x => this.integrantes.set(x)); }
+  eliminarIntegrante(id: number) {
+    if (!confirm('¿Eliminar este integrante de la agrupación-período?')) return;
+    this.http.delete(`${environment.apiUrl}/agrupacion-integrantes/${id}`).subscribe(() => {
+      this.integrantes.set([]);
+      this.loadIntegrantes();
+    });
+  }
   loadPadron() { this.http.get<PadronItem[]>(`${environment.apiUrl}/agrupaciones/padron`).subscribe(x => this.padron.set(x)); }
 }
