@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -237,10 +237,25 @@ type Tab = 'todas' | 'pendientes' | 'fichas' | 'periodo' | 'integrantes' | 'padr
       <div class="card"><div class="card-body" style="padding:0;overflow-x:auto">
         <table class="table">
           <thead>
-            <tr><th>Serie</th><th>Nro.</th><th>Primer Nombre</th><th>Segundo Nombre</th><th>Primer Apellido</th><th>Segundo Apellido</th></tr>
+            <tr>
+              <th>Serie</th><th>Nro.</th><th>Primer Nombre</th><th>Segundo Nombre</th><th>Primer Apellido</th><th>Segundo Apellido</th>
+            </tr>
+            <tr class="filter-row">
+              <th>
+                <select class="column-filter" [ngModel]="fPadSerie()" (ngModelChange)="fPadSerie.set($event)">
+                  <option value="">Todas</option>
+                  @for (s of padronSeries(); track s) { <option [ngValue]="s">{{ s }}</option> }
+                </select>
+              </th>
+              <th><input class="column-filter" [ngModel]="fPadNro()"    (ngModelChange)="fPadNro.set($event)"    placeholder="Filtrar..."></th>
+              <th><input class="column-filter" [ngModel]="fPadPNom()"   (ngModelChange)="fPadPNom.set($event)"   placeholder="Filtrar..."></th>
+              <th><input class="column-filter" [ngModel]="fPadSNom()"   (ngModelChange)="fPadSNom.set($event)"   placeholder="Filtrar..."></th>
+              <th><input class="column-filter" [ngModel]="fPadPApe()"   (ngModelChange)="fPadPApe.set($event)"   placeholder="Filtrar..."></th>
+              <th><input class="column-filter" [ngModel]="fPadSApe()"   (ngModelChange)="fPadSApe.set($event)"   placeholder="Filtrar..."></th>
+            </tr>
           </thead>
           <tbody>
-            @for (p of padron(); track $index) {
+            @for (p of padronFiltrado(); track $index) {
               <tr>
                 <td>{{ p.serie }}</td>
                 <td>{{ p.nro }}</td>
@@ -249,9 +264,14 @@ type Tab = 'todas' | 'pendientes' | 'fichas' | 'periodo' | 'integrantes' | 'padr
                 <td><strong>{{ p.primerApellido }}</strong></td>
                 <td>{{ p.segundoApellido }}</td>
               </tr>
+            } @empty {
+              <tr><td colspan="6"><div class="empty-state"><div class="empty-state-text">No hay resultados para el filtro.</div></div></td></tr>
             }
           </tbody>
         </table>
+        <div style="padding:12px 18px; font-size:13px; color:#666; border-top:1px solid #eef1f5">
+          Mostrando {{ padronFiltrado().length }} de {{ padron().length }} entradas
+        </div>
       </div></div>
     }
   `,
@@ -291,6 +311,28 @@ export class AgrupacionesComponent {
   agrupaciones = signal<Agrupacion[]>([]);
   integrantes = signal<Integrante[]>([]);
   padron = signal<PadronItem[]>([]);
+
+  fPadSerie = signal(''); fPadNro = signal('');
+  fPadPNom = signal('');  fPadSNom = signal('');
+  fPadPApe = signal('');  fPadSApe = signal('');
+
+  padronSeries = computed(() => Array.from(new Set(this.padron().map(p => p.serie).filter(Boolean))).sort());
+
+  padronFiltrado = computed(() => {
+    const norm = (s: any) => (s ?? '').toString().toLowerCase();
+    const m = (val: any, q: string) => !q || norm(val).includes(q.toLowerCase());
+    const fS = this.fPadSerie(), fN = this.fPadNro(),
+          fPN = this.fPadPNom(), fSN = this.fPadSNom(),
+          fPA = this.fPadPApe(), fSA = this.fPadSApe();
+    return this.padron().filter(p =>
+      (!fS || p.serie === fS) &&
+      m(p.nro, fN) &&
+      m(p.primerNombre, fPN) &&
+      m(p.segundoNombre, fSN) &&
+      m(p.primerApellido, fPA) &&
+      m(p.segundoApellido, fSA)
+    );
+  });
   expandido = signal<number | null>(null);
 
   toggleRow(id: number) {
