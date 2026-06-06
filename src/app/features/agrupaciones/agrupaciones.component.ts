@@ -34,6 +34,101 @@ type Tab = 'todas' | 'pendientes' | 'fichas' | 'periodo' | 'padron';
       <button class="btn btn-primary" (click)="abrirNueva()">+ Nueva Agrupación</button>
     </div>
 
+    @if (mostrarNueva()) {
+      <div class="modal-backdrop" (click)="cerrarNueva()">
+        <div class="nv-modal" (click)="$event.stopPropagation()">
+          <div class="nv-header">
+            <div class="nv-title">Nueva Agrupación (entrará como pendiente)</div>
+            <button class="nv-close" (click)="cerrarNueva()">×</button>
+          </div>
+          <div class="nv-body">
+            <p class="nv-sub">
+              Esta agrupación se creará y quedará en la pestaña <strong>Agrupaciones Pendientes</strong>
+              para el período <strong>2025-2030</strong>. Solo <strong>Nombre</strong> es obligatorio;
+              el resto se puede completar después.
+            </p>
+
+            <h4 class="sec-h">Identificación</h4>
+            <div class="nv-grid">
+              <div class="fg full"><label>Nombre *</label><input [(ngModel)]="nuevoForm.nombre" name="n-nombre"></div>
+              <div class="fg"><label>Sigla</label><input [(ngModel)]="nuevoForm.sigla" name="n-sigla"></div>
+              <div class="fg"><label>Cod. Agrupación</label><input [(ngModel)]="nuevoForm.codAgrup" name="n-codAgrup"></div>
+              <div class="fg"><label>Cod. Depto.</label><input [(ngModel)]="nuevoForm.codDepto" name="n-codDepto"></div>
+              <div class="fg"><label>Tipo</label>
+                <select [(ngModel)]="nuevoForm.tipo" name="n-tipo">
+                  <option value="">—</option>
+                  <option value="DEPARTAMENTAL">DEPARTAMENTAL</option>
+                  <option value="NACIONAL">NACIONAL</option>
+                </select>
+              </div>
+              <div class="fg"><label>Solic.</label><input type="number" [(ngModel)]="nuevoForm.solic" name="n-solic"></div>
+              <div class="fg"><label>Departamento</label>
+                <select [(ngModel)]="nuevoForm.depto" name="n-depto">
+                  <option value="">—</option>
+                  @for (d of departamentos; track d) { <option [ngValue]="d">{{ d }}</option> }
+                </select>
+              </div>
+              <div class="fg"><label>Clasificación</label><input [(ngModel)]="nuevoForm.clasificacion" name="n-clasif"></div>
+              <div class="fg"><label>Solicita</label><input [(ngModel)]="nuevoForm.solicita" name="n-solicita"></div>
+              <div class="fg"><label>Sector</label><input [(ngModel)]="nuevoForm.sector" name="n-sector"></div>
+              <div class="fg"><label>Fecha Solicitud</label><input type="date" [(ngModel)]="nuevoForm.fechaSolicitud" name="n-fSol"></div>
+              <div class="fg"><label>Cod. Ant.</label><input [(ngModel)]="nuevoForm.codAnt" name="n-codAnt"></div>
+              <div class="fg"><label>Nombre Ant.</label><input [(ngModel)]="nuevoForm.nombreAnt" name="n-nomAnt"></div>
+            </div>
+
+            <h4 class="sec-h">Domicilio y Contacto</h4>
+            <div class="nv-grid">
+              <div class="fg full"><label>Domicilio Legal</label><input [(ngModel)]="nuevoForm.domicilioLegal" name="n-dom"></div>
+              <div class="fg"><label>Ciudad</label><input [(ngModel)]="nuevoForm.ciudad" name="n-ciudad"></div>
+              <div class="fg"><label>Tel. 1</label><input [(ngModel)]="nuevoForm.tel1" name="n-tel1"></div>
+              <div class="fg"><label>Tel. 2</label><input [(ngModel)]="nuevoForm.tel2" name="n-tel2"></div>
+              <div class="fg"><label>Fax</label><input [(ngModel)]="nuevoForm.fax" name="n-fax"></div>
+              <div class="fg"><label>Email</label><input [(ngModel)]="nuevoForm.email" name="n-email"></div>
+            </div>
+
+            <h4 class="sec-h">Comisión Electoral</h4>
+            <div class="nv-grid">
+              <div class="fg"><label>Forma Representación</label><input [(ngModel)]="nuevoForm.formaRepresentacion" name="n-fr"></div>
+              <div class="fg"><label>Representante</label><input [(ngModel)]="nuevoForm.representante" name="n-rep"></div>
+              <div class="fg"><label>Delegado C.E.</label><input [(ngModel)]="nuevoForm.delegadoCE" name="n-del"></div>
+              <div class="fg"><label>Forma Actuación</label><input [(ngModel)]="nuevoForm.formaActuacion" name="n-fa"></div>
+              <div class="fg"><label>Fecha Ing. Comis.</label><input type="date" [(ngModel)]="nuevoForm.fechaIngComis" name="n-fic"></div>
+              <div class="fg"><label>Fecha Rec. Agrup.</label><input type="date" [(ngModel)]="nuevoForm.fechaRecAgrup" name="n-fra"></div>
+              <div class="fg"><label>Fecha Entr. C.E.</label><input type="date" [(ngModel)]="nuevoForm.fechaEntrCE" name="n-fec"></div>
+              <div class="fg"><label>Fecha Circ. C.E.</label><input type="date" [(ngModel)]="nuevoForm.fechaCircCE" name="n-fcc"></div>
+            </div>
+
+            <h4 class="sec-h">Sublemas (período 2025-2030)</h4>
+            <div class="nv-grid">
+              <div class="fg"><label>Sublema 1</label><input [(ngModel)]="nuevoForm.sublema1" name="n-s1"></div>
+              <div class="fg"><label>Sublema 2</label><input [(ngModel)]="nuevoForm.sublema2" name="n-s2"></div>
+              <div class="fg"><label>Sublema 3</label><input [(ngModel)]="nuevoForm.sublema3" name="n-s3"></div>
+              <div class="fg"><label>Sublema 4</label><input [(ngModel)]="nuevoForm.sublema4" name="n-s4"></div>
+              <div class="fg"><label>Sublema 5</label><input [(ngModel)]="nuevoForm.sublema5" name="n-s5"></div>
+              <div class="fg full"><label>Sublema Renunciado</label><input [(ngModel)]="nuevoForm.sublemaRenunciado" name="n-sr"></div>
+            </div>
+
+            <h4 class="sec-h">Observaciones</h4>
+            <div class="nv-grid">
+              <div class="fg full"><label>Antecedentes</label><textarea rows="2" [(ngModel)]="nuevoForm.antecedentes" name="n-ant"></textarea></div>
+              <div class="fg full"><label>Resolución de la Comisión</label><textarea rows="2" [(ngModel)]="nuevoForm.resolucionComision" name="n-res"></textarea></div>
+              <div class="fg"><label>Observaciones</label><input [(ngModel)]="nuevoForm.observaciones" name="n-obs"></div>
+              <div class="fg"><label>Obs. C.E.</label><input [(ngModel)]="nuevoForm.obsCE" name="n-obsCE"></div>
+              <div class="fg full"><label>Nota</label><input [(ngModel)]="nuevoForm.nota" name="n-nota"></div>
+            </div>
+
+            @if (nuevoError()) { <div class="nv-err">{{ nuevoError() }}</div> }
+          </div>
+          <div class="nv-footer">
+            <button class="btn btn-secondary" (click)="cerrarNueva()">Cancelar</button>
+            <button class="btn btn-primary" (click)="guardarNueva()" [disabled]="nuevoBusy()">
+              {{ nuevoBusy() ? 'Creando…' : 'Crear pendiente' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
     <div class="tabs">
       <a class="tab" [class.active]="tab()==='todas'"       (click)="setTab('todas')">Todas</a>
       <a class="tab" [class.active]="tab()==='pendientes'"  (click)="setTab('pendientes')">Agrupaciones Pendientes</a>
@@ -249,6 +344,55 @@ type Tab = 'todas' | 'pendientes' | 'fichas' | 'periodo' | 'padron';
       display:inline-block; min-width:18px; color:#1a4f8a; font-weight:700;
       margin-left:2px;
     }
+
+    .modal-backdrop {
+      position:fixed; inset:0; background:rgba(15,23,42,.55);
+      display:flex; align-items:center; justify-content:center; z-index:1000; padding:20px;
+    }
+    .nv-modal {
+      background:#fff; border-radius:10px; width:min(960px, 100%);
+      height:min(780px, 92vh); display:flex; flex-direction:column;
+      box-shadow:0 20px 50px rgba(0,0,0,.3); overflow:hidden;
+    }
+    .nv-header {
+      display:flex; justify-content:space-between; align-items:center;
+      padding:14px 20px; background:#1e3a8a; color:#fff;
+    }
+    .nv-title { font-size:16px; font-weight:600; }
+    .nv-close { background:transparent; border:none; color:#fff; font-size:24px; cursor:pointer; }
+    .nv-body { padding:18px 22px; overflow-y:auto; flex:1; }
+    .nv-sub {
+      background:#f0f6ff; border:1px solid #d6e4f5; border-radius:6px;
+      padding:10px 12px; font-size:13px; color:#3d4f6b; margin:0 0 14px 0;
+    }
+    .nv-footer {
+      padding:12px 20px; border-top:1px solid #eef1f5; background:#fafbfd;
+      display:flex; gap:10px; justify-content:flex-end;
+    }
+    .sec-h {
+      margin:16px 0 8px 0; font-size:13px; font-weight:600; color:#4a5568;
+      text-transform:uppercase; letter-spacing:.5px;
+      padding-bottom:4px; border-bottom:1px solid #eef1f5;
+    }
+    .sec-h:first-child { margin-top:0; }
+    .nv-grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:10px 16px; }
+    @media (max-width:900px) { .nv-grid { grid-template-columns:repeat(2, 1fr); } }
+    @media (max-width:600px) { .nv-grid { grid-template-columns:1fr; } }
+    .fg { display:flex; flex-direction:column; gap:4px; }
+    .fg.full { grid-column:1 / -1; }
+    .fg label { font-size:11px; font-weight:600; color:#666; text-transform:uppercase; letter-spacing:.4px; }
+    .fg input, .fg select, .fg textarea {
+      padding:8px 10px; font-size:13px; font-family:inherit;
+      border:1px solid #cfd6e0; border-radius:5px; outline:none;
+    }
+    .fg input:focus, .fg select:focus, .fg textarea:focus {
+      border-color:#1e3a8a; box-shadow:0 0 0 3px rgba(30,58,138,.12);
+    }
+    .fg textarea { resize:vertical; }
+    .nv-err {
+      margin-top:12px; padding:8px 12px; background:#fdecea; color:#a8261b;
+      border-radius:5px; font-size:13px;
+    }
   `]
 })
 export class AgrupacionesComponent {
@@ -356,8 +500,68 @@ export class AgrupacionesComponent {
     this.titleSvc.set(label);
   }
 
+  mostrarNueva = signal(false);
+  nuevoBusy = signal(false);
+  nuevoError = signal('');
+  nuevoForm: any = {};
+  departamentos = [
+    'Artigas','Canelones','Cerro Largo','Colonia','Durazno','Flores','Florida',
+    'Lavalleja','Maldonado','Montevideo','Paysandú','Río Negro','Rivera','Rocha',
+    'Salto','San José','Soriano','Tacuarembó','Treinta y Tres','Nacional'
+  ];
+
   abrirNueva() {
-    alert('Nueva agrupacion (formulario proximamente)');
+    this.nuevoForm = {
+      nombre: '', sigla: '', descripcion: '',
+      codAgrup: '', codDepto: '', tipo: '', solic: null, depto: '',
+      clasificacion: '', solicita: '', sector: '',
+      fechaSolicitud: '', codAnt: '', nombreAnt: '',
+      domicilioLegal: '', ciudad: '',
+      tel1: '', tel2: '', fax: '', email: '',
+      formaRepresentacion: '', representante: '', delegadoCE: '', formaActuacion: '',
+      fechaIngComis: '', fechaRecAgrup: '', fechaEntrCE: '', fechaCircCE: '',
+      observaciones: '', obsCE: '', nota: '',
+      antecedentes: '', resolucionComision: '',
+      sublema1: '', sublema2: '', sublema3: '', sublema4: '', sublema5: '',
+      sublemaRenunciado: ''
+    };
+    this.nuevoError.set('');
+    this.mostrarNueva.set(true);
+  }
+
+  cerrarNueva() {
+    this.mostrarNueva.set(false);
+    this.nuevoError.set('');
+  }
+
+  guardarNueva() {
+    if (!this.nuevoForm.nombre?.trim()) {
+      this.nuevoError.set('El nombre es obligatorio.');
+      return;
+    }
+    this.nuevoBusy.set(true);
+    this.nuevoError.set('');
+    const body: any = {
+      ...this.nuevoForm,
+      nombre: this.nuevoForm.nombre.trim(),
+      solic: this.nuevoForm.solic == null || this.nuevoForm.solic === '' ? 0 : Number(this.nuevoForm.solic),
+      fechaSolicitud: this.nuevoForm.fechaSolicitud || null,
+      fechaIngComis: this.nuevoForm.fechaIngComis || null,
+      fechaRecAgrup: this.nuevoForm.fechaRecAgrup || null,
+      fechaEntrCE: this.nuevoForm.fechaEntrCE || null,
+      fechaCircCE: this.nuevoForm.fechaCircCE || null
+    };
+    this.http.post(`${environment.apiUrl}/agrupaciones-pendientes/nueva`, body).subscribe({
+      next: () => {
+        this.nuevoBusy.set(false);
+        this.cerrarNueva();
+        this.setTab('pendientes');
+      },
+      error: (err) => {
+        this.nuevoBusy.set(false);
+        this.nuevoError.set(err?.error?.message || err?.message || 'No se pudo crear la agrupación.');
+      }
+    });
   }
 
   loadTodas() { this.http.get<Agrupacion[]>(`${environment.apiUrl}/agrupaciones`).subscribe(x => this.agrupaciones.set(x)); }
