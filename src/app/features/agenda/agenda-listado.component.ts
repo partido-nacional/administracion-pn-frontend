@@ -7,6 +7,7 @@ import { environment } from '../../../environments/environment';
 import { PageTitleService } from '../../core/page-title.service';
 import { ContactosService, Contacto } from './contactos.service';
 import { DuplicadosContactosComponent } from './duplicados-contactos.component';
+import { imprimirContactos } from './imprimir-contactos';
 
 interface ContactoListado {
   id: number; nombre: string; apellido: string; cedula?: string; credencial?: string;
@@ -22,6 +23,7 @@ type Tab = 'todos' | 'padron' | 'duplicados' | 'exportar';
   imports: [CommonModule, FormsModule, RouterLink, DuplicadosContactosComponent],
   template: `
     <div class="topbar-inline">
+      <button class="btn btn-secondary" (click)="imprimir()" title="Imprimir / PDF">🖨 Imprimir</button>
       <a routerLink="/agenda/nuevo" class="btn btn-primary">+ Nuevo Contacto</a>
     </div>
 
@@ -33,19 +35,22 @@ type Tab = 'todos' | 'padron' | 'duplicados' | 'exportar';
     </div>
 
     @if (tab() === 'todos') {
+      <div class="sort-hint">
+        💡 Click en una columna para ordenar. <strong>Shift+Click</strong> para agregarla como orden secundario.
+      </div>
       <div class="card">
         <div class="card-body" style="padding:0; overflow-x:auto">
           <table class="table">
             <thead>
               <tr>
-                <th>ID</th>
-                <th>Nombre</th>
-                <th>Cedula</th>
-                <th>Credencial</th>
-                <th>Departamento</th>
-                <th>Celular</th>
-                <th>Email</th>
-                <th>Adhesion</th>
+                <th class="sortable" (click)="onSort('id', $event)">ID <span class="ind">{{ indicador('id') }}</span></th>
+                <th class="sortable" (click)="onSort('apellido', $event)">Nombre <span class="ind">{{ indicador('apellido') }}</span></th>
+                <th class="sortable" (click)="onSort('cedula', $event)">Cedula <span class="ind">{{ indicador('cedula') }}</span></th>
+                <th class="sortable" (click)="onSort('credencial', $event)">Credencial <span class="ind">{{ indicador('credencial') }}</span></th>
+                <th class="sortable" (click)="onSort('departamento', $event)">Departamento <span class="ind">{{ indicador('departamento') }}</span></th>
+                <th class="sortable" (click)="onSort('celular', $event)">Celular <span class="ind">{{ indicador('celular') }}</span></th>
+                <th class="sortable" (click)="onSort('email', $event)">Email <span class="ind">{{ indicador('email') }}</span></th>
+                <th class="sortable" (click)="onSort('adhesion', $event)">Adhesion <span class="ind">{{ indicador('adhesion') }}</span></th>
                 <th></th>
               </tr>
               <tr class="filter-row">
@@ -215,7 +220,17 @@ type Tab = 'todos' | 'padron' | 'duplicados' | 'exportar';
     }
   `,
   styles: [`
-    .topbar-inline { display:flex; justify-content:flex-end; margin-bottom:16px; }
+    .topbar-inline { display:flex; justify-content:flex-end; gap:8px; margin-bottom:16px; }
+    .sort-hint {
+      background:#f0f6ff; border:1px solid #d6e4f5; border-radius:5px;
+      padding:6px 12px; margin-bottom:12px; font-size:12px; color:#3d4f6b;
+    }
+    th.sortable { cursor:pointer; user-select:none; }
+    th.sortable:hover { background:#eef2f7; }
+    th.sortable .ind {
+      display:inline-block; min-width:18px; color:#1a4f8a; font-weight:700;
+      margin-left:2px;
+    }
     .action-group { align-items:stretch; }
     .action-group .btn {
       font-family:inherit; font-size:13px; line-height:1.3;
@@ -291,12 +306,16 @@ export class AgendaListadoComponent {
   fEmail = signal('');
   fAdh = signal('');
 
+  sortBy = signal<{col: keyof ContactoListado; dir: 'asc' | 'desc'}[]>([
+    { col: 'apellido', dir: 'asc' }
+  ]);
+
   filtrados = computed(() => {
     const norm = (s: any) => (s ?? '').toString().toLowerCase();
     const m = (val: any, q: string) => !q || norm(val).includes(q.toLowerCase());
     const fId = this.fId(), fNom = this.fNombre(), fCed = this.fCedula(), fCre = this.fCred(),
           fDep = this.fDepto(), fCel = this.fCel(), fMail = this.fEmail(), fAdh = this.fAdh();
-    return this.contactos().filter(c =>
+    const filtered = this.contactos().filter(c =>
       m(c.id, fId) &&
       m(`${c.apellido}, ${c.nombre}`, fNom) &&
       m(c.cedula, fCed) &&
@@ -306,7 +325,80 @@ export class AgendaListadoComponent {
       m(c.email, fMail) &&
       (!fAdh || (c.adhesion ?? '') === fAdh)
     );
+
+    const sorts = this.sortBy();
+    if (sorts.length === 0) return filtered;
+    return [...filtered].sort((a, b) => {
+      for (const { col, dir } of sorts) {
+        const av = (a as any)[col], bv = (b as any)[col];
+        const c = this.cmp(av, bv);
+        if (c !== 0) return dir === 'asc' ? c : -c;
+      }
+      return 0;
+    });
   });
+
+  onSort(col: keyof ContactoListado, ev: MouseEvent) {
+    const current = [...this.sortBy()];
+    const idx = current.findIndex(s => s.col === col);
+    if (ev.shiftKey) {
+      if (idx >= 0) {
+        current[idx] = { col, dir: current[idx].dir === 'asc' ? 'desc' : 'asc' };
+      } else {
+        current.push({ col, dir: 'asc' });
+      }
+      this.sortBy.set(current);
+    } else {
+      if (idx === 0 && current.length === 1) {
+        this.sortBy.set([{ col, dir: current[0].dir === 'asc' ? 'desc' : 'asc' }]);
+      } else {
+        this.sortBy.set([{ col, dir: 'asc' }]);
+      }
+    }
+  }
+
+  indicador(col: keyof ContactoListado): string {
+    const sorts = this.sortBy();
+    const idx = sorts.findIndex(s => s.col === col);
+    if (idx < 0) return '';
+    const arrow = sorts[idx].dir === 'asc' ? '▲' : '▼';
+    return sorts.length > 1 ? `${arrow}${idx + 1}` : arrow;
+  }
+
+  private cmp(a: any, b: any): number {
+    if (a == null && b == null) return 0;
+    if (a == null) return 1;
+    if (b == null) return -1;
+    if (typeof a === 'number' && typeof b === 'number') return a - b;
+    return String(a).localeCompare(String(b), 'es', { sensitivity: 'base', numeric: true });
+  }
+
+  imprimir() {
+    const rows = this.filtrados();
+    const filtros = [
+      { campo: 'ID', valor: this.fId() },
+      { campo: 'Nombre', valor: this.fNombre() },
+      { campo: 'Cédula', valor: this.fCedula() },
+      { campo: 'Credencial', valor: this.fCred() },
+      { campo: 'Departamento', valor: this.fDepto() },
+      { campo: 'Celular', valor: this.fCel() },
+      { campo: 'Email', valor: this.fEmail() },
+      { campo: 'Adhesión', valor: this.fAdh() }
+    ];
+    const labels: Record<string, string> = {
+      id: 'ID', apellido: 'Nombre', cedula: 'Cédula', credencial: 'Credencial',
+      departamento: 'Departamento', celular: 'Celular', email: 'Email', adhesion: 'Adhesión'
+    };
+    const orden = this.sortBy().map(s => ({
+      campo: labels[s.col as string] || (s.col as string),
+      dir: s.dir
+    }));
+    imprimirContactos(rows.map(c => ({
+      id: c.id, nombre: c.nombre, apellido: c.apellido,
+      cedula: c.cedula, credencial: c.credencial, departamento: c.departamento,
+      celular: c.celular, email: c.email, adhesion: c.adhesion
+    })), { filtros, orden });
+  }
 
   constructor() {
     this.titleSvc.set('Agenda');
