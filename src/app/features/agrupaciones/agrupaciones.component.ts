@@ -21,29 +21,9 @@ interface Agrupacion {
   antecedentes?: string; resolucionComision?: string;
   sublema1?: string; sublema2?: string; sublema3?: string; sublema4?: string; sublema5?: string;
 }
-interface Integrante {
-  id: number;
-  contactoId: number;
-  nombre: string;
-  apellido: string;
-  cedula?: string;
-  credencial?: string;
-  telefono?: string;
-  celular?: string;
-  email?: string;
-  agrupacionPeriodoId: number;
-  periodo: string;
-  periodoPendiente: boolean;
-  agrupacionId: number;
-  agrupacion: string;
-  sector?: string;
-  depto?: string;
-  cargo?: string;
-  fechaIngreso?: string;
-}
 interface PadronItem { serie: string; nro: number; primerNombre: string; segundoNombre: string; primerApellido: string; segundoApellido: string; }
 
-type Tab = 'todas' | 'pendientes' | 'fichas' | 'periodo' | 'integrantes' | 'padron';
+type Tab = 'todas' | 'pendientes' | 'fichas' | 'periodo' | 'padron';
 
 @Component({
   selector: 'app-agrupaciones',
@@ -59,7 +39,6 @@ type Tab = 'todas' | 'pendientes' | 'fichas' | 'periodo' | 'integrantes' | 'padr
       <a class="tab" [class.active]="tab()==='pendientes'"  (click)="setTab('pendientes')">Agrupaciones Pendientes</a>
       <a class="tab" [class.active]="tab()==='fichas'"      (click)="setTab('fichas')">Fichas de Agrupación Web</a>
       <a class="tab" [class.active]="tab()==='periodo'"     (click)="setTab('periodo')">Agrupaciones por Período</a>
-      <a class="tab" [class.active]="tab()==='integrantes'" (click)="setTab('integrantes')">Integrantes por Agrupación</a>
       <a class="tab" [class.active]="tab()==='padron'"      (click)="setTab('padron')">Padrón Electoral</a>
     </div>
 
@@ -181,57 +160,6 @@ type Tab = 'todas' | 'pendientes' | 'fichas' | 'periodo' | 'integrantes' | 'padr
       <app-agrupaciones-por-periodo></app-agrupaciones-por-periodo>
     }
 
-    @if (tab()==='integrantes') {
-      <div class="card"><div class="card-body" style="padding:0;overflow-x:auto">
-        <table class="table" style="min-width:1300px">
-          <thead>
-            <tr>
-              <th>Id</th>
-              <th>Id C.</th>
-              <th>Nombre</th>
-              <th>Cédula</th>
-              <th>Credencial</th>
-              <th>Teléfono</th>
-              <th>Celular</th>
-              <th>Agrupación</th>
-              <th>Período</th>
-              <th>Sector</th>
-              <th>Depto.</th>
-              <th>Cargo</th>
-              <th>Fecha Ingreso</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (i of integrantes(); track i.id) {
-              <tr>
-                <td>{{ i.id }}</td>
-                <td>{{ i.contactoId }}</td>
-                <td><strong>{{ i.apellido }}, {{ i.nombre }}</strong></td>
-                <td>{{ i.cedula || '—' }}</td>
-                <td>{{ i.credencial || '—' }}</td>
-                <td>{{ i.telefono || '—' }}</td>
-                <td>{{ i.celular || '—' }}</td>
-                <td>{{ i.agrupacion }}</td>
-                <td>
-                  <span class="badge periodo">{{ i.periodo }}</span>
-                  @if (i.periodoPendiente) { <span class="badge st-pend">pend.</span> }
-                </td>
-                <td>{{ i.sector || '—' }}</td>
-                <td><span class="badge dept">{{ i.depto || '—' }}</span></td>
-                <td>{{ i.cargo || '—' }}</td>
-                <td>{{ i.fechaIngreso || '—' }}</td>
-                <td>
-                  <button class="btn btn-sm btn-danger" (click)="eliminarIntegrante(i.id)">Eliminar</button>
-                </td>
-              </tr>
-            } @empty {
-              <tr><td colspan="14"><div class="empty-state"><div class="empty-state-text">Sin integrantes</div></div></td></tr>
-            }
-          </tbody>
-        </table>
-      </div></div>
-    }
 
     @if (tab()==='padron') {
       <div class="card"><div class="card-body" style="padding:0;overflow-x:auto">
@@ -309,7 +237,6 @@ export class AgrupacionesComponent {
 
   tab = signal<Tab>('todas');
   agrupaciones = signal<Agrupacion[]>([]);
-  integrantes = signal<Integrante[]>([]);
   padron = signal<PadronItem[]>([]);
 
   fPadSerie = signal(''); fPadNro = signal('');
@@ -346,14 +273,12 @@ export class AgrupacionesComponent {
 
   setTab(t: Tab) {
     this.tab.set(t);
-    if (t === 'integrantes' && this.integrantes().length === 0) this.loadIntegrantes();
     if (t === 'padron' && this.padron().length === 0) this.loadPadron();
     const label =
       t === 'todas' ? 'Agrupaciones' :
       t === 'pendientes' ? 'Agrupaciones — Pendientes' :
       t === 'fichas' ? 'Agrupaciones — Fichas Web' :
       t === 'periodo' ? 'Agrupaciones — Por Período' :
-      t === 'integrantes' ? 'Agrupaciones — Integrantes' :
       'Agrupaciones — Padrón Electoral';
     this.titleSvc.set(label);
   }
@@ -363,13 +288,5 @@ export class AgrupacionesComponent {
   }
 
   loadTodas() { this.http.get<Agrupacion[]>(`${environment.apiUrl}/agrupaciones`).subscribe(x => this.agrupaciones.set(x)); }
-  loadIntegrantes() { this.http.get<Integrante[]>(`${environment.apiUrl}/agrupaciones/integrantes`).subscribe(x => this.integrantes.set(x)); }
-  eliminarIntegrante(id: number) {
-    if (!confirm('¿Eliminar este integrante de la agrupación-período?')) return;
-    this.http.delete(`${environment.apiUrl}/agrupacion-integrantes/${id}`).subscribe(() => {
-      this.integrantes.set([]);
-      this.loadIntegrantes();
-    });
-  }
   loadPadron() { this.http.get<PadronItem[]>(`${environment.apiUrl}/agrupaciones/padron`).subscribe(x => this.padron.set(x)); }
 }

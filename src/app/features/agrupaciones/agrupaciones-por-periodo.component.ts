@@ -4,6 +4,20 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 
+interface IntegranteRow {
+  id: number;
+  contactoId: number;
+  nombre: string;
+  apellido: string;
+  cedula?: string;
+  credencial?: string;
+  telefono?: string;
+  celular?: string;
+  email?: string;
+  cargo?: string;
+  fechaIngreso?: string;
+}
+
 interface AgrupacionPeriodoRow {
   periodoId: number;
   periodo: string;
@@ -46,6 +60,7 @@ interface AgrupacionPeriodoRow {
   sublema4?: string;
   sublema5?: string;
   sublemaRenunciado?: string;
+  integrantes: IntegranteRow[];
 }
 
 @Component({
@@ -210,6 +225,44 @@ interface AgrupacionPeriodoRow {
                         <div class="kv full"><span class="k">Nota</span><span class="v">{{ r.nota || '—' }}</span></div>
                       </div>
                     </div>
+
+                    <div class="seccion">
+                      <div class="seccion-title">Integrantes ({{ r.integrantes.length }})</div>
+                      @if (r.integrantes.length === 0) {
+                        <div style="font-size:13px; color:#888">Sin integrantes registrados en este período.</div>
+                      } @else {
+                        <table class="int-table">
+                          <thead>
+                            <tr>
+                              <th>Id C.</th>
+                              <th>Nombre</th>
+                              <th>Cédula</th>
+                              <th>Credencial</th>
+                              <th>Teléfono</th>
+                              <th>Celular</th>
+                              <th>Email</th>
+                              <th>Cargo</th>
+                              <th>Fecha Ingreso</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            @for (i of r.integrantes; track i.id) {
+                              <tr>
+                                <td>{{ i.contactoId }}</td>
+                                <td><strong>{{ i.apellido }}, {{ i.nombre }}</strong></td>
+                                <td>{{ i.cedula || '—' }}</td>
+                                <td>{{ i.credencial || '—' }}</td>
+                                <td>{{ i.telefono || '—' }}</td>
+                                <td>{{ i.celular || '—' }}</td>
+                                <td>{{ i.email || '—' }}</td>
+                                <td>{{ i.cargo || '—' }}</td>
+                                <td>{{ i.fechaIngreso || '—' }}</td>
+                              </tr>
+                            }
+                          </tbody>
+                        </table>
+                      }
+                    </div>
                   </div>
                 </td>
               </tr>
@@ -248,6 +301,9 @@ interface AgrupacionPeriodoRow {
     .kv.full { grid-column:1 / -1; }
     .kv .k { font-size:11px; color:#888; text-transform:uppercase; letter-spacing:.4px; }
     .kv .v { font-size:14px; color:#222; word-break:break-word; }
+    .int-table { width:100%; border-collapse:collapse; font-size:13px; }
+    .int-table th, .int-table td { border-bottom:1px solid #eef1f5; padding:8px 10px; text-align:left; }
+    .int-table th { font-size:11px; color:#666; text-transform:uppercase; letter-spacing:.4px; background:#fafbfd; }
   `]
 })
 export class AgrupacionesPorPeriodoComponent {
