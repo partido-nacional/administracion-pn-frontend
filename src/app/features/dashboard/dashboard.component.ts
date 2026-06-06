@@ -23,6 +23,7 @@ interface Evento {
   descripcion?: string;
   tipo?: string;
   creadorNombre?: string;
+  esPublico: boolean;
 }
 
 interface DiaCalendario {
@@ -54,6 +55,12 @@ const DIAS_SEM = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
       <div class="card-header cal-header">
         <h2 class="card-title">Calendario</h2>
         <div class="cal-nav">
+          <div class="cal-vista">
+            <button class="vista-btn" [class.active]="!soloPrivados()"
+                    (click)="setSoloPrivados(false)">Todos</button>
+            <button class="vista-btn" [class.active]="soloPrivados()"
+                    (click)="setSoloPrivados(true)">Solo privados</button>
+          </div>
           <button class="btn btn-sm btn-secondary" (click)="prevMes()">‹</button>
           <span class="cal-month">{{ tituloMes() }}</span>
           <button class="btn btn-sm btn-secondary" (click)="nextMes()">›</button>
@@ -70,9 +77,10 @@ const DIAS_SEM = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
               <div class="cal-day-num">{{ d.fecha.getDate() }}</div>
               <div class="cal-eventos">
                 @for (e of d.eventos; track e.id) {
-                  <div class="cal-evento" (click)="abrirVer(e)" [title]="e.titulo">
+                  <div class="cal-evento" [class.priv]="!e.esPublico" (click)="abrirVer(e)" [title]="e.titulo">
                     <span class="cal-hora">{{ formatoHora(e.fechaInicio) }}</span>
                     <span class="cal-titulo">{{ e.titulo }}</span>
+                    @if (!e.esPublico) { <span class="cal-lock">🔒</span> }
                   </div>
                 }
               </div>
@@ -106,6 +114,13 @@ const DIAS_SEM = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
             <div class="fg"><label>Descripción</label>
               <textarea rows="3" [(ngModel)]="form.descripcion" name="descripcion"></textarea>
             </div>
+            <div class="vis-toggle">
+              <span class="vis-label">Visibilidad:</span>
+              <button type="button" class="vis-btn" [class.active]="form.esPublico"
+                      (click)="form.esPublico = true">🌐 Público</button>
+              <button type="button" class="vis-btn" [class.active]="!form.esPublico"
+                      (click)="form.esPublico = false">🔒 Privado</button>
+            </div>
             <small class="muted">Creado por: <strong>{{ usuario() }}</strong></small>
             @if (modalError()) { <div class="ev-err">{{ modalError() }}</div> }
           </div>
@@ -134,6 +149,9 @@ const DIAS_SEM = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
             @if (eventoSel()!.tipo) {
               <div class="kv"><span class="k">Tipo</span><span class="v">{{ eventoSel()!.tipo }}</span></div>
             }
+            <div class="kv"><span class="k">Visibilidad</span>
+              <span class="v">{{ eventoSel()!.esPublico ? '🌐 Público' : '🔒 Privado' }}</span>
+            </div>
             <div class="kv"><span class="k">Creador</span><span class="v">{{ eventoSel()!.creadorNombre || '—' }}</span></div>
             @if (eventoSel()!.descripcion) {
               <div class="kv"><span class="k">Descripción</span><span class="v desc">{{ eventoSel()!.descripcion }}</span></div>
@@ -179,8 +197,34 @@ const DIAS_SEM = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
       overflow:hidden; white-space:nowrap; text-overflow:ellipsis;
     }
     .cal-evento:hover { background:#bfdbfe; }
+    .cal-evento.priv { background:#fef3c7; color:#854d0e; }
+    .cal-evento.priv:hover { background:#fde68a; }
+    .cal-lock { font-size:10px; flex-shrink:0; margin-left:auto; }
     .cal-hora { font-weight:600; flex-shrink:0; }
     .cal-titulo { overflow:hidden; text-overflow:ellipsis; }
+    .cal-vista {
+      display:inline-flex; border:1px solid #cfd6e0; border-radius:6px;
+      overflow:hidden; margin-right:6px;
+    }
+    .vista-btn {
+      background:#fff; color:#444; border:none; padding:6px 12px;
+      font-size:13px; cursor:pointer;
+    }
+    .vista-btn:not(:last-child) { border-right:1px solid #cfd6e0; }
+    .vista-btn.active { background:#2563eb; color:#fff; }
+    .vista-btn:hover:not(.active) { background:#f0f4fa; }
+    .vis-toggle {
+      display:flex; align-items:center; gap:8px;
+      background:#fafbfd; border:1px solid #e6eaf0; border-radius:6px;
+      padding:8px 10px;
+    }
+    .vis-label { font-size:12px; font-weight:600; color:#666; text-transform:uppercase; }
+    .vis-btn {
+      flex:1; background:#fff; color:#444; border:1px solid #cfd6e0;
+      padding:6px 10px; border-radius:5px; font-size:13px; cursor:pointer;
+    }
+    .vis-btn.active { background:#2563eb; color:#fff; border-color:#2563eb; }
+    .vis-btn:hover:not(.active) { background:#f0f4fa; }
     .cal-add {
       position:absolute; bottom:4px; right:4px;
       width:22px; height:22px; border-radius:50%;
@@ -245,7 +289,8 @@ export class DashboardComponent {
   eventoSel = signal<Evento | null>(null);
   modalError = signal('');
   busy = signal(false);
-  form = { titulo: '', fecha: '', hora: '', tipo: '', descripcion: '' };
+  soloPrivados = signal(false);
+  form: any = { titulo: '', fecha: '', hora: '', tipo: '', descripcion: '', esPublico: true };
 
   usuario = computed(() => this.auth.session()?.usuario ?? 'desconocido');
 
@@ -287,8 +332,13 @@ export class DashboardComponent {
   }
 
   cargarEventos() {
-    const params = `?anio=${this.anio()}&mes=${this.mes() + 1}`;
+    const params = `?anio=${this.anio()}&mes=${this.mes() + 1}&soloPrivados=${this.soloPrivados()}`;
     this.http.get<Evento[]>(`${environment.apiUrl}/calendario/eventos${params}`).subscribe(x => this.eventos.set(x));
+  }
+
+  setSoloPrivados(v: boolean) {
+    this.soloPrivados.set(v);
+    this.cargarEventos();
   }
 
   prevMes() {
@@ -322,7 +372,7 @@ export class DashboardComponent {
   }
 
   abrirCrear(isoDate: string) {
-    this.form = { titulo: '', fecha: isoDate, hora: '09:00', tipo: '', descripcion: '' };
+    this.form = { titulo: '', fecha: isoDate, hora: '09:00', tipo: '', descripcion: '', esPublico: true };
     this.modalError.set('');
     this.modal.set('crear');
   }
@@ -345,7 +395,8 @@ export class DashboardComponent {
       fechaFin: null,
       descripcion: this.form.descripcion || null,
       tipo: this.form.tipo || null,
-      creadorNombre: this.usuario()
+      creadorNombre: this.usuario(),
+      esPublico: this.form.esPublico
     }).subscribe({
       next: () => { this.busy.set(false); this.cerrarModal(); this.cargarEventos(); },
       error: (err) => {
