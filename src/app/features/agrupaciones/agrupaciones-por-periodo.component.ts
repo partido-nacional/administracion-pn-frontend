@@ -68,21 +68,24 @@ interface AgrupacionPeriodoRow {
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
+    <div class="sort-hint">
+      💡 Click en una columna para ordenar. <strong>Shift+Click</strong> para agregarla como orden secundario.
+    </div>
     <div class="card"><div class="card-body" style="padding:0; overflow-x:auto">
       <table class="table">
         <thead>
           <tr>
             <th style="width:34px"></th>
-            <th>Id Per.</th>
-            <th>Período</th>
-            <th>Estado</th>
-            <th>Id Agr.</th>
-            <th>Cod. Agrup.</th>
-            <th>Cod. Depto.</th>
-            <th>Tipo</th>
-            <th>Nombre</th>
-            <th>Depto.</th>
-            <th>Sector</th>
+            <th class="sortable" (click)="onSort('periodoId', $event)">Id Per. <span class="ind">{{ indicador('periodoId') }}</span></th>
+            <th class="sortable" (click)="onSort('periodo', $event)">Período <span class="ind">{{ indicador('periodo') }}</span></th>
+            <th class="sortable" (click)="onSort('pendiente', $event)">Estado <span class="ind">{{ indicador('pendiente') }}</span></th>
+            <th class="sortable" (click)="onSort('agrupacionId', $event)">Id Agr. <span class="ind">{{ indicador('agrupacionId') }}</span></th>
+            <th class="sortable" (click)="onSort('codAgrup', $event)">Cod. Agrup. <span class="ind">{{ indicador('codAgrup') }}</span></th>
+            <th class="sortable" (click)="onSort('codDepto', $event)">Cod. Depto. <span class="ind">{{ indicador('codDepto') }}</span></th>
+            <th class="sortable" (click)="onSort('tipo', $event)">Tipo <span class="ind">{{ indicador('tipo') }}</span></th>
+            <th class="sortable" (click)="onSort('nombre', $event)">Nombre <span class="ind">{{ indicador('nombre') }}</span></th>
+            <th class="sortable" (click)="onSort('depto', $event)">Depto. <span class="ind">{{ indicador('depto') }}</span></th>
+            <th class="sortable" (click)="onSort('sector', $event)">Sector <span class="ind">{{ indicador('sector') }}</span></th>
             <th>Sublemas</th>
           </tr>
           <tr class="filter-row">
@@ -304,6 +307,17 @@ interface AgrupacionPeriodoRow {
     .int-table { width:100%; border-collapse:collapse; font-size:13px; }
     .int-table th, .int-table td { border-bottom:1px solid #eef1f5; padding:8px 10px; text-align:left; }
     .int-table th { font-size:11px; color:#666; text-transform:uppercase; letter-spacing:.4px; background:#fafbfd; }
+
+    .sort-hint {
+      background:#f0f6ff; border:1px solid #d6e4f5; border-radius:5px;
+      padding:6px 12px; margin-bottom:12px; font-size:12px; color:#3d4f6b;
+    }
+    th.sortable { cursor:pointer; user-select:none; }
+    th.sortable:hover { background:#eef2f7; }
+    th.sortable .ind {
+      display:inline-block; min-width:18px; color:#1a4f8a; font-weight:700;
+      margin-left:2px;
+    }
   `]
 })
 export class AgrupacionesPorPeriodoComponent {
@@ -312,8 +326,41 @@ export class AgrupacionesPorPeriodoComponent {
   items = signal<AgrupacionPeriodoRow[]>([]);
   expandido = signal<number | null>(null);
 
+  // [{col, dir}] — orden por defecto: periodo desc, luego nombre asc
+  sortBy = signal<{col: keyof AgrupacionPeriodoRow; dir: 'asc' | 'desc'}[]>([
+    { col: 'periodo', dir: 'desc' },
+    { col: 'nombre', dir: 'asc' }
+  ]);
+
   toggle(id: number) {
     this.expandido.set(this.expandido() === id ? null : id);
+  }
+
+  onSort(col: keyof AgrupacionPeriodoRow, ev: MouseEvent) {
+    const current = [...this.sortBy()];
+    const idx = current.findIndex(s => s.col === col);
+    if (ev.shiftKey) {
+      if (idx >= 0) {
+        current[idx] = { col, dir: current[idx].dir === 'asc' ? 'desc' : 'asc' };
+      } else {
+        current.push({ col, dir: 'asc' });
+      }
+      this.sortBy.set(current);
+    } else {
+      if (idx === 0 && current.length === 1) {
+        this.sortBy.set([{ col, dir: current[0].dir === 'asc' ? 'desc' : 'asc' }]);
+      } else {
+        this.sortBy.set([{ col, dir: 'asc' }]);
+      }
+    }
+  }
+
+  indicador(col: keyof AgrupacionPeriodoRow): string {
+    const sorts = this.sortBy();
+    const idx = sorts.findIndex(s => s.col === col);
+    if (idx < 0) return '';
+    const arrow = sorts[idx].dir === 'asc' ? '▲' : '▼';
+    return sorts.length > 1 ? `${arrow}${idx + 1}` : arrow;
   }
 
   fId = signal(''); fPeriodo = signal(''); fPend = signal('');
@@ -336,7 +383,7 @@ export class AgrupacionesPorPeriodoComponent {
           fAgrId = this.fAgrId(), fCod = this.fCod(), fCodDep = this.fCodDep(),
           fTipo = this.fTipo(), fNom = this.fNombre(), fDep = this.fDepto(),
           fSec = this.fSector(), fSub = this.fSublema();
-    return this.items().filter(r =>
+    const filtered = this.items().filter(r =>
       m(r.periodoId, fId) &&
       (!fPer || r.periodo === fPer) &&
       (!fPend || (fPend === 'si' ? r.pendiente : !r.pendiente)) &&
@@ -349,7 +396,28 @@ export class AgrupacionesPorPeriodoComponent {
       m(r.sector, fSec) &&
       m(this.joinSublemas(r), fSub)
     );
+
+    const sorts = this.sortBy();
+    if (sorts.length === 0) return filtered;
+
+    return [...filtered].sort((a, b) => {
+      for (const { col, dir } of sorts) {
+        const av = (a as any)[col], bv = (b as any)[col];
+        const c = this.cmp(av, bv);
+        if (c !== 0) return dir === 'asc' ? c : -c;
+      }
+      return 0;
+    });
   });
+
+  private cmp(a: any, b: any): number {
+    if (a == null && b == null) return 0;
+    if (a == null) return 1;
+    if (b == null) return -1;
+    if (typeof a === 'number' && typeof b === 'number') return a - b;
+    if (typeof a === 'boolean' && typeof b === 'boolean') return (a ? 1 : 0) - (b ? 1 : 0);
+    return String(a).localeCompare(String(b), 'es', { sensitivity: 'base', numeric: true });
+  }
 
   constructor() {
     this.http.get<AgrupacionPeriodoRow[]>(`${environment.apiUrl}/agrupaciones-periodos`).subscribe(x => this.items.set(x));

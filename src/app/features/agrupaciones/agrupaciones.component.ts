@@ -43,17 +43,27 @@ type Tab = 'todas' | 'pendientes' | 'fichas' | 'periodo' | 'padron';
     </div>
 
     @if (tab()==='todas') {
+      <div class="sort-hint">
+        💡 Click en una columna para ordenar. <strong>Shift+Click</strong> para agregarla como orden secundario.
+      </div>
       <div class="card"><div class="card-body" style="padding:0;overflow-x:auto">
         <table class="table">
           <thead>
             <tr>
               <th style="width:34px"></th>
-              <th>Id</th><th>Cod. Agrup.</th><th>Cod. Depto.</th><th>Pendiente</th>
-              <th>Tipo</th><th>Solic.</th><th>Nombre</th><th>Depto.</th><th></th>
+              <th class="sortable" (click)="onSort('id', $event)">Id <span class="ind">{{ indicador('id') }}</span></th>
+              <th class="sortable" (click)="onSort('codAgrup', $event)">Cod. Agrup. <span class="ind">{{ indicador('codAgrup') }}</span></th>
+              <th class="sortable" (click)="onSort('codDepto', $event)">Cod. Depto. <span class="ind">{{ indicador('codDepto') }}</span></th>
+              <th class="sortable" (click)="onSort('pendiente', $event)">Pendiente <span class="ind">{{ indicador('pendiente') }}</span></th>
+              <th class="sortable" (click)="onSort('tipo', $event)">Tipo <span class="ind">{{ indicador('tipo') }}</span></th>
+              <th class="sortable" (click)="onSort('solic', $event)">Solic. <span class="ind">{{ indicador('solic') }}</span></th>
+              <th class="sortable" (click)="onSort('nombre', $event)">Nombre <span class="ind">{{ indicador('nombre') }}</span></th>
+              <th class="sortable" (click)="onSort('depto', $event)">Depto. <span class="ind">{{ indicador('depto') }}</span></th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
-            @for (a of agrupaciones(); track a.id) {
+            @for (a of agrupacionesOrdenadas(); track a.id) {
               <tr class="clickable" [class.selected]="expandido() === a.id" (click)="toggleRow(a.id)">
                 <td class="caret">{{ expandido() === a.id ? '▾' : '▸' }}</td>
                 <td>{{ a.id }}</td>
@@ -229,6 +239,16 @@ type Tab = 'todas' | 'pendientes' | 'fichas' | 'periodo' | 'padron';
     .kv .v { font-size:14px; color:#222; word-break:break-word; }
     .badge.periodo { background:#eef5ff; color:#1a4f8a; padding:3px 9px; border-radius:12px; font-size:12px; font-weight:600; }
     .badge.st-pend { background:#fff3cd; color:#856404; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:600; margin-left:4px; }
+    .sort-hint {
+      background:#f0f6ff; border:1px solid #d6e4f5; border-radius:5px;
+      padding:6px 12px; margin-bottom:12px; font-size:12px; color:#3d4f6b;
+    }
+    th.sortable { cursor:pointer; user-select:none; }
+    th.sortable:hover { background:#eef2f7; }
+    th.sortable .ind {
+      display:inline-block; min-width:18px; color:#1a4f8a; font-weight:700;
+      margin-left:2px;
+    }
   `]
 })
 export class AgrupacionesComponent {
@@ -261,6 +281,59 @@ export class AgrupacionesComponent {
     );
   });
   expandido = signal<number | null>(null);
+
+  sortBy = signal<{col: keyof Agrupacion; dir: 'asc' | 'desc'}[]>([
+    { col: 'nombre', dir: 'asc' }
+  ]);
+
+  agrupacionesOrdenadas = computed(() => {
+    const sorts = this.sortBy();
+    if (sorts.length === 0) return this.agrupaciones();
+    return [...this.agrupaciones()].sort((a, b) => {
+      for (const { col, dir } of sorts) {
+        const av = (a as any)[col], bv = (b as any)[col];
+        const c = this.cmp(av, bv);
+        if (c !== 0) return dir === 'asc' ? c : -c;
+      }
+      return 0;
+    });
+  });
+
+  onSort(col: keyof Agrupacion, ev: MouseEvent) {
+    const current = [...this.sortBy()];
+    const idx = current.findIndex(s => s.col === col);
+    if (ev.shiftKey) {
+      if (idx >= 0) {
+        current[idx] = { col, dir: current[idx].dir === 'asc' ? 'desc' : 'asc' };
+      } else {
+        current.push({ col, dir: 'asc' });
+      }
+      this.sortBy.set(current);
+    } else {
+      if (idx === 0 && current.length === 1) {
+        this.sortBy.set([{ col, dir: current[0].dir === 'asc' ? 'desc' : 'asc' }]);
+      } else {
+        this.sortBy.set([{ col, dir: 'asc' }]);
+      }
+    }
+  }
+
+  indicador(col: keyof Agrupacion): string {
+    const sorts = this.sortBy();
+    const idx = sorts.findIndex(s => s.col === col);
+    if (idx < 0) return '';
+    const arrow = sorts[idx].dir === 'asc' ? '▲' : '▼';
+    return sorts.length > 1 ? `${arrow}${idx + 1}` : arrow;
+  }
+
+  private cmp(a: any, b: any): number {
+    if (a == null && b == null) return 0;
+    if (a == null) return 1;
+    if (b == null) return -1;
+    if (typeof a === 'number' && typeof b === 'number') return a - b;
+    if (typeof a === 'boolean' && typeof b === 'boolean') return (a ? 1 : 0) - (b ? 1 : 0);
+    return String(a).localeCompare(String(b), 'es', { sensitivity: 'base', numeric: true });
+  }
 
   toggleRow(id: number) {
     this.expandido.set(this.expandido() === id ? null : id);
