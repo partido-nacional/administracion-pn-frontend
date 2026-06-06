@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
+import { imprimirAgrupacion } from './imprimir-agrupacion';
 
 interface IntegranteRow {
   id: number;
@@ -87,6 +88,7 @@ interface AgrupacionPeriodoRow {
             <th class="sortable" (click)="onSort('depto', $event)">Depto. <span class="ind">{{ indicador('depto') }}</span></th>
             <th class="sortable" (click)="onSort('sector', $event)">Sector <span class="ind">{{ indicador('sector') }}</span></th>
             <th>Sublemas</th>
+            <th></th>
           </tr>
           <tr class="filter-row">
             <th></th>
@@ -125,6 +127,7 @@ interface AgrupacionPeriodoRow {
             </th>
             <th><input class="column-filter" [ngModel]="fSector()" (ngModelChange)="fSector.set($event)" placeholder="Filtrar..."></th>
             <th><input class="column-filter" [ngModel]="fSublema()" (ngModelChange)="fSublema.set($event)" placeholder="Filtrar..."></th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
@@ -145,10 +148,15 @@ interface AgrupacionPeriodoRow {
               <td><span class="badge dept">{{ r.depto || '—' }}</span></td>
               <td>{{ r.sector || '—' }}</td>
               <td>{{ joinSublemas(r) }}</td>
+              <td (click)="$event.stopPropagation()">
+                <button class="btn btn-sm btn-secondary" (click)="imprimir(r)" title="Imprimir / PDF">
+                  🖨 Imprimir
+                </button>
+              </td>
             </tr>
             @if (expandido() === r.periodoId) {
               <tr class="detalle-row">
-                <td colspan="12">
+                <td colspan="13">
                   <div class="detalle-wrap">
                     <div class="seccion">
                       <div class="seccion-title">Período</div>
@@ -271,7 +279,7 @@ interface AgrupacionPeriodoRow {
               </tr>
             }
           } @empty {
-            <tr><td colspan="12"><div class="empty-state"><div class="empty-state-text">No hay agrupaciones por período que coincidan con el filtro.</div></div></td></tr>
+            <tr><td colspan="13"><div class="empty-state"><div class="empty-state-text">No hay agrupaciones por período que coincidan con el filtro.</div></div></td></tr>
           }
         </tbody>
       </table>
@@ -370,6 +378,29 @@ export class AgrupacionesPorPeriodoComponent {
 
   periodos = computed(() => Array.from(new Set(this.items().map(a => a.periodo).filter(Boolean))).sort());
   deptos   = computed(() => Array.from(new Set(this.items().map(a => a.depto).filter((d): d is string => !!d))).sort());
+
+  imprimir(r: AgrupacionPeriodoRow) {
+    imprimirAgrupacion({
+      agrupacionId: r.agrupacionId, periodoId: r.periodoId, periodo: r.periodo,
+      pendiente: r.pendiente,
+      nombre: r.nombre, codAgrup: r.codAgrup, codDepto: r.codDepto, tipo: r.tipo,
+      depto: r.depto, solic: r.solic,
+      clasificacion: r.clasificacion, solicita: r.solicita, sector: r.sector,
+      fechaSolicitud: r.fechaSolicitud, codAnt: r.codAnt, nombreAnt: r.nombreAnt,
+      domicilioLegal: r.domicilioLegal, ciudad: r.ciudad,
+      tel1: r.tel1, tel2: r.tel2, fax: r.fax, email: r.email,
+      formaRepresentacion: r.formaRepresentacion, representante: r.representante,
+      delegadoCE: r.delegadoCE, formaActuacion: r.formaActuacion,
+      fechaIngComis: r.fechaIngComis, fechaRecAgrup: r.fechaRecAgrup,
+      fechaEntrCE: r.fechaEntrCE, fechaCircCE: r.fechaCircCE,
+      observaciones: r.observaciones, obsCE: r.obsCE, nota: r.nota,
+      antecedentes: r.antecedentes, resolucionComision: r.resolucionComision,
+      sublema1: r.sublema1, sublema2: r.sublema2, sublema3: r.sublema3,
+      sublema4: r.sublema4, sublema5: r.sublema5,
+      sublemaRenunciado: r.sublemaRenunciado,
+      integrantes: r.integrantes
+    }, { firmas: false, titulo: 'Agrupación por Período' });
+  }
 
   joinSublemas(r: AgrupacionPeriodoRow): string {
     const s = [r.sublema1, r.sublema2, r.sublema3, r.sublema4, r.sublema5].filter(Boolean);

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
+import { imprimirAgrupacion } from './imprimir-agrupacion';
 
 interface AgrupacionPendiente {
   id: number;
@@ -60,6 +61,7 @@ const DEPARTAMENTOS = [
                 <td (click)="$event.stopPropagation()" style="white-space:nowrap">
                   <button class="btn btn-sm btn-secondary" (click)="abrirModal(a, 'editar')">Editar</button>
                   <button class="btn btn-sm btn-success" (click)="abrirModal(a, 'aprobar')" style="margin-left:6px">Aprobar</button>
+                  <button class="btn btn-sm btn-secondary" (click)="imprimir(a)" style="margin-left:6px" title="Imprimir / PDF">🖨</button>
                   <button class="btn btn-sm btn-danger" (click)="eliminar(a.id)" style="margin-left:6px">Eliminar</button>
                 </td>
               </tr>
@@ -345,6 +347,28 @@ export class AgrupacionesPendientesComponent {
 
   toggle(id: number) {
     this.expandido.set(this.expandido() === id ? null : id);
+  }
+
+  imprimir(a: AgrupacionPendiente) {
+    imprimirAgrupacion({
+      agrupacionId: a.id, periodoId: a.id, periodo: 'Pendiente',
+      pendiente: true,
+      nombre: a.nombre, codAgrup: a.codAgrup, codDepto: a.codDepto,
+      tipo: a.tipo, depto: a.depto, solic: a.solic,
+      clasificacion: a.clasificacion, solicita: a.solicita, sector: a.sector,
+      fechaSolicitud: a.fechaSolicitud, codAnt: a.codAnt, nombreAnt: a.nombreAnt,
+      domicilioLegal: a.domicilioLegal, ciudad: a.ciudad,
+      tel1: a.tel1, tel2: a.tel2, fax: a.fax, email: a.email,
+      formaRepresentacion: a.formaRepresentacion, representante: a.representante,
+      delegadoCE: a.delegadoCE, formaActuacion: a.formaActuacion,
+      fechaIngComis: a.fechaIngComis, fechaRecAgrup: a.fechaRecAgrup,
+      fechaEntrCE: a.fechaEntrCE, fechaCircCE: a.fechaCircCE,
+      observaciones: a.observaciones, obsCE: a.obsCE, nota: a.nota,
+      antecedentes: a.antecedentes, resolucionComision: a.resolucionComision,
+      sublema1: a.sublema1, sublema2: a.sublema2, sublema3: a.sublema3,
+      sublema4: a.sublema4, sublema5: a.sublema5,
+      sublemaRenunciado: a.sublemaRenunciado
+    }, { firmas: true, titulo: 'Agrupación Pendiente' });
   }
 
   eliminar(id: number) {
