@@ -60,13 +60,16 @@ export interface PrintAgrupacionData {
   }>;
 }
 
+// '' = celda vacia para mantener alineacion 2-cols y que las dos Juventud
+// queden lado a lado en la ultima fila.
 const FIRMAS_PENDIENTE = [
   'Gloria Rodriguez',
-  'Juventud',
   'Luis Alberto Heber',
   'Javier Garcia',
   'Enrique Antia',
   'Armando Castaingdo',
+  '',
+  'Juventud',
   'Juventud (2)'
 ];
 
@@ -116,12 +119,13 @@ function buildFirmas(): string {
   return `
     <h2 class="sec">Firmas</h2>
     <div class="firmas">
-      ${FIRMAS_PENDIENTE.map(n => `
-        <div class="firma">
-          <div class="firma-linea"></div>
-          <div class="firma-nombre">${n}</div>
-        </div>
-      `).join('')}
+      ${FIRMAS_PENDIENTE.map(n => n
+        ? `<div class="firma">
+             <div class="firma-linea"></div>
+             <div class="firma-nombre">${n}</div>
+           </div>`
+        : `<div class="firma firma-empty"></div>`
+      ).join('')}
     </div>
   `;
 }
@@ -178,6 +182,7 @@ function buildHtml(d: PrintAgrupacionData, opts: { firmas: boolean; titulo: stri
       width: 100%; border-top: 1px solid #222; height: 0; margin-top: 35px;
     }
     .firma-nombre { font-size: 12px; margin-top: 4px; color: #333; font-weight: 600; text-align: center; }
+    .firma-empty { visibility: hidden; }
     footer { margin-top: 24px; font-size: 10px; color: #888; text-align: right; }
     @media print {
       header { break-inside: avoid; }
