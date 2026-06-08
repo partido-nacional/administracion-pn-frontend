@@ -61,7 +61,7 @@ interface AgrupacionPeriodoRow {
   sublema4?: string;
   sublema5?: string;
   sublemaRenunciado?: string;
-  asuntosPublicos: boolean;
+  asuntosPoliticos: boolean;
   integrantes: IntegranteRow[];
 }
 
@@ -89,7 +89,7 @@ interface AgrupacionPeriodoRow {
             <th class="sortable" (click)="onSort('depto', $event)">Depto. <span class="ind">{{ indicador('depto') }}</span></th>
             <th class="sortable" (click)="onSort('sector', $event)">Sector <span class="ind">{{ indicador('sector') }}</span></th>
             <th>Sublemas</th>
-            <th class="sortable" (click)="onSort('asuntosPublicos', $event)" title="Asuntos Públicos">AP <span class="ind">{{ indicador('asuntosPublicos') }}</span></th>
+            <th class="sortable" (click)="onSort('asuntosPoliticos', $event)" title="Asuntos Políticos">AP <span class="ind">{{ indicador('asuntosPoliticos') }}</span></th>
             <th></th>
           </tr>
           <tr class="filter-row">
@@ -158,8 +158,8 @@ interface AgrupacionPeriodoRow {
               <td>{{ r.sector || '—' }}</td>
               <td>{{ joinSublemas(r) }}</td>
               <td (click)="$event.stopPropagation()" style="text-align:center">
-                <input type="checkbox" [checked]="r.asuntosPublicos"
-                       (change)="toggleAP(r, $event)" title="Asuntos Públicos">
+                <input type="checkbox" [checked]="r.asuntosPoliticos"
+                       (change)="toggleAP(r, $event)" title="Asuntos Políticos">
               </td>
               <td (click)="$event.stopPropagation()">
                 <button class="btn btn-sm btn-secondary" (click)="imprimir(r)" title="Imprimir / PDF">
@@ -178,7 +178,7 @@ interface AgrupacionPeriodoRow {
                         <div class="kv"><span class="k">Período</span><span class="v">{{ r.periodo }}</span></div>
                         <div class="kv"><span class="k">Estado</span><span class="v">{{ r.pendiente ? 'Pendiente' : 'Aprobada' }}</span></div>
                         <div class="kv"><span class="k">Ficha origen</span><span class="v">{{ r.fichaAgrupacionOrigenId ? '#' + r.fichaAgrupacionOrigenId : '—' }}</span></div>
-                        <div class="kv"><span class="k">Asuntos Públicos</span><span class="v">{{ r.asuntosPublicos ? 'Sí' : 'No' }}</span></div>
+                        <div class="kv"><span class="k">Asuntos Políticos</span><span class="v">{{ r.asuntosPoliticos ? 'Sí' : 'No' }}</span></div>
                       </div>
                     </div>
 
@@ -397,15 +397,15 @@ export class AgrupacionesPorPeriodoComponent {
     const target = ev.target as HTMLInputElement;
     const value = target.checked;
     // optimistic: aplico al modelo local y reviero si falla
-    r.asuntosPublicos = value;
+    r.asuntosPoliticos = value;
     this.items.set([...this.items()]);
-    this.http.patch(`${environment.apiUrl}/agrupaciones-periodos/${r.periodoId}/asuntos-publicos`, { value })
+    this.http.patch(`${environment.apiUrl}/agrupaciones-periodos/${r.periodoId}/asuntos-politicos`, { value })
       .subscribe({
         error: () => {
-          r.asuntosPublicos = !value;
+          r.asuntosPoliticos = !value;
           target.checked = !value;
           this.items.set([...this.items()]);
-          alert('No se pudo actualizar Asuntos Públicos.');
+          alert('No se pudo actualizar Asuntos Políticos.');
         }
       });
   }
@@ -457,7 +457,7 @@ export class AgrupacionesPorPeriodoComponent {
       (!fDep || r.depto === fDep) &&
       m(r.sector, fSec) &&
       m(this.joinSublemas(r), fSub) &&
-      (!fAP || (fAP === 'si' ? r.asuntosPublicos : !r.asuntosPublicos))
+      (!fAP || (fAP === 'si' ? r.asuntosPoliticos : !r.asuntosPoliticos))
     );
 
     const sorts = this.sortBy();
