@@ -12,7 +12,7 @@ import { exportarCSV } from '../../core/exportar-csv';
 
 interface ContactoListado {
   id: number; nombre: string; apellido: string; cedula?: string; credencial?: string;
-  departamento?: string; celular?: string; email?: string; adhesion?: string;
+  departamento?: string; celular?: string; celular2?: string; email?: string; adhesion?: string;
   adherente?: boolean; tieneFicha?: boolean; tieneIntegranteOrganismo?: boolean;
 }
 
@@ -104,6 +104,12 @@ type Tab = 'todos' | 'padron' | 'duplicados' | 'exportar';
                   </td>
                   <td (click)="$event.stopPropagation()">
                     <div class="action-group">
+                      <button class="btn-wa" (click)="abrirWhatsapp(c)" [disabled]="!c.celular && !c.celular2"
+                              [title]="(c.celular || c.celular2) ? 'WhatsApp' : 'Sin celular'">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
+                          <path d="M.057 24l1.687-6.163a11.867 11.867 0 01-1.62-5.964C.122 5.335 5.46 0 12.05 0a11.82 11.82 0 018.412 3.488 11.82 11.82 0 013.48 8.413c-.003 6.557-5.338 11.892-11.892 11.892a11.9 11.9 0 01-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884a9.86 9.86 0 001.51 5.26l-.999 3.648 3.978-1.607zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.149-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413z"/>
+                        </svg>
+                      </button>
                       <a [routerLink]="['/agenda', c.id]" class="btn btn-sm btn-primary">Editar</a>
                       @if (c.tieneFicha) {
                         <a [routerLink]="['/agenda', c.id, 'fichas']" class="btn btn-sm btn-success">Ficha Adhesion</a>
@@ -220,6 +226,27 @@ type Tab = 'todos' | 'padron' | 'duplicados' | 'exportar';
     @if (tab() === 'exportar') {
       <div class="card"><div class="card-body"><div class="empty-state"><div class="empty-state-text">Exportar — proximamente</div></div></div></div>
     }
+
+    @if (waChoice()) {
+      <div class="modal-backdrop" (click)="waChoice.set(null)">
+        <div class="wa-pick" (click)="$event.stopPropagation()">
+          <div class="wa-pick-header">¿A qué celular querés escribir?</div>
+          <div class="wa-pick-body">
+            <button class="wa-pick-opt" (click)="abrirWaCon(waChoice()!.celular!)">
+              <span class="wa-pick-label">Celular</span>
+              <span class="wa-pick-num">{{ waChoice()!.celular }}</span>
+            </button>
+            <button class="wa-pick-opt" (click)="abrirWaCon(waChoice()!.celular2!)">
+              <span class="wa-pick-label">Celular 2</span>
+              <span class="wa-pick-num">{{ waChoice()!.celular2 }}</span>
+            </button>
+          </div>
+          <div class="wa-pick-footer">
+            <button class="btn btn-secondary" (click)="waChoice.set(null)">Cancelar</button>
+          </div>
+        </div>
+      </div>
+    }
   `,
   styles: [`
     .topbar-inline { display:flex; justify-content:flex-end; gap:8px; margin-bottom:16px; }
@@ -233,6 +260,34 @@ type Tab = 'todos' | 'padron' | 'duplicados' | 'exportar';
       display:inline-block; min-width:18px; color:#1a4f8a; font-weight:700;
       margin-left:2px;
     }
+    .btn-wa {
+      background:#25D366; color:#fff; border:none; border-radius:50%;
+      width:30px; height:30px; display:inline-flex; align-items:center; justify-content:center;
+      cursor:pointer; padding:0;
+    }
+    .btn-wa:hover:not(:disabled) { background:#1ebe57; }
+    .btn-wa:disabled { background:#bcd; cursor:not-allowed; }
+
+    .modal-backdrop {
+      position:fixed; inset:0; background:rgba(15,23,42,.55);
+      display:flex; align-items:center; justify-content:center; z-index:1000; padding:20px;
+    }
+    .wa-pick {
+      background:#fff; border-radius:10px; width:min(380px, 100%);
+      box-shadow:0 20px 50px rgba(0,0,0,.3); overflow:hidden;
+    }
+    .wa-pick-header { background:#25D366; color:#fff; padding:14px 18px; font-weight:600; }
+    .wa-pick-body { padding:14px 16px; display:flex; flex-direction:column; gap:10px; }
+    .wa-pick-opt {
+      background:#f5fbf7; border:1px solid #d6efdf; color:#1f6f3b;
+      padding:12px 14px; border-radius:6px; cursor:pointer; text-align:left;
+      display:flex; justify-content:space-between; align-items:center;
+      font-family:inherit; font-size:14px;
+    }
+    .wa-pick-opt:hover { background:#e7f6ec; }
+    .wa-pick-label { font-weight:600; }
+    .wa-pick-num { font-family:monospace; }
+    .wa-pick-footer { padding:10px 16px; border-top:1px solid #eef1f5; display:flex; justify-content:flex-end; }
     .action-group { align-items:stretch; }
     .action-group .btn {
       font-family:inherit; font-size:13px; line-height:1.3;
@@ -400,6 +455,34 @@ export class AgendaListadoComponent {
       cedula: c.cedula, credencial: c.credencial, departamento: c.departamento,
       celular: c.celular, email: c.email, adhesion: c.adhesion
     })), { filtros, orden });
+  }
+
+  waChoice = signal<ContactoListado | null>(null);
+
+  abrirWhatsapp(c: ContactoListado) {
+    if (c.celular && c.celular2) {
+      this.waChoice.set(c);
+    } else if (c.celular) {
+      this.abrirWaCon(c.celular);
+    } else if (c.celular2) {
+      this.abrirWaCon(c.celular2);
+    }
+  }
+
+  abrirWaCon(numero: string) {
+    const num = this.formatoUy(numero);
+    if (!num) { alert('Número inválido.'); return; }
+    window.open(`https://wa.me/${num}`, '_blank');
+    this.waChoice.set(null);
+  }
+
+  /** Normaliza a internacional UY sin '+' para wa.me. */
+  private formatoUy(raw: string): string {
+    const digits = (raw || '').replace(/\D/g, '');
+    if (!digits) return '';
+    if (digits.startsWith('598')) return digits;
+    if (digits.startsWith('0')) return '598' + digits.slice(1);
+    return '598' + digits;
   }
 
   exportarCsv() {
