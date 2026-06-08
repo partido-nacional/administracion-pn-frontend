@@ -55,20 +55,20 @@ type Tab = 'gestion' | 'listar' | 'ventas' | 'donaciones' | 'form';
                 <th>Fecha</th><th>Producto</th><th>Tipo</th><th>Cantidad</th><th>Motivo</th><th>Observaciones</th>
               </tr>
               <tr class="filter-row">
-                <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fmFecha"></th>
-                <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fmProducto"></th>
+                <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fmFecha()"    (ngModelChange)="fmFecha.set($event)"></th>
+                <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fmProducto()" (ngModelChange)="fmProducto.set($event)"></th>
                 <th>
-                  <select class="column-filter" [(ngModel)]="fmTipo">
+                  <select class="column-filter" [ngModel]="fmTipo()" (ngModelChange)="fmTipo.set($event)">
                     <option value="">Todos</option><option>Alta</option><option>Baja</option>
                   </select>
                 </th>
-                <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fmCantidad"></th>
+                <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fmCantidad()" (ngModelChange)="fmCantidad.set($event)"></th>
                 <th>
-                  <select class="column-filter" [(ngModel)]="fmMotivo">
+                  <select class="column-filter" [ngModel]="fmMotivo()" (ngModelChange)="fmMotivo.set($event)">
                     <option value="">Todos</option><option>Ingreso</option><option>Venta</option><option>Donacion</option><option>Ajuste</option>
                   </select>
                 </th>
-                <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fmObs"></th>
+                <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fmObs()" (ngModelChange)="fmObs.set($event)"></th>
               </tr>
             </thead>
             <tbody>
@@ -110,13 +110,13 @@ type Tab = 'gestion' | 'listar' | 'ventas' | 'donaciones' | 'form';
                 <th>Id</th><th>Producto</th><th>Descripcion</th><th>Precio Unitario</th><th>Stock</th><th>Estado</th><th></th>
               </tr>
               <tr class="filter-row">
-                <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fpId"></th>
-                <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fpNombre"></th>
-                <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fpDesc"></th>
-                <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fpPrecio"></th>
-                <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fpStock"></th>
+                <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fpId()"     (ngModelChange)="fpId.set($event)"></th>
+                <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fpNombre()" (ngModelChange)="fpNombre.set($event)"></th>
+                <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fpDesc()"   (ngModelChange)="fpDesc.set($event)"></th>
+                <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fpPrecio()" (ngModelChange)="fpPrecio.set($event)"></th>
+                <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fpStock()"  (ngModelChange)="fpStock.set($event)"></th>
                 <th>
-                  <select class="column-filter" [(ngModel)]="fpEstado">
+                  <select class="column-filter" [ngModel]="fpEstado()" (ngModelChange)="fpEstado.set($event)">
                     <option value="">Todos</option><option>Disponible</option><option>Sin stock</option><option>Stock bajo</option>
                   </select>
                 </th>
@@ -168,7 +168,7 @@ type Tab = 'gestion' | 'listar' | 'ventas' | 'donaciones' | 'form';
           <input type="date" class="form-input" style="width:150px; padding:6px 10px; font-size:13px">
           <label style="font-size:13px; font-weight:500; color:var(--gray-600)">hasta</label>
           <input type="date" class="form-input" style="width:150px; padding:6px 10px; font-size:13px">
-          <input type="text" class="form-input" placeholder="Filtrar por comprador..." style="width:220px; padding:6px 10px; font-size:13px" [(ngModel)]="fvComprador">
+          <input type="text" class="form-input" placeholder="Filtrar por comprador..." style="width:220px; padding:6px 10px; font-size:13px" [ngModel]="fvComprador()" (ngModelChange)="fvComprador.set($event)">
           <button class="btn btn-primary" style="padding:6px 16px; font-size:13px">Filtrar</button>
         </div>
         <button class="btn btn-primary" (click)="abrirNuevaVenta()">+ Nueva Venta</button>
@@ -218,7 +218,7 @@ type Tab = 'gestion' | 'listar' | 'ventas' | 'donaciones' | 'form';
           <input type="date" class="form-input" style="width:150px; padding:6px 10px; font-size:13px">
           <label style="font-size:13px; font-weight:500; color:var(--gray-600)">hasta</label>
           <input type="date" class="form-input" style="width:150px; padding:6px 10px; font-size:13px">
-          <input type="text" class="form-input" placeholder="Filtrar por destinatario..." style="width:220px; padding:6px 10px; font-size:13px" [(ngModel)]="fdDest">
+          <input type="text" class="form-input" placeholder="Filtrar por destinatario..." style="width:220px; padding:6px 10px; font-size:13px" [ngModel]="fdDest()" (ngModelChange)="fdDest.set($event)">
           <button class="btn btn-primary" style="padding:6px 16px; font-size:13px">Filtrar</button>
         </div>
         <button class="btn btn-primary">+ Nueva Donacion</button>
@@ -564,36 +564,47 @@ export class ProductosComponent {
   ventas = signal<Venta[]>([]);
   donaciones = signal<Donacion[]>([]);
 
-  fmFecha = ''; fmProducto = ''; fmTipo = ''; fmCantidad = ''; fmMotivo = ''; fmObs = '';
-  fpId = ''; fpNombre = ''; fpDesc = ''; fpPrecio = ''; fpStock = ''; fpEstado = '';
-  fvComprador = '';
-  fdDest = '';
+  fmFecha = signal(''); fmProducto = signal(''); fmTipo = signal('');
+  fmCantidad = signal(''); fmMotivo = signal(''); fmObs = signal('');
+  fpId = signal(''); fpNombre = signal(''); fpDesc = signal('');
+  fpPrecio = signal(''); fpStock = signal(''); fpEstado = signal('');
+  fvComprador = signal('');
+  fdDest = signal('');
 
   formP: Partial<ProductoListado> = { activo: true, precio: 0 };
 
-  movimientosFiltrados = computed(() => this.movimientos().filter(m => {
+  movimientosFiltrados = computed(() => {
     const t = (s: string, f: string) => !f || (s ?? '').toLowerCase().includes(f.toLowerCase());
     const e = (s: string, f: string) => !f || s === f;
-    return t(m.fecha, this.fmFecha) && t(m.producto, this.fmProducto)
-      && e(m.tipo, this.fmTipo) && t(String(m.cantidad), this.fmCantidad)
-      && e(m.motivo, this.fmMotivo) && t(m.observaciones, this.fmObs);
-  }));
+    const fF = this.fmFecha(), fP = this.fmProducto(), fT = this.fmTipo(),
+          fC = this.fmCantidad(), fMo = this.fmMotivo(), fO = this.fmObs();
+    return this.movimientos().filter(m =>
+      t(m.fecha, fF) && t(m.producto, fP) && e(m.tipo, fT)
+      && t(String(m.cantidad), fC) && e(m.motivo, fMo) && t(m.observaciones, fO)
+    );
+  });
 
-  productosFiltrados = computed(() => this.productos().filter(p => {
+  productosFiltrados = computed(() => {
     const t = (s: string, f: string) => !f || (s ?? '').toLowerCase().includes(f.toLowerCase());
     const e = (s: string, f: string) => !f || s === f;
-    return t(String(p.id), this.fpId) && t(p.nombre, this.fpNombre)
-      && t(p.descripcion ?? '', this.fpDesc) && t(String(p.precio), this.fpPrecio)
-      && t(String(p.stock), this.fpStock) && e(p.estado, this.fpEstado);
-  }));
+    const fId = this.fpId(), fNom = this.fpNombre(), fDesc = this.fpDesc(),
+          fPre = this.fpPrecio(), fSto = this.fpStock(), fEst = this.fpEstado();
+    return this.productos().filter(p =>
+      t(String(p.id), fId) && t(p.nombre, fNom)
+      && t(p.descripcion ?? '', fDesc) && t(String(p.precio), fPre)
+      && t(String(p.stock), fSto) && e(p.estado, fEst)
+    );
+  });
 
-  ventasFiltradas = computed(() => this.ventas().filter(v =>
-    !this.fvComprador || v.comprador.toLowerCase().includes(this.fvComprador.toLowerCase())
-  ));
+  ventasFiltradas = computed(() => {
+    const f = this.fvComprador();
+    return this.ventas().filter(v => !f || v.comprador.toLowerCase().includes(f.toLowerCase()));
+  });
 
-  donacionesFiltradas = computed(() => this.donaciones().filter(d =>
-    !this.fdDest || d.destinatario.toLowerCase().includes(this.fdDest.toLowerCase())
-  ));
+  donacionesFiltradas = computed(() => {
+    const f = this.fdDest();
+    return this.donaciones().filter(d => !f || d.destinatario.toLowerCase().includes(f.toLowerCase()));
+  });
 
   constructor() {
     this.titleSvc.set('Productos');
