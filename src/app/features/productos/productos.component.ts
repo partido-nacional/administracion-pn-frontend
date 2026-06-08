@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { PageTitleService } from '../../core/page-title.service';
+import { AuthService } from '../../core/auth.service';
 
 interface ProductoListado {
   id: number; nombre: string; descripcion?: string; precio: number;
@@ -11,7 +12,7 @@ interface ProductoListado {
 }
 interface Stats { productosActivos: number; unidadesStock: number; ventasMes: number; donacionesMes: number; }
 interface Movimiento { fecha: string; producto: string; tipo: string; cantidad: number; motivo: string; observaciones: string; }
-interface Venta { id: string; fecha: string; producto: string; cantidad: number; precioUnit: number; total: number; comprador: string; vendedor: string; }
+interface Venta { id: string; fecha: string; producto: string; cantidad: number; precioUnit: number; total: number; comprador: string; vendedor: string; metodoPago: string; nroRecibo: string; }
 interface Donacion { id: string; fecha: string; producto: string; cantidad: number; destinatario: string; observaciones: string; }
 
 type Tab = 'gestion' | 'listar' | 'ventas' | 'donaciones' | 'form';
@@ -170,14 +171,14 @@ type Tab = 'gestion' | 'listar' | 'ventas' | 'donaciones' | 'form';
           <input type="text" class="form-input" placeholder="Filtrar por comprador..." style="width:220px; padding:6px 10px; font-size:13px" [(ngModel)]="fvComprador">
           <button class="btn btn-primary" style="padding:6px 16px; font-size:13px">Filtrar</button>
         </div>
-        <button class="btn btn-primary">+ Nueva Venta</button>
+        <button class="btn btn-primary" (click)="abrirNuevaVenta()">+ Nueva Venta</button>
       </div>
 
       <div class="card">
         <div class="card-body" style="padding:0; overflow-x:auto">
           <table class="table">
             <thead>
-              <tr><th>ID</th><th>Fecha</th><th>Producto</th><th>Cantidad</th><th>Precio Unit.</th><th>Total</th><th>Comprador</th><th>Vendedor</th><th></th></tr>
+              <tr><th>ID</th><th>Fecha</th><th>Producto</th><th>Unidades</th><th>Precio Unit.</th><th>Recaudación</th><th>Nro. Recibo</th><th>Método Pago</th><th>Vendedor</th><th></th></tr>
             </thead>
             <tbody>
               @for (v of ventasFiltradas(); track v.id) {
@@ -188,12 +189,13 @@ type Tab = 'gestion' | 'listar' | 'ventas' | 'donaciones' | 'form';
                   <td>{{ v.cantidad }}</td>
                   <td>\${{ v.precioUnit }}</td>
                   <td><strong>\${{ v.total }}</strong></td>
-                  <td>{{ v.comprador }}</td>
+                  <td>{{ v.nroRecibo || '—' }}</td>
+                  <td>{{ v.metodoPago || '—' }}</td>
                   <td>{{ v.vendedor || '—' }}</td>
                   <td><a class="action-link" style="color:var(--danger)">Eliminar</a></td>
                 </tr>
               } @empty {
-                <tr><td colspan="9"><div class="empty-state"><div class="empty-state-text">Sin ventas</div></div></td></tr>
+                <tr><td colspan="10"><div class="empty-state"><div class="empty-state-text">Sin ventas</div></div></td></tr>
               }
             </tbody>
           </table>
@@ -275,14 +277,140 @@ type Tab = 'gestion' | 'listar' | 'ventas' | 'donaciones' | 'form';
         </div>
       </div>
     }
+
+    @if (modalVenta()) {
+      <div class="vm-backdrop" (click)="cerrarNuevaVenta()">
+        <div class="vm" (click)="$event.stopPropagation()">
+          <div class="vm-header">
+            <div class="vm-title">Nueva Venta</div>
+            <button class="vm-close" (click)="cerrarNuevaVenta()">×</button>
+          </div>
+          <div class="vm-body">
+            <div class="vm-fg">
+              <label>Producto *</label>
+              <select [(ngModel)]="vForm.productoId" name="vProd">
+                <option [ngValue]="null">— Seleccionar —</option>
+                @for (p of productos(); track p.id) {
+                  <option [ngValue]="p.id">{{ p.nombre }} (\${{ p.precio }})</option>
+                }
+              </select>
+            </div>
+            <div class="vm-row">
+              <div class="vm-fg"><label>Unidades *</label><input type="number" min="1" [(ngModel)]="vForm.unidades" name="vUni"></div>
+              <div class="vm-fg"><label>Recaudación * ($)</label><input type="number" min="0" step="0.01" [(ngModel)]="vForm.recaudacion" name="vRec"></div>
+            </div>
+            <div class="vm-fg"><label>Nro. de recibo</label><input [(ngModel)]="vForm.nroRecibo" name="vRec1"></div>
+            <div class="vm-fg">
+              <label>Método de pago *</label>
+              <select [(ngModel)]="vForm.metodoPago" name="vMet">
+                <option value="">— Seleccionar —</option>
+                <option>Efectivo</option>
+                <option>Transferencia</option>
+                <option>Tarjeta Débito</option>
+                <option>Tarjeta Crédito</option>
+                <option>Cheque</option>
+                <option>MercadoPago</option>
+                <option>Otro</option>
+              </select>
+            </div>
+            <small class="vm-info">
+              Se registra automáticamente: <strong>{{ ahora() }}</strong>
+              · vendedor: <strong>{{ usuario() }}</strong>
+            </small>
+            @if (vError()) { <div class="vm-err">{{ vError() }}</div> }
+          </div>
+          <div class="vm-footer">
+            <button class="btn btn-secondary" (click)="cerrarNuevaVenta()">Cancelar</button>
+            <button class="btn btn-primary" (click)="guardarVenta()" [disabled]="vBusy()">
+              {{ vBusy() ? 'Guardando…' : 'Guardar venta' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
   `,
   styles: [`
     .topbar-inline { display:flex; justify-content:flex-end; margin-bottom:16px; }
+    .vm-backdrop {
+      position:fixed; inset:0; background:rgba(15,23,42,.55);
+      display:flex; align-items:center; justify-content:center; z-index:1000; padding:20px;
+    }
+    .vm {
+      background:#fff; border-radius:10px; width:min(480px, 100%);
+      display:flex; flex-direction:column; box-shadow:0 20px 50px rgba(0,0,0,.3);
+      overflow:hidden;
+    }
+    .vm-header { display:flex; justify-content:space-between; align-items:center; padding:14px 18px; background:#1e3a8a; color:#fff; }
+    .vm-title { font-size:16px; font-weight:600; }
+    .vm-close { background:transparent; border:none; color:#fff; font-size:22px; cursor:pointer; }
+    .vm-body { padding:18px 20px; display:flex; flex-direction:column; gap:12px; }
+    .vm-row { display:flex; gap:12px; }
+    .vm-row .vm-fg { flex:1; }
+    .vm-fg { display:flex; flex-direction:column; gap:4px; }
+    .vm-fg label { font-size:11px; font-weight:600; color:#666; text-transform:uppercase; letter-spacing:.4px; }
+    .vm-fg input, .vm-fg select {
+      padding:8px 10px; font-size:13px; font-family:inherit;
+      border:1px solid #cfd6e0; border-radius:5px; outline:none;
+    }
+    .vm-fg input:focus, .vm-fg select:focus { border-color:#1e3a8a; box-shadow:0 0 0 3px rgba(30,58,138,.12); }
+    .vm-info { color:#666; font-size:12px; }
+    .vm-err { background:#fdecea; color:#a8261b; padding:8px 10px; border-radius:5px; font-size:13px; }
+    .vm-footer { padding:12px 18px; border-top:1px solid #eef1f5; background:#fafbfd; display:flex; gap:8px; justify-content:flex-end; }
   `]
 })
 export class ProductosComponent {
   private http = inject(HttpClient);
   private titleSvc = inject(PageTitleService);
+  private auth = inject(AuthService);
+
+  usuario = computed(() => this.auth.session()?.usuario ?? 'desconocido');
+  ahora = signal('');
+
+  modalVenta = signal(false);
+  vBusy = signal(false);
+  vError = signal('');
+  vForm: { productoId: number | null; unidades: number | null; recaudacion: number | null; nroRecibo: string; metodoPago: string } = {
+    productoId: null, unidades: null, recaudacion: null, nroRecibo: '', metodoPago: ''
+  };
+
+  abrirNuevaVenta() {
+    this.vForm = { productoId: null, unidades: 1, recaudacion: null, nroRecibo: '', metodoPago: '' };
+    this.vError.set('');
+    this.ahora.set(new Date().toLocaleString('es-UY'));
+    this.modalVenta.set(true);
+  }
+
+  cerrarNuevaVenta() {
+    this.modalVenta.set(false);
+    this.vError.set('');
+  }
+
+  guardarVenta() {
+    if (!this.vForm.productoId) { this.vError.set('Seleccioná un producto.'); return; }
+    if (!this.vForm.unidades || this.vForm.unidades <= 0) { this.vError.set('Las unidades deben ser mayores a 0.'); return; }
+    if (!this.vForm.recaudacion || this.vForm.recaudacion <= 0) { this.vError.set('La recaudación debe ser mayor a 0.'); return; }
+    if (!this.vForm.metodoPago) { this.vError.set('Seleccioná un método de pago.'); return; }
+
+    this.vBusy.set(true);
+    this.vError.set('');
+    this.http.post(`${environment.apiUrl}/ventas/simple`, {
+      productoId: this.vForm.productoId,
+      unidades: this.vForm.unidades,
+      recaudacion: this.vForm.recaudacion,
+      nroRecibo: this.vForm.nroRecibo || null,
+      metodoPago: this.vForm.metodoPago
+    }).subscribe({
+      next: () => {
+        this.vBusy.set(false);
+        this.cerrarNuevaVenta();
+        this.reload();
+      },
+      error: (err) => {
+        this.vBusy.set(false);
+        this.vError.set(err?.error?.message || err?.message || 'No se pudo guardar la venta.');
+      }
+    });
+  }
 
   tab = signal<Tab>('gestion');
 
