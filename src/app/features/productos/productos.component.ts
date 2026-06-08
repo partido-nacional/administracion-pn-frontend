@@ -142,7 +142,7 @@ type Tab = 'gestion' | 'listar' | 'pocoStock' | 'ventas' | 'donaciones' | 'form'
                   <td>
                     <div class="action-group">
                       <a class="action-link" (click)="editarProducto(p)">Editar</a>
-                      <a class="action-link">Stock</a>
+                      <a class="action-link" (click)="abrirStock(p)">Stock</a>
                     </div>
                   </td>
                 </tr>
@@ -317,6 +317,75 @@ type Tab = 'gestion' | 'listar' | 'pocoStock' | 'ventas' | 'donaciones' | 'form'
       </div>
     }
 
+    @if (modalStock()) {
+      <div class="vm-backdrop" (click)="cerrarStock()">
+        <div class="vm" (click)="$event.stopPropagation()">
+          <div class="vm-header">
+            <div class="vm-title">Ajustar Stock — {{ modalStock()!.nombre }}</div>
+            <button class="vm-close" (click)="cerrarStock()">×</button>
+          </div>
+          <div class="vm-body">
+            <div class="st-actual">
+              <span class="st-label">Stock actual</span>
+              <span class="st-val">{{ modalStock()!.stock }}</span>
+              <span class="st-desc">{{ modalStock()!.descripcion }}</span>
+            </div>
+
+            <div class="vm-fg">
+              <label>Operación *</label>
+              <div class="op-toggle">
+                <button type="button" class="op-btn" [class.alta]="sForm.operacion === 'Alta'"
+                        (click)="sForm.operacion = 'Alta'">+ Ingreso</button>
+                <button type="button" class="op-btn" [class.baja]="sForm.operacion === 'Baja'"
+                        (click)="sForm.operacion = 'Baja'">− Baja</button>
+              </div>
+            </div>
+
+            <div class="vm-fg">
+              <label>Cantidad *</label>
+              <input type="number" min="1" [(ngModel)]="sForm.cantidad" name="sCant">
+            </div>
+
+            <div class="vm-fg">
+              <label>Motivo</label>
+              <select [(ngModel)]="sForm.motivo" name="sMot">
+                <option value="">— Por defecto —</option>
+                @if (sForm.operacion === 'Alta') {
+                  <option>Ingreso</option>
+                  <option>Reposición</option>
+                  <option>Devolución</option>
+                  <option>Ajuste</option>
+                } @else {
+                  <option>Venta</option>
+                  <option>Donación</option>
+                  <option>Rotura</option>
+                  <option>Ajuste</option>
+                  <option>Pérdida</option>
+                }
+                <option>Otro</option>
+              </select>
+            </div>
+
+            <div class="vm-fg">
+              <label>Observaciones</label>
+              <textarea rows="2" [(ngModel)]="sForm.observaciones" name="sObs"></textarea>
+            </div>
+
+            <small class="vm-info">
+              Después del ajuste: <strong>{{ stockPreview() }}</strong>
+            </small>
+            @if (sError()) { <div class="vm-err">{{ sError() }}</div> }
+          </div>
+          <div class="vm-footer">
+            <button class="btn btn-secondary" (click)="cerrarStock()">Cancelar</button>
+            <button class="btn btn-primary" (click)="guardarStock()" [disabled]="sBusy()">
+              {{ sBusy() ? 'Guardando…' : 'Aplicar ajuste' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
     @if (modalVenta()) {
       <div class="vm-backdrop" (click)="cerrarNuevaVenta()">
         <div class="vm" (click)="$event.stopPropagation()">
@@ -395,6 +464,27 @@ type Tab = 'gestion' | 'listar' | 'pocoStock' | 'ventas' | 'donaciones' | 'form'
     .vm-info { color:#666; font-size:12px; }
     .vm-err { background:#fdecea; color:#a8261b; padding:8px 10px; border-radius:5px; font-size:13px; }
     .vm-footer { padding:12px 18px; border-top:1px solid #eef1f5; background:#fafbfd; display:flex; gap:8px; justify-content:flex-end; }
+    .vm-fg textarea {
+      padding:8px 10px; font-size:13px; font-family:inherit;
+      border:1px solid #cfd6e0; border-radius:5px; outline:none; resize:vertical;
+    }
+    .vm-fg textarea:focus { border-color:#1e3a8a; box-shadow:0 0 0 3px rgba(30,58,138,.12); }
+    .st-actual {
+      display:flex; align-items:baseline; gap:8px; flex-wrap:wrap;
+      background:#f0f6ff; border:1px solid #d6e4f5; border-radius:6px; padding:10px 14px;
+    }
+    .st-label { font-size:11px; color:#666; text-transform:uppercase; letter-spacing:.4px; }
+    .st-val { font-size:24px; font-weight:700; color:#1e3a8a; }
+    .st-desc { color:#555; font-size:13px; margin-left:auto; }
+    .op-toggle { display:flex; border:1px solid #cfd6e0; border-radius:6px; overflow:hidden; }
+    .op-btn {
+      flex:1; background:#fff; color:#444; border:none; padding:9px 12px;
+      font-size:14px; font-weight:600; cursor:pointer; font-family:inherit;
+    }
+    .op-btn:not(:last-child) { border-right:1px solid #cfd6e0; }
+    .op-btn:hover { background:#f5f8ff; }
+    .op-btn.alta { background:#1f6f3b; color:#fff; }
+    .op-btn.baja { background:#a8261b; color:#fff; }
   `]
 })
 export class ProductosComponent {
@@ -404,6 +494,60 @@ export class ProductosComponent {
 
   usuario = computed(() => this.auth.session()?.usuario ?? 'desconocido');
   ahora = signal('');
+
+  modalStock = signal<ProductoListado | null>(null);
+  sBusy = signal(false);
+  sError = signal('');
+  sForm: { operacion: 'Alta' | 'Baja'; cantidad: number | null; motivo: string; observaciones: string } = {
+    operacion: 'Alta', cantidad: 1, motivo: '', observaciones: ''
+  };
+
+  stockPreview = computed(() => {
+    const p = this.modalStock();
+    if (!p) return 0;
+    const c = Number(this.sForm.cantidad) || 0;
+    const op = this.sForm.operacion;
+    return op === 'Alta' ? p.stock + c : p.stock - c;
+  });
+
+  abrirStock(p: ProductoListado) {
+    this.sForm = { operacion: 'Alta', cantidad: 1, motivo: '', observaciones: '' };
+    this.sError.set('');
+    this.modalStock.set(p);
+  }
+
+  cerrarStock() {
+    this.modalStock.set(null);
+    this.sError.set('');
+  }
+
+  guardarStock() {
+    const p = this.modalStock();
+    if (!p) return;
+    if (!this.sForm.cantidad || this.sForm.cantidad <= 0) { this.sError.set('La cantidad debe ser mayor a 0.'); return; }
+    if (this.sForm.operacion === 'Baja' && this.sForm.cantidad > p.stock) {
+      this.sError.set(`No podés dar de baja más de lo que hay en stock (${p.stock}).`);
+      return;
+    }
+    this.sBusy.set(true);
+    this.sError.set('');
+    this.http.post(`${environment.apiUrl}/productos/${p.id}/stock/ajuste`, {
+      operacion: this.sForm.operacion,
+      cantidad: this.sForm.cantidad,
+      motivo: this.sForm.motivo || null,
+      observaciones: this.sForm.observaciones || null
+    }).subscribe({
+      next: () => {
+        this.sBusy.set(false);
+        this.cerrarStock();
+        this.reload();
+      },
+      error: (err) => {
+        this.sBusy.set(false);
+        this.sError.set(err?.error?.message || err?.message || 'No se pudo aplicar el ajuste.');
+      }
+    });
+  }
 
   modalVenta = signal(false);
   vBusy = signal(false);
