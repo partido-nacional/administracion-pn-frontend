@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, HostListener, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -355,23 +355,49 @@ type Tab = 'gestion' | 'listar' | 'ventas' | 'donaciones' | 'form';
             <button class="vm-close" (click)="cerrarNuevaVenta()">×</button>
           </div>
           <div class="vm-body">
-            <div class="vm-fg">
+            <div class="vm-fg combo-fg">
               <label>Producto *</label>
-              <select [(ngModel)]="vForm.productoId" name="vProd">
-                <option [ngValue]="null">— Seleccionar —</option>
-                @for (p of productos(); track p.id) {
-                  <option [ngValue]="p.id">{{ p.nombre }} (\${{ p.precio }})</option>
+              <div class="combo" (click)="$event.stopPropagation()">
+                <input class="combo-input"
+                       [placeholder]="vProductoId() ? '' : 'Buscar producto…'"
+                       [value]="vProductoId() && !vSearchOpen() ? labelProducto(productoSeleccionado()) : vSearchText()"
+                       (focus)="vSearchOpen.set(true); vSearchText.set('')"
+                       (input)="onSearchInput($event)">
+                @if (vProductoId() && !vSearchOpen()) {
+                  <button type="button" class="combo-clear" (click)="vProductoId.set(null); vSearchText.set('')" title="Cambiar">×</button>
                 }
-              </select>
+                @if (vSearchOpen()) {
+                  <div class="combo-list">
+                    @for (p of productosBusqueda(); track p.id) {
+                      <div class="combo-opt" (click)="seleccionarProducto(p)">
+                        <span class="combo-nom">{{ labelProducto(p) }}</span>
+                        <span class="combo-pre">\${{ p.precio }}</span>
+                      </div>
+                    } @empty {
+                      <div class="combo-empty">Sin resultados</div>
+                    }
+                  </div>
+                }
+              </div>
             </div>
+
             <div class="vm-row">
-              <div class="vm-fg"><label>Unidades *</label><input type="number" min="1" [(ngModel)]="vForm.unidades" name="vUni"></div>
-              <div class="vm-fg"><label>Recaudación * ($)</label><input type="number" min="0" step="0.01" [(ngModel)]="vForm.recaudacion" name="vRec"></div>
+              <div class="vm-fg"><label>Unidades *</label><input type="number" min="1" [ngModel]="vUnidades()" (ngModelChange)="vUnidades.set($event)" name="vUni"></div>
+              <div class="vm-fg"><label>Descuento (%)</label><input type="number" min="0" max="100" step="0.01" [ngModel]="vDescuento()" (ngModelChange)="vDescuento.set($event)" name="vDesc"></div>
             </div>
-            <div class="vm-fg"><label>Nro. de recibo</label><input [(ngModel)]="vForm.nroRecibo" name="vRec1"></div>
+
+            <div class="recaud-box">
+              <span class="recaud-label">Recaudación calculada</span>
+              <span class="recaud-val">\${{ recaudacionCalc() | number:'1.2-2' }}</span>
+              @if (vDescuento() > 0) {
+                <span class="recaud-orig">— sin desc.: \${{ recaudacionSinDesc() | number:'1.2-2' }}</span>
+              }
+            </div>
+
+            <div class="vm-fg"><label>Nro. de recibo</label><input [ngModel]="vNroRecibo()" (ngModelChange)="vNroRecibo.set($event)" name="vRec1"></div>
             <div class="vm-fg">
               <label>Método de pago *</label>
-              <select [(ngModel)]="vForm.metodoPago" name="vMet">
+              <select [ngModel]="vMetodoPago()" (ngModelChange)="vMetodoPago.set($event)" name="vMet">
                 <option value="">— Seleccionar —</option>
                 <option>Efectivo</option>
                 <option>Transferencia</option>
@@ -446,6 +472,44 @@ type Tab = 'gestion' | 'listar' | 'ventas' | 'donaciones' | 'form';
     .op-btn:hover { background:#f5f8ff; }
     .op-btn.alta { background:#1f6f3b; color:#fff; }
     .op-btn.baja { background:#a8261b; color:#fff; }
+
+    .combo-fg { position:relative; }
+    .combo { position:relative; }
+    .combo-input {
+      width:100%; box-sizing:border-box; padding:8px 30px 8px 10px;
+      font-size:13px; font-family:inherit;
+      border:1px solid #cfd6e0; border-radius:5px; outline:none;
+    }
+    .combo-input:focus { border-color:#1e3a8a; box-shadow:0 0 0 3px rgba(30,58,138,.12); }
+    .combo-clear {
+      position:absolute; right:6px; top:50%; transform:translateY(-50%);
+      background:transparent; border:none; font-size:18px; cursor:pointer; color:#888;
+      padding:0; width:22px; height:22px; line-height:1;
+    }
+    .combo-clear:hover { color:#222; }
+    .combo-list {
+      position:absolute; top:100%; left:0; right:0; z-index:10;
+      max-height:240px; overflow-y:auto; background:#fff;
+      border:1px solid #cfd6e0; border-radius:5px; margin-top:2px;
+      box-shadow:0 6px 16px rgba(0,0,0,.1);
+    }
+    .combo-opt {
+      display:flex; justify-content:space-between; gap:8px;
+      padding:8px 12px; cursor:pointer; font-size:13px; border-bottom:1px solid #f0f3f7;
+    }
+    .combo-opt:last-child { border-bottom:none; }
+    .combo-opt:hover { background:#eef5ff; }
+    .combo-nom { color:#222; }
+    .combo-pre { color:#1a4f8a; font-weight:600; font-family:monospace; }
+    .combo-empty { padding:10px 12px; color:#888; font-size:13px; text-align:center; }
+
+    .recaud-box {
+      display:flex; align-items:baseline; gap:10px; flex-wrap:wrap;
+      background:#eef5ff; border:1px solid #d6e4f5; border-radius:6px; padding:10px 14px;
+    }
+    .recaud-label { font-size:11px; color:#666; text-transform:uppercase; letter-spacing:.4px; }
+    .recaud-val { font-size:22px; font-weight:700; color:#1a4f8a; font-family:monospace; }
+    .recaud-orig { color:#888; font-size:12px; text-decoration:line-through; }
   `]
 })
 export class ProductosComponent {
@@ -513,12 +577,80 @@ export class ProductosComponent {
   modalVenta = signal(false);
   vBusy = signal(false);
   vError = signal('');
-  vForm: { productoId: number | null; unidades: number | null; recaudacion: number | null; nroRecibo: string; metodoPago: string } = {
-    productoId: null, unidades: null, recaudacion: null, nroRecibo: '', metodoPago: ''
-  };
+
+  vProductoId = signal<number | null>(null);
+  vUnidades = signal<number>(1);
+  vDescuento = signal<number>(0);
+  vNroRecibo = signal('');
+  vMetodoPago = signal('');
+
+  // combo
+  vSearchOpen = signal(false);
+  vSearchText = signal('');
+
+  productoSeleccionado = computed(() => {
+    const id = this.vProductoId();
+    if (!id) return null;
+    return this.productos().find(p => p.id === id) ?? null;
+  });
+
+  private nombreCounts = computed(() => {
+    const map: Record<string, number> = {};
+    for (const p of this.productos()) map[p.nombre] = (map[p.nombre] ?? 0) + 1;
+    return map;
+  });
+
+  labelProducto(p: ProductoListado | null | undefined): string {
+    if (!p) return '';
+    const counts = this.nombreCounts();
+    if ((counts[p.nombre] ?? 0) > 1 && p.descripcion) {
+      return `${p.nombre} · ${p.descripcion}`;
+    }
+    return p.nombre;
+  }
+
+  productosBusqueda = computed(() => {
+    const q = this.vSearchText().toLowerCase().trim();
+    const list = this.productos();
+    if (!q) return list.slice(0, 50);
+    return list.filter(p =>
+      p.nombre.toLowerCase().includes(q) ||
+      (p.descripcion ?? '').toLowerCase().includes(q)
+    ).slice(0, 50);
+  });
+
+  recaudacionSinDesc = computed(() => {
+    const p = this.productoSeleccionado();
+    const u = Number(this.vUnidades()) || 0;
+    return p ? p.precio * u : 0;
+  });
+
+  recaudacionCalc = computed(() => {
+    const base = this.recaudacionSinDesc();
+    const d = Math.max(0, Math.min(100, Number(this.vDescuento()) || 0));
+    return Math.round(base * (1 - d / 100) * 100) / 100;
+  });
+
+  onSearchInput(ev: Event) {
+    const v = (ev.target as HTMLInputElement).value;
+    this.vSearchText.set(v);
+    this.vSearchOpen.set(true);
+  }
+
+  seleccionarProducto(p: ProductoListado) {
+    this.vProductoId.set(p.id);
+    this.vSearchOpen.set(false);
+    this.vSearchText.set('');
+  }
 
   abrirNuevaVenta() {
-    this.vForm = { productoId: null, unidades: 1, recaudacion: null, nroRecibo: '', metodoPago: '' };
+    this.vProductoId.set(null);
+    this.vUnidades.set(1);
+    this.vDescuento.set(0);
+    this.vNroRecibo.set('');
+    this.vMetodoPago.set('');
+    this.vSearchOpen.set(false);
+    this.vSearchText.set('');
     this.vError.set('');
     this.ahora.set(new Date().toLocaleString('es-UY'));
     this.modalVenta.set(true);
@@ -527,22 +659,31 @@ export class ProductosComponent {
   cerrarNuevaVenta() {
     this.modalVenta.set(false);
     this.vError.set('');
+    this.vSearchOpen.set(false);
+  }
+
+  @HostListener('document:click')
+  onDocClick() {
+    if (this.modalVenta() && this.vSearchOpen()) this.vSearchOpen.set(false);
   }
 
   guardarVenta() {
-    if (!this.vForm.productoId) { this.vError.set('Seleccioná un producto.'); return; }
-    if (!this.vForm.unidades || this.vForm.unidades <= 0) { this.vError.set('Las unidades deben ser mayores a 0.'); return; }
-    if (!this.vForm.recaudacion || this.vForm.recaudacion <= 0) { this.vError.set('La recaudación debe ser mayor a 0.'); return; }
-    if (!this.vForm.metodoPago) { this.vError.set('Seleccioná un método de pago.'); return; }
+    const prod = this.productoSeleccionado();
+    if (!prod) { this.vError.set('Seleccioná un producto.'); return; }
+    const u = Number(this.vUnidades()) || 0;
+    if (u <= 0) { this.vError.set('Las unidades deben ser mayores a 0.'); return; }
+    if (!this.vMetodoPago()) { this.vError.set('Seleccioná un método de pago.'); return; }
+    const rec = this.recaudacionCalc();
+    if (rec <= 0) { this.vError.set('La recaudación debe ser mayor a 0.'); return; }
 
     this.vBusy.set(true);
     this.vError.set('');
     this.http.post(`${environment.apiUrl}/ventas/simple`, {
-      productoId: this.vForm.productoId,
-      unidades: this.vForm.unidades,
-      recaudacion: this.vForm.recaudacion,
-      nroRecibo: this.vForm.nroRecibo || null,
-      metodoPago: this.vForm.metodoPago
+      productoId: prod.id,
+      unidades: u,
+      recaudacion: rec,
+      nroRecibo: this.vNroRecibo() || null,
+      metodoPago: this.vMetodoPago()
     }).subscribe({
       next: () => {
         this.vBusy.set(false);
