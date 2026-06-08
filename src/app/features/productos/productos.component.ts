@@ -10,12 +10,12 @@ interface ProductoListado {
   id: number; nombre: string; descripcion?: string; precio: number;
   stock: number; estado: string; activo: boolean; categoria?: string;
 }
-interface Stats { productosUnicosTotales: number; productosSinStock: number; ventasMes: number; donacionesMes: number; }
+interface Stats { productosUnicosTotales: number; productosSinStock: number; productosPocoStock: number; ventasMes: number; donacionesMes: number; }
 interface Movimiento { fecha: string; producto: string; tipo: string; cantidad: number; motivo: string; observaciones: string; }
 interface Venta { id: string; fecha: string; producto: string; cantidad: number; precioUnit: number; total: number; comprador: string; vendedor: string; metodoPago: string; nroRecibo: string; }
 interface Donacion { id: string; fecha: string; producto: string; cantidad: number; destinatario: string; observaciones: string; }
 
-type Tab = 'gestion' | 'listar' | 'ventas' | 'donaciones' | 'form';
+type Tab = 'gestion' | 'listar' | 'pocoStock' | 'ventas' | 'donaciones' | 'form';
 
 @Component({
   selector: 'app-productos',
@@ -25,6 +25,7 @@ type Tab = 'gestion' | 'listar' | 'ventas' | 'donaciones' | 'form';
     <div class="tabs">
       <a class="tab" [class.active]="tab()==='gestion'"     (click)="tab.set('gestion')">Gestion Productos</a>
       <a class="tab" [class.active]="tab()==='listar'"      (click)="tab.set('listar')">Listar Productos</a>
+      <a class="tab" [class.active]="tab()==='pocoStock'"   (click)="tab.set('pocoStock')">Productos con poco stock</a>
       <a class="tab" [class.active]="tab()==='ventas'"      (click)="tab.set('ventas')">Listar Ventas</a>
       <a class="tab" [class.active]="tab()==='donaciones'"  (click)="tab.set('donaciones')">Listar Donaciones</a>
     </div>
@@ -43,6 +44,7 @@ type Tab = 'gestion' | 'listar' | 'ventas' | 'donaciones' | 'form';
       <div class="stats-grid">
         <div class="stat-card"><div class="stat-value">{{ stats()?.productosUnicosTotales ?? 0 }}</div><div class="stat-label">Productos únicos totales</div></div>
         <div class="stat-card"><div class="stat-value">{{ stats()?.productosSinStock ?? 0 }}</div><div class="stat-label">Productos sin stock</div></div>
+        <div class="stat-card"><div class="stat-value">{{ stats()?.productosPocoStock ?? 0 }}</div><div class="stat-label">Productos con poco stock (≤5)</div></div>
         <div class="stat-card"><div class="stat-value">{{ stats()?.ventasMes ?? 0 }}</div><div class="stat-label">Ventas este mes</div></div>
         <div class="stat-card"><div class="stat-value">{{ stats()?.donacionesMes ?? 0 }}</div><div class="stat-label">Donaciones este mes</div></div>
       </div>
@@ -156,6 +158,43 @@ type Tab = 'gestion' | 'listar' | 'ventas' | 'donaciones' | 'form';
               <button class="page-btn active">1</button>
               <button class="page-btn">&gt;</button>
             </div>
+          </div>
+        </div>
+      </div>
+    }
+
+    @if (tab() === 'pocoStock') {
+      <div class="card">
+        <div class="card-body" style="padding:0; overflow-x:auto">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Id</th><th>Producto</th><th>Descripción</th><th>Precio Unitario</th><th>Stock</th><th>Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (p of productosPocoStock(); track p.id) {
+                <tr>
+                  <td><strong>{{ p.id }}</strong></td>
+                  <td>{{ p.nombre }}</td>
+                  <td>{{ p.descripcion }}</td>
+                  <td>\${{ p.precio }}</td>
+                  <td><strong>{{ p.stock }}</strong></td>
+                  <td>
+                    <span class="badge"
+                      [class.status-rejected]="p.stock === 0"
+                      [class.status-pending]="p.stock > 0">
+                      {{ p.stock === 0 ? 'Sin stock' : 'Stock bajo' }}
+                    </span>
+                  </td>
+                </tr>
+              } @empty {
+                <tr><td colspan="6"><div class="empty-state"><div class="empty-state-text">No hay productos con poco stock (≤ 5 unidades).</div></div></td></tr>
+              }
+            </tbody>
+          </table>
+          <div style="padding:12px 18px; font-size:13px; color:#666; border-top:1px solid #eef1f5">
+            Mostrando {{ productosPocoStock().length }} producto(s) con 5 unidades o menos.
           </div>
         </div>
       </div>
@@ -434,6 +473,12 @@ export class ProductosComponent {
       && e(m.tipo, this.fmTipo) && t(String(m.cantidad), this.fmCantidad)
       && e(m.motivo, this.fmMotivo) && t(m.observaciones, this.fmObs);
   }));
+
+  productosPocoStock = computed(() =>
+    this.productos()
+      .filter(p => p.stock <= 5)
+      .sort((a, b) => a.stock - b.stock)
+  );
 
   productosFiltrados = computed(() => this.productos().filter(p => {
     const t = (s: string, f: string) => !f || (s ?? '').toLowerCase().includes(f.toLowerCase());
