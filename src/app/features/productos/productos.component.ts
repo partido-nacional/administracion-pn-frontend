@@ -10,7 +10,7 @@ interface ProductoListado {
   id: number; nombre: string; descripcion?: string; precio: number;
   stock: number; estado: string; activo: boolean; categoria?: string;
 }
-interface Stats { productosActivos: number; unidadesStock: number; ventasMes: number; donacionesMes: number; }
+interface Stats { productosUnicosTotales: number; productosSinStock: number; ventasMes: number; donacionesMes: number; }
 interface Movimiento { fecha: string; producto: string; tipo: string; cantidad: number; motivo: string; observaciones: string; }
 interface Venta { id: string; fecha: string; producto: string; cantidad: number; precioUnit: number; total: number; comprador: string; vendedor: string; metodoPago: string; nroRecibo: string; }
 interface Donacion { id: string; fecha: string; producto: string; cantidad: number; destinatario: string; observaciones: string; }
@@ -41,8 +41,8 @@ type Tab = 'gestion' | 'listar' | 'ventas' | 'donaciones' | 'form';
       </div>
 
       <div class="stats-grid">
-        <div class="stat-card"><div class="stat-value">{{ stats()?.productosActivos ?? 0 }}</div><div class="stat-label">Productos Activos</div></div>
-        <div class="stat-card"><div class="stat-value">{{ stats()?.unidadesStock ?? 0 }}</div><div class="stat-label">Unidades en Stock</div></div>
+        <div class="stat-card"><div class="stat-value">{{ stats()?.productosUnicosTotales ?? 0 }}</div><div class="stat-label">Productos únicos totales</div></div>
+        <div class="stat-card"><div class="stat-value">{{ stats()?.productosSinStock ?? 0 }}</div><div class="stat-label">Productos sin stock</div></div>
         <div class="stat-card"><div class="stat-value">{{ stats()?.ventasMes ?? 0 }}</div><div class="stat-label">Ventas este mes</div></div>
         <div class="stat-card"><div class="stat-value">{{ stats()?.donacionesMes ?? 0 }}</div><div class="stat-label">Donaciones este mes</div></div>
       </div>
