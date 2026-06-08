@@ -11,7 +11,7 @@ interface ProductoListado {
 }
 interface Stats { productosActivos: number; unidadesStock: number; ventasMes: number; donacionesMes: number; }
 interface Movimiento { fecha: string; producto: string; tipo: string; cantidad: number; motivo: string; observaciones: string; }
-interface Venta { id: string; fecha: string; producto: string; cantidad: number; precioUnit: number; total: number; comprador: string; }
+interface Venta { id: string; fecha: string; producto: string; cantidad: number; precioUnit: number; total: number; comprador: string; vendedor: string; }
 interface Donacion { id: string; fecha: string; producto: string; cantidad: number; destinatario: string; observaciones: string; }
 
 type Tab = 'gestion' | 'listar' | 'ventas' | 'donaciones' | 'form';
@@ -21,10 +21,6 @@ type Tab = 'gestion' | 'listar' | 'ventas' | 'donaciones' | 'form';
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="topbar-inline">
-      <button class="btn btn-primary" (click)="nuevoProducto()">+ Nuevo Producto</button>
-    </div>
-
     <div class="tabs">
       <a class="tab" [class.active]="tab()==='gestion'"     (click)="tab.set('gestion')">Gestion Productos</a>
       <a class="tab" [class.active]="tab()==='listar'"      (click)="tab.set('listar')">Listar Productos</a>
@@ -102,6 +98,9 @@ type Tab = 'gestion' | 'listar' | 'ventas' | 'donaciones' | 'form';
     }
 
     @if (tab() === 'listar') {
+      <div class="topbar-inline">
+        <button class="btn btn-primary" (click)="nuevoProducto()">+ Nuevo Producto</button>
+      </div>
       <div class="card">
         <div class="card-body" style="padding:0; overflow-x:auto">
           <table class="table">
@@ -178,7 +177,7 @@ type Tab = 'gestion' | 'listar' | 'ventas' | 'donaciones' | 'form';
         <div class="card-body" style="padding:0; overflow-x:auto">
           <table class="table">
             <thead>
-              <tr><th>ID</th><th>Fecha</th><th>Producto</th><th>Cantidad</th><th>Precio Unit.</th><th>Total</th><th>Comprador</th><th></th></tr>
+              <tr><th>ID</th><th>Fecha</th><th>Producto</th><th>Cantidad</th><th>Precio Unit.</th><th>Total</th><th>Comprador</th><th>Vendedor</th><th></th></tr>
             </thead>
             <tbody>
               @for (v of ventasFiltradas(); track v.id) {
@@ -190,10 +189,11 @@ type Tab = 'gestion' | 'listar' | 'ventas' | 'donaciones' | 'form';
                   <td>\${{ v.precioUnit }}</td>
                   <td><strong>\${{ v.total }}</strong></td>
                   <td>{{ v.comprador }}</td>
+                  <td>{{ v.vendedor || '—' }}</td>
                   <td><a class="action-link" style="color:var(--danger)">Eliminar</a></td>
                 </tr>
               } @empty {
-                <tr><td colspan="8"><div class="empty-state"><div class="empty-state-text">Sin ventas</div></div></td></tr>
+                <tr><td colspan="9"><div class="empty-state"><div class="empty-state-text">Sin ventas</div></div></td></tr>
               }
             </tbody>
           </table>
