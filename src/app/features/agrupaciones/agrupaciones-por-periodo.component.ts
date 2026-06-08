@@ -61,6 +61,7 @@ interface AgrupacionPeriodoRow {
   sublema4?: string;
   sublema5?: string;
   sublemaRenunciado?: string;
+  asuntosPublicos: boolean;
   integrantes: IntegranteRow[];
 }
 
@@ -88,6 +89,7 @@ interface AgrupacionPeriodoRow {
             <th class="sortable" (click)="onSort('depto', $event)">Depto. <span class="ind">{{ indicador('depto') }}</span></th>
             <th class="sortable" (click)="onSort('sector', $event)">Sector <span class="ind">{{ indicador('sector') }}</span></th>
             <th>Sublemas</th>
+            <th class="sortable" (click)="onSort('asuntosPublicos', $event)" title="Asuntos Públicos">AP <span class="ind">{{ indicador('asuntosPublicos') }}</span></th>
             <th></th>
           </tr>
           <tr class="filter-row">
@@ -127,6 +129,13 @@ interface AgrupacionPeriodoRow {
             </th>
             <th><input class="column-filter" [ngModel]="fSector()" (ngModelChange)="fSector.set($event)" placeholder="Filtrar..."></th>
             <th><input class="column-filter" [ngModel]="fSublema()" (ngModelChange)="fSublema.set($event)" placeholder="Filtrar..."></th>
+            <th>
+              <select class="column-filter" [ngModel]="fAP()" (ngModelChange)="fAP.set($event)">
+                <option value="">Todos</option>
+                <option value="si">Sí</option>
+                <option value="no">No</option>
+              </select>
+            </th>
             <th></th>
           </tr>
         </thead>
@@ -148,6 +157,10 @@ interface AgrupacionPeriodoRow {
               <td><span class="badge dept">{{ r.depto || '—' }}</span></td>
               <td>{{ r.sector || '—' }}</td>
               <td>{{ joinSublemas(r) }}</td>
+              <td (click)="$event.stopPropagation()" style="text-align:center">
+                <input type="checkbox" [checked]="r.asuntosPublicos"
+                       (change)="toggleAP(r, $event)" title="Asuntos Públicos">
+              </td>
               <td (click)="$event.stopPropagation()">
                 <button class="btn btn-sm btn-secondary" (click)="imprimir(r)" title="Imprimir / PDF">
                   🖨 Imprimir
@@ -156,7 +169,7 @@ interface AgrupacionPeriodoRow {
             </tr>
             @if (expandido() === r.periodoId) {
               <tr class="detalle-row">
-                <td colspan="13">
+                <td colspan="14">
                   <div class="detalle-wrap">
                     <div class="seccion">
                       <div class="seccion-title">Período</div>
@@ -165,6 +178,7 @@ interface AgrupacionPeriodoRow {
                         <div class="kv"><span class="k">Período</span><span class="v">{{ r.periodo }}</span></div>
                         <div class="kv"><span class="k">Estado</span><span class="v">{{ r.pendiente ? 'Pendiente' : 'Aprobada' }}</span></div>
                         <div class="kv"><span class="k">Ficha origen</span><span class="v">{{ r.fichaAgrupacionOrigenId ? '#' + r.fichaAgrupacionOrigenId : '—' }}</span></div>
+                        <div class="kv"><span class="k">Asuntos Públicos</span><span class="v">{{ r.asuntosPublicos ? 'Sí' : 'No' }}</span></div>
                       </div>
                     </div>
 
@@ -279,7 +293,7 @@ interface AgrupacionPeriodoRow {
               </tr>
             }
           } @empty {
-            <tr><td colspan="13"><div class="empty-state"><div class="empty-state-text">No hay agrupaciones por período que coincidan con el filtro.</div></div></td></tr>
+            <tr><td colspan="14"><div class="empty-state"><div class="empty-state-text">No hay agrupaciones por período que coincidan con el filtro.</div></div></td></tr>
           }
         </tbody>
       </table>
@@ -374,10 +388,27 @@ export class AgrupacionesPorPeriodoComponent {
   fId = signal(''); fPeriodo = signal(''); fPend = signal('');
   fAgrId = signal(''); fCod = signal(''); fCodDep = signal('');
   fTipo = signal(''); fNombre = signal(''); fDepto = signal('');
-  fSector = signal(''); fSublema = signal('');
+  fSector = signal(''); fSublema = signal(''); fAP = signal('');
 
   periodos = computed(() => Array.from(new Set(this.items().map(a => a.periodo).filter(Boolean))).sort());
   deptos   = computed(() => Array.from(new Set(this.items().map(a => a.depto).filter((d): d is string => !!d))).sort());
+
+  toggleAP(r: AgrupacionPeriodoRow, ev: Event) {
+    const target = ev.target as HTMLInputElement;
+    const value = target.checked;
+    // optimistic: aplico al modelo local y reviero si falla
+    r.asuntosPublicos = value;
+    this.items.set([...this.items()]);
+    this.http.patch(`${environment.apiUrl}/agrupaciones-periodos/${r.periodoId}/asuntos-publicos`, { value })
+      .subscribe({
+        error: () => {
+          r.asuntosPublicos = !value;
+          target.checked = !value;
+          this.items.set([...this.items()]);
+          alert('No se pudo actualizar Asuntos Públicos.');
+        }
+      });
+  }
 
   imprimir(r: AgrupacionPeriodoRow) {
     imprimirAgrupacion({
@@ -413,7 +444,7 @@ export class AgrupacionesPorPeriodoComponent {
     const fId = this.fId(), fPer = this.fPeriodo(), fPend = this.fPend(),
           fAgrId = this.fAgrId(), fCod = this.fCod(), fCodDep = this.fCodDep(),
           fTipo = this.fTipo(), fNom = this.fNombre(), fDep = this.fDepto(),
-          fSec = this.fSector(), fSub = this.fSublema();
+          fSec = this.fSector(), fSub = this.fSublema(), fAP = this.fAP();
     const filtered = this.items().filter(r =>
       m(r.periodoId, fId) &&
       (!fPer || r.periodo === fPer) &&
@@ -425,7 +456,8 @@ export class AgrupacionesPorPeriodoComponent {
       m(r.nombre, fNom) &&
       (!fDep || r.depto === fDep) &&
       m(r.sector, fSec) &&
-      m(this.joinSublemas(r), fSub)
+      m(this.joinSublemas(r), fSub) &&
+      (!fAP || (fAP === 'si' ? r.asuntosPublicos : !r.asuntosPublicos))
     );
 
     const sorts = this.sortBy();
