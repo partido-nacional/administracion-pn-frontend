@@ -8,6 +8,7 @@ import { PageTitleService } from '../../core/page-title.service';
 import { ContactosService, Contacto } from './contactos.service';
 import { DuplicadosContactosComponent } from './duplicados-contactos.component';
 import { imprimirContactos } from './imprimir-contactos';
+import { exportarCSV } from '../../core/exportar-csv';
 
 interface ContactoListado {
   id: number; nombre: string; apellido: string; cedula?: string; credencial?: string;
@@ -23,6 +24,7 @@ type Tab = 'todos' | 'padron' | 'duplicados' | 'exportar';
   imports: [CommonModule, FormsModule, RouterLink, DuplicadosContactosComponent],
   template: `
     <div class="topbar-inline">
+      <button class="btn btn-secondary" (click)="exportarCsv()" title="Exportar CSV">📥 CSV</button>
       <button class="btn btn-secondary" (click)="imprimir()" title="Imprimir / PDF">🖨 Imprimir</button>
       <a routerLink="/agenda/nuevo" class="btn btn-primary">+ Nuevo Contacto</a>
     </div>
@@ -398,6 +400,19 @@ export class AgendaListadoComponent {
       cedula: c.cedula, credencial: c.credencial, departamento: c.departamento,
       celular: c.celular, email: c.email, adhesion: c.adhesion
     })), { filtros, orden });
+  }
+
+  exportarCsv() {
+    exportarCSV(this.filtrados(), [
+      { get: 'id', label: 'ID' },
+      { get: (c) => `${c.apellido}, ${c.nombre}`, label: 'Nombre' },
+      { get: 'cedula', label: 'Cédula' },
+      { get: 'credencial', label: 'Credencial' },
+      { get: 'departamento', label: 'Departamento' },
+      { get: 'celular', label: 'Celular' },
+      { get: 'email', label: 'Email' },
+      { get: 'adhesion', label: 'Adhesión' }
+    ], `contactos-${new Date().toISOString().slice(0, 10)}.csv`);
   }
 
   constructor() {
