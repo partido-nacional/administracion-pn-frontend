@@ -34,19 +34,26 @@ type Tab = 'todas' | 'pendientes' | 'fichas' | 'periodo' | 'padron';
       <button class="btn btn-primary" (click)="abrirNueva()">+ Nueva Agrupación</button>
     </div>
 
-    @if (mostrarNueva()) {
+    @if (modoModal()) {
       <div class="modal-backdrop" (click)="cerrarNueva()">
         <div class="nv-modal" (click)="$event.stopPropagation()">
           <div class="nv-header">
-            <div class="nv-title">Nueva Agrupación (entrará como pendiente)</div>
+            <div class="nv-title">{{ modoModal() === 'editar' ? 'Editar Agrupación' : 'Nueva Agrupación (entrará como pendiente)' }}</div>
             <button class="nv-close" (click)="cerrarNueva()">×</button>
           </div>
           <div class="nv-body">
-            <p class="nv-sub">
-              Esta agrupación se creará y quedará en la pestaña <strong>Agrupaciones Pendientes</strong>
-              para el período <strong>2025-2030</strong>. Solo <strong>Nombre</strong> es obligatorio;
-              el resto se puede completar después.
-            </p>
+            @if (modoModal() === 'nueva') {
+              <p class="nv-sub">
+                Esta agrupación se creará y quedará en la pestaña <strong>Agrupaciones Pendientes</strong>
+                para el período <strong>2025-2030</strong>. Solo <strong>Nombre</strong> es obligatorio;
+                el resto se puede completar después.
+              </p>
+            } @else {
+              <p class="nv-sub">
+                Editás los datos maestros de la agrupación. Los sublemas y el flag AP viven en cada
+                <strong>Agrupación por Período</strong> y se editan ahí.
+              </p>
+            }
 
             <h4 class="sec-h">Identificación</h4>
             <div class="nv-grid">
@@ -98,15 +105,17 @@ type Tab = 'todas' | 'pendientes' | 'fichas' | 'periodo' | 'padron';
               <div class="fg"><label>Fecha Circ. C.E.</label><input type="date" [(ngModel)]="nuevoForm.fechaCircCE" name="n-fcc"></div>
             </div>
 
-            <h4 class="sec-h">Sublemas (período 2025-2030)</h4>
-            <div class="nv-grid">
-              <div class="fg"><label>Sublema 1</label><input [(ngModel)]="nuevoForm.sublema1" name="n-s1"></div>
-              <div class="fg"><label>Sublema 2</label><input [(ngModel)]="nuevoForm.sublema2" name="n-s2"></div>
-              <div class="fg"><label>Sublema 3</label><input [(ngModel)]="nuevoForm.sublema3" name="n-s3"></div>
-              <div class="fg"><label>Sublema 4</label><input [(ngModel)]="nuevoForm.sublema4" name="n-s4"></div>
-              <div class="fg"><label>Sublema 5</label><input [(ngModel)]="nuevoForm.sublema5" name="n-s5"></div>
-              <div class="fg full"><label>Sublema Renunciado</label><input [(ngModel)]="nuevoForm.sublemaRenunciado" name="n-sr"></div>
-            </div>
+            @if (modoModal() === 'nueva') {
+              <h4 class="sec-h">Sublemas (período 2025-2030)</h4>
+              <div class="nv-grid">
+                <div class="fg"><label>Sublema 1</label><input [(ngModel)]="nuevoForm.sublema1" name="n-s1"></div>
+                <div class="fg"><label>Sublema 2</label><input [(ngModel)]="nuevoForm.sublema2" name="n-s2"></div>
+                <div class="fg"><label>Sublema 3</label><input [(ngModel)]="nuevoForm.sublema3" name="n-s3"></div>
+                <div class="fg"><label>Sublema 4</label><input [(ngModel)]="nuevoForm.sublema4" name="n-s4"></div>
+                <div class="fg"><label>Sublema 5</label><input [(ngModel)]="nuevoForm.sublema5" name="n-s5"></div>
+                <div class="fg full"><label>Sublema Renunciado</label><input [(ngModel)]="nuevoForm.sublemaRenunciado" name="n-sr"></div>
+              </div>
+            }
 
             <h4 class="sec-h">Observaciones</h4>
             <div class="nv-grid">
@@ -122,7 +131,7 @@ type Tab = 'todas' | 'pendientes' | 'fichas' | 'periodo' | 'padron';
           <div class="nv-footer">
             <button class="btn btn-secondary" (click)="cerrarNueva()">Cancelar</button>
             <button class="btn btn-primary" (click)="guardarNueva()" [disabled]="nuevoBusy()">
-              {{ nuevoBusy() ? 'Creando…' : 'Crear pendiente' }}
+              {{ nuevoBusy() ? 'Guardando…' : (modoModal() === 'editar' ? 'Guardar cambios' : 'Crear pendiente') }}
             </button>
           </div>
         </div>
@@ -169,7 +178,14 @@ type Tab = 'todas' | 'pendientes' | 'fichas' | 'periodo' | 'padron';
                 <td>{{ a.solic }}</td>
                 <td><strong>{{ a.nombre }}</strong></td>
                 <td><span class="badge dept">{{ a.depto }}</span></td>
-                <td (click)="$event.stopPropagation()"><a class="action-link">Editar</a></td>
+                <td (click)="$event.stopPropagation()">
+                  <button class="btn-pencil" (click)="abrirEditar(a)" title="Editar">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M12 20h9"/>
+                      <path d="M16.5 3.5a2.121 2.121 0 113 3L7 19l-4 1 1-4 12.5-12.5z"/>
+                    </svg>
+                  </button>
+                </td>
               </tr>
               @if (expandido() === a.id) {
                 <tr class="detalle-row">
@@ -500,7 +516,10 @@ export class AgrupacionesComponent {
     this.titleSvc.set(label);
   }
 
-  mostrarNueva = signal(false);
+  modoModal = signal<'nueva' | 'editar' | null>(null);
+  editandoId = signal<number | null>(null);
+  // alias compat
+  mostrarNueva = computed(() => this.modoModal() !== null);
   nuevoBusy = signal(false);
   nuevoError = signal('');
   nuevoForm: any = {};
@@ -510,8 +529,8 @@ export class AgrupacionesComponent {
     'Salto','San José','Soriano','Tacuarembó','Treinta y Tres','Nacional'
   ];
 
-  abrirNueva() {
-    this.nuevoForm = {
+  private formVacio() {
+    return {
       nombre: '', sigla: '', descripcion: '',
       codAgrup: '', codDepto: '', tipo: '', solic: null, depto: '',
       clasificacion: '', solicita: '', sector: '',
@@ -525,12 +544,61 @@ export class AgrupacionesComponent {
       sublema1: '', sublema2: '', sublema3: '', sublema4: '', sublema5: '',
       sublemaRenunciado: ''
     };
+  }
+
+  /** Convierte fechas dd/MM/yyyy -> yyyy-MM-dd (para input type=date) */
+  private toInputDate(v: any): string {
+    if (!v) return '';
+    const s = String(v);
+    if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
+    const m = s.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+    return m ? `${m[3]}-${m[2]}-${m[1]}` : '';
+  }
+
+  abrirNueva() {
+    this.nuevoForm = this.formVacio();
     this.nuevoError.set('');
-    this.mostrarNueva.set(true);
+    this.editandoId.set(null);
+    this.modoModal.set('nueva');
+  }
+
+  abrirEditar(a: Agrupacion) {
+    this.nuevoForm = {
+      ...this.formVacio(),
+      nombre: a.nombre || '',
+      codAgrup: a.codAgrup || '',
+      codDepto: a.codDepto || '',
+      tipo: a.tipo || '',
+      solic: a.solic ?? null,
+      depto: a.depto || '',
+      clasificacion: a.clasificacion || '',
+      solicita: a.solicita || '',
+      sector: a.sector || '',
+      fechaSolicitud: this.toInputDate(a.fechaSolicitud),
+      codAnt: a.codAnt || '',
+      nombreAnt: a.nombreAnt || '',
+      domicilioLegal: a.domicilioLegal || '',
+      ciudad: a.ciudad || '',
+      tel1: a.tel1 || '', tel2: a.tel2 || '', fax: a.fax || '', email: a.email || '',
+      formaRepresentacion: a.formaRepresentacion || '',
+      representante: a.representante || '',
+      delegadoCE: a.delegadoCE || '',
+      formaActuacion: a.formaActuacion || '',
+      fechaIngComis: this.toInputDate(a.fechaIngComis),
+      fechaRecAgrup: this.toInputDate(a.fechaRecAgrup),
+      fechaEntrCE: this.toInputDate(a.fechaEntrCE),
+      fechaCircCE: this.toInputDate(a.fechaCircCE),
+      observaciones: a.observaciones || '', obsCE: a.obsCE || '', nota: a.nota || '',
+      antecedentes: a.antecedentes || '', resolucionComision: a.resolucionComision || ''
+    };
+    this.nuevoError.set('');
+    this.editandoId.set(a.id);
+    this.modoModal.set('editar');
   }
 
   cerrarNueva() {
-    this.mostrarNueva.set(false);
+    this.modoModal.set(null);
+    this.editandoId.set(null);
     this.nuevoError.set('');
   }
 
@@ -551,17 +619,34 @@ export class AgrupacionesComponent {
       fechaEntrCE: this.nuevoForm.fechaEntrCE || null,
       fechaCircCE: this.nuevoForm.fechaCircCE || null
     };
-    this.http.post(`${environment.apiUrl}/agrupaciones-pendientes/nueva`, body).subscribe({
-      next: () => {
-        this.nuevoBusy.set(false);
-        this.cerrarNueva();
-        this.setTab('pendientes');
-      },
-      error: (err) => {
-        this.nuevoBusy.set(false);
-        this.nuevoError.set(err?.error?.message || err?.message || 'No se pudo crear la agrupación.');
-      }
-    });
+
+    const editId = this.editandoId();
+    if (this.modoModal() === 'editar' && editId != null) {
+      body.id = editId;
+      this.http.put(`${environment.apiUrl}/agrupaciones/${editId}`, body).subscribe({
+        next: () => {
+          this.nuevoBusy.set(false);
+          this.cerrarNueva();
+          this.loadTodas();
+        },
+        error: (err) => {
+          this.nuevoBusy.set(false);
+          this.nuevoError.set(err?.error?.message || err?.message || 'No se pudo guardar.');
+        }
+      });
+    } else {
+      this.http.post(`${environment.apiUrl}/agrupaciones-pendientes/nueva`, body).subscribe({
+        next: () => {
+          this.nuevoBusy.set(false);
+          this.cerrarNueva();
+          this.setTab('pendientes');
+        },
+        error: (err) => {
+          this.nuevoBusy.set(false);
+          this.nuevoError.set(err?.error?.message || err?.message || 'No se pudo crear la agrupación.');
+        }
+      });
+    }
   }
 
   loadTodas() { this.http.get<Agrupacion[]>(`${environment.apiUrl}/agrupaciones`).subscribe(x => this.agrupaciones.set(x)); }

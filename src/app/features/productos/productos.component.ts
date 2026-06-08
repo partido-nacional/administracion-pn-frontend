@@ -139,7 +139,12 @@ type Tab = 'gestion' | 'listar' | 'ventas' | 'donaciones' | 'form';
                   </td>
                   <td>
                     <div class="action-group">
-                      <button class="btn btn-sm btn-primary" (click)="editarProducto(p)">Editar</button>
+                      <button class="btn-pencil" (click)="editarProducto(p)" title="Editar">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                          <path d="M12 20h9"/>
+                          <path d="M16.5 3.5a2.121 2.121 0 113 3L7 19l-4 1 1-4 12.5-12.5z"/>
+                        </svg>
+                      </button>
                       <button class="btn btn-sm btn-secondary" (click)="abrirStock(p)">Stock</button>
                     </div>
                   </td>

@@ -60,7 +60,12 @@ type Tab = 'nacionales' | 'departamentales' | 'odn' | 'odd' | 'integrantes';
                 <td><a class="action-link">{{ c.contacto }}</a></td>
                 <td class="action-group">
                   <a class="action-link">Detalle</a>
-                  <a class="action-link">Editar</a>
+                  <button class="btn-pencil" title="Editar (no implementado)">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M12 20h9"/>
+                      <path d="M16.5 3.5a2.121 2.121 0 113 3L7 19l-4 1 1-4 12.5-12.5z"/>
+                    </svg>
+                  </button>
                 </td>
               </tr>
             }
@@ -109,7 +114,12 @@ type Tab = 'nacionales' | 'departamentales' | 'odn' | 'odd' | 'integrantes';
                 <td>{{ l.titulares + l.suplentes }}</td>
                 <td class="action-group">
                   <a class="action-link">Ver Integrantes</a>
-                  <a class="action-link">Editar</a>
+                  <button class="btn-pencil" title="Editar (no implementado)">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M12 20h9"/>
+                      <path d="M16.5 3.5a2.121 2.121 0 113 3L7 19l-4 1 1-4 12.5-12.5z"/>
+                    </svg>
+                  </button>
                 </td>
               </tr>
             }

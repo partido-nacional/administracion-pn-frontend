@@ -79,7 +79,14 @@ const m = (val: any, q: string) => !q || norm(val).includes(q.toLowerCase());
                 <td>{{ o.art44 ? '☑' : '☐' }}</td>
                 <td>{{ o.ordenDpto }}</td>
                 <td>{{ o.observaciones || '—' }}</td>
-                <td><a class="action-link">Editar</a></td>
+                <td>
+                  <button class="btn-pencil" title="Editar (no implementado)">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M12 20h9"/>
+                      <path d="M16.5 3.5a2.121 2.121 0 113 3L7 19l-4 1 1-4 12.5-12.5z"/>
+                    </svg>
+                  </button>
+                </td>
               </tr>
             } @empty {
               <tr><td colspan="11"><div class="empty-state"><div class="empty-state-text">Sin resultados</div></div></td></tr>
@@ -124,7 +131,14 @@ const m = (val: any, q: string) => !q || norm(val).includes(q.toLowerCase());
                 <td><strong>{{ i.nombreCompania }}</strong></td>
                 <td>{{ i.nombreAbreviado }}</td>
                 <td><span class="badge dept">{{ i.departamento }}</span></td>
-                <td><a class="action-link">Editar</a></td>
+                <td>
+                  <button class="btn-pencil" title="Editar (no implementado)">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M12 20h9"/>
+                      <path d="M16.5 3.5a2.121 2.121 0 113 3L7 19l-4 1 1-4 12.5-12.5z"/>
+                    </svg>
+                  </button>
+                </td>
               </tr>
             } @empty {
               <tr><td colspan="8"><div class="empty-state"><div class="empty-state-text">Sin resultados</div></div></td></tr>

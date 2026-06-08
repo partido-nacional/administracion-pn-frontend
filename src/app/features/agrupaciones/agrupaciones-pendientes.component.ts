@@ -59,7 +59,12 @@ const DEPARTAMENTOS = [
                 <td><span class="badge dept">{{ a.depto || '—' }}</span></td>
                 <td>{{ a.fichaAgrupacionOrigenId ? 'Ficha #' + a.fichaAgrupacionOrigenId : '—' }}</td>
                 <td (click)="$event.stopPropagation()" style="white-space:nowrap">
-                  <button class="btn btn-sm btn-secondary" (click)="abrirModal(a, 'editar')">Editar</button>
+                  <button class="btn-pencil" (click)="abrirModal(a, 'editar')" title="Editar">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M12 20h9"/>
+                      <path d="M16.5 3.5a2.121 2.121 0 113 3L7 19l-4 1 1-4 12.5-12.5z"/>
+                    </svg>
+                  </button>
                   <button class="btn btn-sm btn-success" (click)="abrirModal(a, 'aprobar')" style="margin-left:6px">Aprobar</button>
                   <button class="btn btn-sm btn-secondary" (click)="imprimir(a)" style="margin-left:6px" title="Imprimir / PDF">🖨</button>
                   <button class="btn btn-sm btn-danger" (click)="eliminar(a.id)" style="margin-left:6px">Eliminar</button>
