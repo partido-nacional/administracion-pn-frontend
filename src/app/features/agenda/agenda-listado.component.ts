@@ -260,15 +260,20 @@ type Tab = 'todos' | 'padron' | 'duplicados' | 'exportar';
       display:inline-block; min-width:18px; color:#1a4f8a; font-weight:700;
       margin-left:2px;
     }
-    .btn-wa {
-      background:#25D366; color:#fff; border:none; border-radius:50%;
-      width:34px; height:34px; flex:0 0 34px; align-self:center;
+    .action-group .btn-wa {
+      background:#25D366; color:#fff; border:none;
+      border-radius:50%;
+      width:34px !important; height:34px !important;
+      min-width:34px; min-height:34px;
+      max-width:34px; max-height:34px;
+      flex:0 0 34px; align-self:center;
       display:inline-flex; align-items:center; justify-content:center;
-      cursor:pointer; padding:0; vertical-align:middle;
+      cursor:pointer; padding:0; box-sizing:border-box;
+      aspect-ratio: 1 / 1;
     }
-    .btn-wa svg { display:block; }
-    .btn-wa:hover:not(:disabled) { background:#1ebe57; }
-    .btn-wa:disabled { background:#bcd; cursor:not-allowed; }
+    .action-group .btn-wa svg { display:block; flex-shrink:0; }
+    .action-group .btn-wa:hover:not(:disabled) { background:#1ebe57; }
+    .action-group .btn-wa:disabled { background:#bcd; cursor:not-allowed; }
 
     .modal-backdrop {
       position:fixed; inset:0; background:rgba(15,23,42,.55);
