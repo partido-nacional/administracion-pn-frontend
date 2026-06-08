@@ -161,7 +161,13 @@ interface AgrupacionPeriodoRow {
                 <input type="checkbox" [checked]="r.asuntosPoliticos"
                        (change)="toggleAP(r, $event)" title="Asuntos Políticos">
               </td>
-              <td (click)="$event.stopPropagation()">
+              <td (click)="$event.stopPropagation()" style="white-space:nowrap">
+                <button class="btn-pencil" (click)="abrirEditar(r)" title="Editar período" style="margin-right:6px">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M12 20h9"/>
+                    <path d="M16.5 3.5a2.121 2.121 0 113 3L7 19l-4 1 1-4 12.5-12.5z"/>
+                  </svg>
+                </button>
                 <button class="btn btn-sm btn-secondary" (click)="imprimir(r)" title="Imprimir / PDF">
                   🖨 Imprimir
                 </button>
@@ -301,6 +307,43 @@ interface AgrupacionPeriodoRow {
         Mostrando {{ filtrados().length }} de {{ items().length }} agrupaciones-período
       </div>
     </div></div>
+
+    @if (modalEditar()) {
+      <div class="ed-backdrop" (click)="cerrarEditar()">
+        <div class="ed-modal" (click)="$event.stopPropagation()">
+          <div class="ed-header">
+            <div class="ed-title">Editar período — {{ modalEditar()!.nombre }}</div>
+            <button class="ed-close" (click)="cerrarEditar()">×</button>
+          </div>
+          <div class="ed-body">
+            <p class="ed-sub">
+              Estos campos son <strong>específicos del período</strong>. Para editar
+              datos maestros (códigos, contacto, fechas C.E., etc.) abrí la agrupación
+              desde la tab <strong>Todas</strong>.
+            </p>
+
+            <div class="ed-fg"><label>Período *</label><input [(ngModel)]="ed.periodo" name="ed-per"></div>
+
+            <h4 class="sec-h">Sublemas</h4>
+            <div class="ed-grid">
+              <div class="ed-fg"><label>Sublema 1</label><input [(ngModel)]="ed.sublema1" name="ed-s1"></div>
+              <div class="ed-fg"><label>Sublema 2</label><input [(ngModel)]="ed.sublema2" name="ed-s2"></div>
+              <div class="ed-fg"><label>Sublema 3</label><input [(ngModel)]="ed.sublema3" name="ed-s3"></div>
+              <div class="ed-fg"><label>Sublema 4</label><input [(ngModel)]="ed.sublema4" name="ed-s4"></div>
+              <div class="ed-fg"><label>Sublema 5</label><input [(ngModel)]="ed.sublema5" name="ed-s5"></div>
+              <div class="ed-fg full"><label>Sublema Renunciado</label><input [(ngModel)]="ed.sublemaRenunciado" name="ed-sr"></div>
+            </div>
+            @if (edError()) { <div class="ed-err">{{ edError() }}</div> }
+          </div>
+          <div class="ed-footer">
+            <button class="btn btn-secondary" (click)="cerrarEditar()">Cancelar</button>
+            <button class="btn btn-primary" (click)="guardarEditar()" [disabled]="edBusy()">
+              {{ edBusy() ? 'Guardando…' : 'Guardar cambios' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
   `,
   styles: [`
     .badge.periodo { background:#eef5ff; color:#1a4f8a; padding:3px 9px; border-radius:12px; font-size:12px; font-weight:600; }
@@ -339,6 +382,49 @@ interface AgrupacionPeriodoRow {
     th.sortable .ind {
       display:inline-block; min-width:18px; color:#1a4f8a; font-weight:700;
       margin-left:2px;
+    }
+
+    .ed-backdrop {
+      position:fixed; inset:0; background:rgba(15,23,42,.55);
+      display:flex; align-items:center; justify-content:center; z-index:1000; padding:20px;
+    }
+    .ed-modal {
+      background:#fff; border-radius:10px; width:min(640px, 100%);
+      max-height:90vh; display:flex; flex-direction:column;
+      box-shadow:0 20px 50px rgba(0,0,0,.3); overflow:hidden;
+    }
+    .ed-header {
+      display:flex; justify-content:space-between; align-items:center;
+      padding:14px 18px; background:#1e3a8a; color:#fff;
+    }
+    .ed-title { font-size:16px; font-weight:600; }
+    .ed-close { background:transparent; border:none; color:#fff; font-size:22px; cursor:pointer; }
+    .ed-body { padding:18px 20px; overflow-y:auto; flex:1; }
+    .ed-sub {
+      background:#f0f6ff; border:1px solid #d6e4f5; border-radius:6px;
+      padding:10px 12px; font-size:13px; color:#3d4f6b; margin:0 0 14px 0;
+    }
+    .sec-h {
+      margin:14px 0 8px 0; font-size:13px; font-weight:600; color:#4a5568;
+      text-transform:uppercase; letter-spacing:.5px;
+      padding-bottom:4px; border-bottom:1px solid #eef1f5;
+    }
+    .ed-grid { display:grid; grid-template-columns:repeat(2, 1fr); gap:10px 16px; }
+    .ed-fg { display:flex; flex-direction:column; gap:4px; }
+    .ed-fg.full { grid-column:1 / -1; }
+    .ed-fg label { font-size:11px; font-weight:600; color:#666; text-transform:uppercase; letter-spacing:.4px; }
+    .ed-fg input {
+      padding:8px 10px; font-size:13px; font-family:inherit;
+      border:1px solid #cfd6e0; border-radius:5px; outline:none;
+    }
+    .ed-fg input:focus { border-color:#1e3a8a; box-shadow:0 0 0 3px rgba(30,58,138,.12); }
+    .ed-err {
+      margin-top:10px; padding:8px 12px; background:#fdecea; color:#a8261b;
+      border-radius:5px; font-size:13px;
+    }
+    .ed-footer {
+      padding:12px 18px; border-top:1px solid #eef1f5; background:#fafbfd;
+      display:flex; gap:8px; justify-content:flex-end;
     }
   `]
 })
@@ -392,6 +478,58 @@ export class AgrupacionesPorPeriodoComponent {
 
   periodos = computed(() => Array.from(new Set(this.items().map(a => a.periodo).filter(Boolean))).sort());
   deptos   = computed(() => Array.from(new Set(this.items().map(a => a.depto).filter((d): d is string => !!d))).sort());
+
+  // ── Editar período (sublemas) ──────────────────────────────
+  modalEditar = signal<AgrupacionPeriodoRow | null>(null);
+  edBusy = signal(false);
+  edError = signal('');
+  ed: any = {};
+
+  abrirEditar(r: AgrupacionPeriodoRow) {
+    this.ed = {
+      periodo: r.periodo,
+      sublema1: r.sublema1 || '',
+      sublema2: r.sublema2 || '',
+      sublema3: r.sublema3 || '',
+      sublema4: r.sublema4 || '',
+      sublema5: r.sublema5 || '',
+      sublemaRenunciado: r.sublemaRenunciado || ''
+    };
+    this.edError.set('');
+    this.modalEditar.set(r);
+  }
+
+  cerrarEditar() {
+    this.modalEditar.set(null);
+    this.edError.set('');
+  }
+
+  guardarEditar() {
+    const r = this.modalEditar();
+    if (!r) return;
+    if (!this.ed.periodo?.trim()) { this.edError.set('El período es obligatorio.'); return; }
+    this.edBusy.set(true);
+    this.edError.set('');
+    this.http.put(`${environment.apiUrl}/agrupaciones-periodos/${r.periodoId}`, {
+      periodo: this.ed.periodo.trim(),
+      sublema1: this.ed.sublema1 || null,
+      sublema2: this.ed.sublema2 || null,
+      sublema3: this.ed.sublema3 || null,
+      sublema4: this.ed.sublema4 || null,
+      sublema5: this.ed.sublema5 || null,
+      sublemaRenunciado: this.ed.sublemaRenunciado || null
+    }).subscribe({
+      next: () => {
+        this.edBusy.set(false);
+        this.cerrarEditar();
+        this.http.get<AgrupacionPeriodoRow[]>(`${environment.apiUrl}/agrupaciones-periodos`).subscribe(x => this.items.set(x));
+      },
+      error: (err) => {
+        this.edBusy.set(false);
+        this.edError.set(err?.error?.message || err?.message || 'No se pudo guardar.');
+      }
+    });
+  }
 
   toggleAP(r: AgrupacionPeriodoRow, ev: Event) {
     const target = ev.target as HTMLInputElement;
