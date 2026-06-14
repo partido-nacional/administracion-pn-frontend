@@ -5,6 +5,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ContactosService, FichaAdhesionDetalle } from '../agenda/contactos.service';
 import { AdhesionesService } from './adhesiones.service';
 import { PageTitleService } from '../../core/page-title.service';
+import { CatalogosService } from '../../core/catalogos.service';
 
 const SISTEMAS = ['Antel', 'OCA', 'VISA', 'MASTER', 'EBROU', 'ANUAL', 'Otro'];
 const DEPARTAMENTOS = [
@@ -15,10 +16,6 @@ const DEPARTAMENTOS = [
 const APORTES_SEC_AGR = [
   'Agrupacion', 'SAS', 'CNJ', 'Centro Josefa Oribe', 'CEPN',
   'Comision Departamental', 'C. Cultura', 'Movimiento Afro-Nacionalista (MAN)'
-];
-const SECTORES = [
-  'ALIANZA NACIONAL', 'TODO POR EL PUEBLO', 'AIRE FRESCO', 'MEJOR PAIS',
-  'D CENTRO', 'ESPACIO 40', 'HERRERISMO', 'POR LA PATRIA'
 ];
 
 @Component({
@@ -90,7 +87,7 @@ const SECTORES = [
                 <label class="form-label">Aporte a un Sector</label>
                 <select class="form-select" [(ngModel)]="ficha()!.sector" name="sector">
                   <option [ngValue]="undefined">-</option>
-                  @for (s of sectores; track s) { <option [ngValue]="s">{{ s }}</option> }
+                  @for (s of sectores(); track s) { <option [ngValue]="s">{{ s }}</option> }
                 </select>
               </div>
               <div class="form-group">
@@ -170,6 +167,7 @@ export class NuevaFichaComponent {
   private contactosSvc = inject(ContactosService);
   private adhSvc = inject(AdhesionesService);
   private titleSvc = inject(PageTitleService);
+  private catSvc = inject(CatalogosService);
 
   contactoId!: number;
   contactoNombre = signal<string>('');
@@ -178,7 +176,7 @@ export class NuevaFichaComponent {
   sistemas = SISTEMAS;
   departamentos = DEPARTAMENTOS;
   aportesSecAgr = APORTES_SEC_AGR;
-  sectores = SECTORES;
+  sectores = signal<string[]>([]);
 
   showTelefonoAntel(s?: string) { return s === 'Antel'; }
   showCedula(s?: string) { return s === 'OCA' || s === 'VISA' || s === 'MASTER' || s === 'EBROU'; }
@@ -228,6 +226,9 @@ export class NuevaFichaComponent {
 
   constructor() {
     this.titleSvc.set('Nueva Ficha de Adhesión');
+    this.catSvc.sectores().subscribe(list =>
+      this.sectores.set(list.map(s => s.descripcion))
+    );
     this.contactoId = +this.route.snapshot.paramMap.get('contactoId')!;
     this.contactosSvc.get(this.contactoId).subscribe(c => {
       this.contactoNombre.set(`${c.apellido}, ${c.nombre}`);
