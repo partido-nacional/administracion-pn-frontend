@@ -1,6 +1,6 @@
 # Administración PN — Frontend
 
-App Angular 17 (standalone components + signals) para el sistema de administración partidaria. Ver `SPEC.md`.
+App Angular 17 (standalone components + signals) para el sistema de administración partidaria. Especificación (fuente de verdad, derivada del código): `project/specs/architecture.md` y `project/specs/features/`.
 
 ## Requisitos
 

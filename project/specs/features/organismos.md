@@ -1,0 +1,219 @@
+# Feature: Organismos
+
+Cubre **dos componentes**:
+
+1. `OrganismosComponent` — pantalla maestra de organismos (4 tabs), ruta `/organismos`. **Backend STUB.**
+2. `IntegrantesContactoComponent` — ficha de los organismos a los que pertenece un contacto, ruta `/agenda/:contactoId/organismos`. **Backend REAL (DB).**
+
+- **Estado global:**
+  - `/organismos` (las 4 tabs): vista funcional que consume HTTP real, pero el **backend es STUB** (datos hardcodeados en memoria, sin DB) → `src/AdministracionPn.Api/Controllers/StubControllers.cs:89-140` (`OrganismosController`).
+  - `/agenda/:contactoId/organismos`: vista funcional que consume **endpoints reales con base de datos** (no stub) → `ContactosController.cs:138` (GET) e `IntegrantesOrganismoController.cs:15` (DELETE).
+- **Rutas:** `/organismos` · `/agenda/:contactoId/organismos`
+- **Componentes:**
+  - `OrganismosComponent` (standalone) — `src/app/features/organismos/organismos.component.ts:233`
+  - `IntegrantesContactoComponent` (standalone) — `src/app/features/organismos/integrantes-contacto.component.ts:110`
+- **Nota arquitectura:** Stack transversal en [../architecture.md](../architecture.md): Angular 17.3 standalone + signals, `authGuard`, `authInterceptor`, `apiUrl = http://localhost:5000/api`.
+
+---
+
+## Propósito
+
+- **OrganismosComponent**: administración/consulta de los organismos del partido (directorios, comisiones, bancadas, juntas) con cuatro vistas: el listado de organismos, la info de la organización, sus integrantes y referencias partidarias históricas. Cada tab tiene filtros por columna y exportación a CSV.
+- **IntegrantesContactoComponent**: desde la agenda de contactos, ver la "ficha" de un contacto puntual mostrando todos los organismos en los que es integrante, con detalle expandible y baja lógica (marca como inactivo).
+
+---
+
+## Rutas y navegación
+
+`src/app/app.routes.ts`:
+
+```ts
+// app.routes.ts:33
+{ path: 'organismos', loadComponent: () => import('./features/organismos/organismos.component').then(m => m.OrganismosComponent) }
+// app.routes.ts:17
+{ path: 'agenda/:contactoId/organismos', loadComponent: () => import('./features/organismos/integrantes-contacto.component').then(m => m.IntegrantesContactoComponent) }
+```
+
+- Ambas son **lazy** (`loadComponent`) y están bajo `authGuard`.
+- `/organismos` no recibe params.
+- `/agenda/:contactoId/organismos` recibe el param `:contactoId` (leído con `route.snapshot.paramMap.get('contactoId')`, `integrantes-contacto.component.ts:121`).
+- Navegación de `IntegrantesContactoComponent`: botón **"← Volver a contactos"** con `routerLink="/agenda"` (`integrantes-contacto.component.ts:13`). Es la única navegación con `routerLink` real de ambos componentes.
+
+---
+
+## Componente A — `OrganismosComponent`
+
+### Estructura general
+
+- Barra superior con un único botón **"📥 CSV"** (`organismos.component.ts:24-26`) que exporta el tab activo.
+- 4 tabs (`organismos.component.ts:28-33`), controladas por el signal `tab`:
+  - `todos` → "Todos los Organismos"
+  - `info` → "Info de la Organización"
+  - `integrantes` → "Integrantes"
+  - `referencias` → "Ref. Partidarias"
+
+### Tab "todos" (`organismos.component.ts:35-98`)
+
+Tabla de organismos con columnas: Id, Nombre, Descripción, Dirección, Ciudad, Departamento (badge), País, Art. 44 (`☑`/`☐`), Orden Dpto., Observaciones (`|| '—'`), y columna de acción con un botón lápiz. Fila de filtros por columna (inputs de texto; Departamento y Art. 44 son `<select>`). Footer "Mostrando X de Y" (`organismos.component.ts:96`). Empty-state "Sin resultados" (`organismos.component.ts:92`).
+
+### Tab "info" (`organismos.component.ts:100-150`)
+
+Tabla de info de organización: Id Info., Id Tipo, Id Org. Est., Id Org. Part., Nombre Compañía, Abreviado, Departamento (badge), acción lápiz. Filtros por columna (Departamento como `<select>`). Footer + empty-state.
+
+### Tab "integrantes" (`organismos.component.ts:152-197`)
+
+Tabla: ID Contacto, Cred. Cívica, Apellidos, Nombres, Celular, Mail, Posición, Organismo, Depto. (badge). Filtros por columna (Depto. como `<select>`). Footer + empty-state. **Sin** columna de acción.
+
+### Tab "referencias" (`organismos.component.ts:199-226`)
+
+Tabla: Nombre, Cargo, Organismo, Período. Filtros por columna (todos inputs de texto). Footer + empty-state.
+
+### Signals (`organismos.component.ts:237-297`)
+
+| Signal | Tipo | Inicial | Notas |
+|---|---|---|---|
+| `tab` | `signal<Tab>` | `'todos'` | tab activa; `Tab = 'todos' \| 'info' \| 'integrantes' \| 'referencias'` (`organismos.component.ts:14`) |
+| `organismos` | `signal<Organismo[]>` | `[]` | carga en constructor |
+| `info` | `signal<InfoOrg[]>` | `[]` | carga lazy al entrar al tab |
+| `integrantes` | `signal<IntegranteOrg[]>` | `[]` | carga lazy al entrar al tab |
+| `referencias` | `signal<RefPart[]>` | `[]` | carga lazy al entrar al tab |
+| Filtros tab "todos" | 10 `signal('')` | `''` | `fOrgId`, `fOrgNom`, `fOrgDesc`, `fOrgDir`, `fOrgCiu`, `fOrgDep`, `fOrgPais`, `fOrgArt`, `fOrgOrd`, `fOrgObs` (`organismos.component.ts:244-247`) |
+| Filtros tab "info" | 7 `signal('')` | `''` | `fInfId`, `fInfTipo`, `fInfEst`, `fInfPart`, `fInfComp`, `fInfAbr`, `fInfDep` (`organismos.component.ts:263-265`) |
+| Filtros tab "integrantes" | 9 `signal('')` | `''` | `fIntId`, `fIntCred`, `fIntApe`, `fIntNom`, `fIntCel`, `fIntMail`, `fIntPos`, `fIntOrg`, `fIntDep` (`organismos.component.ts:277-279`) |
+| Filtros tab "referencias" | 4 `signal('')` | `''` | `fRefNom`, `fRefCar`, `fRefOrg`, `fRefPer` (`organismos.component.ts:292`) |
+
+### Computed signals
+
+- `orgDeptos` / `infoDeptos` / `intDeptos` (`organismos.component.ts:249, 267, 281`): lista única y ordenada de departamentos para poblar los `<select>` de filtro.
+- `organismosFiltrados` (`organismos.component.ts:251-260`), `infoFiltrados` (`:269-274`), `integrantesFiltrados` (`:283-289`), `referenciasFiltradas` (`:294-297`): aplican los filtros en **cliente** usando el helper `m(val, q)` (`organismos.component.ts:17`: substring case-insensitive). Departamento y Art. 44 usan comparación exacta.
+
+### Métodos
+
+- `setTab(t)` (`organismos.component.ts:304-312`): cambia tab y hace **carga lazy** del dataset si aún está vacío.
+- `exportarCsvTab()` (`organismos.component.ts:314-364`): exporta a CSV el dataset filtrado del tab activo, usando `exportarCSV` con columnas tipadas (`CsvColumn<T>`). Nombre de archivo con timestamp `YYYY-MM-DD` (`organismos.component.ts:315`), p.ej. `organismos-2026-06-14.csv`.
+
+### Servicios inyectados
+
+- `HttpClient` (`organismos.component.ts:234`), `PageTitleService` (`:235`, `set('Organismos')` en `:300`).
+
+---
+
+## Componente B — `IntegrantesContactoComponent`
+
+### Qué muestra
+
+- Botón "← Volver a contactos" (`routerLink="/agenda"`, `integrantes-contacto.component.ts:13`).
+- Título "Ficha de Integrante de Organismo — Contacto #{{ contactoId }}" (`:18`).
+- Si no hay items: empty-state "El contacto no está asociado a ningún organismo" (`:20-22`).
+- Si hay items: tabla con columnas Id Int.Org., Id C., Nom. Comp., Nombres, P.-S. (partido-sector), Pos. Org., Orden, Nom. Org., Nota, y botón "Eliminar" (`:24-54`).
+- **Fila expandible**: al hacer click en una fila se expande un panel de detalle con grid de pares clave/valor (Id Integrante, Contacto, Nombre Compañía, Nombre Organismo, Partido-Sector, Posición, Orden, Orden 2, Cargo, Condición, Fecha Designación, Fecha Fin, Nota) (`:55-80`). El botón "Eliminar" hace `$event.stopPropagation()` para no togglear (`:51`).
+
+### Signals (`integrantes-contacto.component.ts:115-117`)
+
+| Signal / prop | Tipo | Notas |
+|---|---|---|
+| `contactoId` | `number` (prop) | se setea en constructor desde el param de ruta (`:121`) |
+| `items` | `signal<IntegranteOrganismo[]>` | inicial `[]`; cargado en `reload()` |
+| `expandedId` | `signal<number \| null>` | inicial `null`; id de la fila expandida |
+
+### Métodos
+
+- `reload()` (`:125-127`): `svc.integrantesOrganismo(contactoId).subscribe(...)`.
+- `toggle(id)` (`:129-131`): expande/colapsa la fila.
+- `eliminar(id)` (`:133-139`): `confirm('¿Eliminar este integrante? Quedará marcado como inactivo.')` → `svc.eliminarIntegranteOrganismo(id)` → al completar, colapsa y `reload()`. Es **baja lógica** (marca inactivo en backend, no borra).
+
+### Servicios inyectados
+
+- `ActivatedRoute` (`:111`), `ContactosService` (`:112`), `PageTitleService` (`:113`, `set('Ficha de Integrante de Organismo')` en `:120`).
+
+---
+
+## API consumida
+
+### OrganismosComponent (todas STUB en backend)
+
+| Método | Ruta exacta | Cuándo (archivo:línea) | Tipo | Backend |
+|---|---|---|---|---|
+| `GET` | `${apiUrl}/organismos` | constructor — `organismos.component.ts:301` | `Organismo[]` | **STUB** `StubControllers.cs:133` (`List`) |
+| `GET` | `${apiUrl}/organismos/info` | `setTab('info')` lazy — `organismos.component.ts:307` | `InfoOrg[]` | **STUB** `StubControllers.cs:135` |
+| `GET` | `${apiUrl}/organismos/integrantes` | `setTab('integrantes')` lazy — `organismos.component.ts:309` | `IntegranteOrg[]` | **STUB** `StubControllers.cs:136` |
+| `GET` | `${apiUrl}/organismos/referencias` | `setTab('referencias')` lazy — `organismos.component.ts:311` | `RefPart[]` | **STUB** `StubControllers.cs:137` |
+
+`OrganismosController` (`StubControllers.cs:89-140`) devuelve arrays de `record` estáticos hardcodeados (`_orgs`, `_info`, `_integ`, `_ref`). También expone `GET /organismos/todos`, `/estatales`, `/partidarios` (`StubControllers.cs:134,138,139`) que **el front NO consume**.
+
+### IntegrantesContactoComponent (REAL — DB)
+
+Vía `ContactosService` (`src/app/features/agenda/contactos.service.ts`):
+
+| Método | Ruta exacta | Llamada front | Backend |
+|---|---|---|---|
+| `GET` | `${apiUrl}/contactos/{id}/integrantes-organismo` | `svc.integrantesOrganismo(id)` — `contactos.service.ts:110`, invocado en `integrantes-contacto.component.ts:126` | **REAL (DB)** `ContactosController.cs:138-158` — consulta `_db.MiembrosOrganismo` con joins, filtra `m.Activo` |
+| `DELETE` | `${apiUrl}/integrantes-organismo/{id}` | `svc.eliminarIntegranteOrganismo(id)` — `contactos.service.ts:111`, invocado en `integrantes-contacto.component.ts:135` | **REAL (DB)** `IntegrantesOrganismoController.cs:15-23` — baja lógica: `m.Activo = false; SaveChangesAsync()` |
+
+> Nota: el `base` de `ContactosService` es `${apiUrl}/contactos` (de ahí `…/contactos/{id}/integrantes-organismo`), mientras que el DELETE usa `environment.apiUrl` directo (`…/integrantes-organismo/{id}`).
+
+---
+
+## Modelos / interfaces
+
+### En `organismos.component.ts:9-12` (locales)
+
+```ts
+interface Organismo { id: number; nombre: string; descripcion: string; direccion: string; ciudad: string; departamento: string; pais: string; art44: boolean; ordenDpto: number; observaciones?: string; }
+interface InfoOrg { id: number; idTipo: number; idEstatal: number; idPartidario: number; nombreCompania: string; nombreAbreviado: string; departamento: string; }
+interface IntegranteOrg { idContacto: number; credCivica: string; apellidos: string; nombres: string; celular: string; mail: string; posicion: string; organismo: string; departamento: string; }
+interface RefPart { nombre: string; cargo: string; organismo: string; periodo: string; }
+type Tab = 'todos' | 'info' | 'integrantes' | 'referencias'; // organismos.component.ts:14
+```
+
+### En `contactos.service.ts:43-58` (compartido)
+
+```ts
+export interface IntegranteOrganismo {
+  id: number; contactoId: number; nombres: string;
+  nombreCompania?: string; nombreOrganismo?: string; partidoSector?: string;
+  posicionOrganismo?: string; orden?: number; orden2?: number;
+  cargo?: string; condicion?: string; nota?: string;
+  fechaFin?: string; fechaDesignacion?: string;
+}
+```
+
+Helpers (`organismos.component.ts:16-17`): `norm(s)` (lowercase) y `m(val, q)` (substring case-insensitive para filtrado en cliente).
+
+---
+
+## Interacciones / UX
+
+- **OrganismosComponent**: tabs con carga lazy; filtros por columna en vivo (signals + computed); selects de Departamento poblados dinámicamente; Art. 44 filtrable Sí/No; export CSV del tab activo; footer de conteo; empty-states por tab. Botones lápiz "Editar (no implementado)" → sin acción.
+- **IntegrantesContactoComponent**: filas clickeables que expanden detalle (`tr.clickable`, `tr.selected`); botón Eliminar con `confirm()` y baja lógica; estilos propios en `styles[]` (`integrantes-contacto.component.ts:88-108`), grid responsive del detalle.
+
+---
+
+## Dependencias
+
+### OrganismosComponent
+- `@angular/core`: `Component`, `computed`, `inject`, `signal` (`organismos.component.ts:1`).
+- `@angular/common`: `CommonModule` (`:2`); `@angular/forms`: `FormsModule` (para `[ngModel]` de filtros) (`:3,22`).
+- `@angular/common/http`: `HttpClient` (`:4`).
+- `environment` (`:5`), `PageTitleService` (`:6`).
+- `exportarCSV`, `CsvColumn` — `src/app/core/exportar-csv` (`:7`).
+
+### IntegrantesContactoComponent
+- `@angular/core`: `Component`, `inject`, `signal` (`integrantes-contacto.component.ts:1`).
+- `@angular/common`: `CommonModule` (`:2`); `@angular/router`: `ActivatedRoute`, `RouterLink` (`:3,10`).
+- `ContactosService`, `IntegranteOrganismo` — `src/app/features/agenda/contactos.service` (`:4`).
+- `PageTitleService` (`:5`).
+
+---
+
+## No implementado / gaps
+
+### OrganismosComponent
+- **Backend STUB**: los 4 endpoints de `/organismos/*` devuelven datos fijos en memoria, sin DB (`StubControllers.cs:89-140`). La vista del front es real (HTTP, filtros y export reales), pero los datos de fondo son ficticios.
+- **Botones de editar no implementados**: lápices con `title="Editar (no implementado)"` en tabs "todos" e "info" (`organismos.component.ts:83, 135`) → sin handler.
+- **Sin alta/edición/baja** de organismos desde esta vista; solo lectura + filtro + export.
+
+### IntegrantesContactoComponent
+- **Vista real, datos reales**: consume endpoints DB-backed (no stub). Funcional para listar y dar de baja (lógica).
+- **No tiene alta ni edición** de integrantes desde aquí (solo listar, ver detalle y eliminar lógicamente).
+- No hay manejo explícito de estados de error HTTP.
