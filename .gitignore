@@ -2,6 +2,7 @@ node_modules/
 dist/
 .angular/
 .idea/
-.vscode/
+.vscode/*
+!.vscode/extensions.json
 *.log
 .DS_Store

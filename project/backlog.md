@@ -3,7 +3,7 @@
 > Items captured during development. Use `/project.backlog` to manage.
 
 **Last Updated**: 2026-06-14
-**Total Items**: 20 (10 TODO, 10 DEBT, 0 IDEA)
+**Total Items**: 22 (10 TODO, 12 DEBT, 0 IDEA)
 
 > Origen común: ingeniería inversa a máximo detalle (reverse-eng) del frontend Angular, 2026-06-14. Cada ítem fue verificado contra el código por un agente lector. Confirmar `archivo:línea` antes de arreglar.
 
@@ -200,3 +200,23 @@
 - **Affected Files**: package.json, src/app/app.config.ts
 - **Complexity**: S
 - **Risk if Ignored**: Bundle innecesario o animaciones que no funcionan.
+
+### DEBT-011: Migrar a la estructura estándar (core/services, core/models, shared)
+- **Priority**: High
+- **Status**: pending
+- **Created**: 2026-06-14
+- **Origin**: chore/boilerplate-scaffold (transversal)
+- **Context**: El estándar objetivo ya está scaffoldeado (`core/interceptors/` con auth + http-error, carpetas `core/services/`, `core/models/`, `shared/{components,directives,pipes}`). Falta **migrar la lógica**: mover las llamadas `HttpClient` dispersas a services por dominio en `core/services/` (DEBT-006), extraer las interfaces inline a `core/models/` (DEBT-009), y los componentes/pipes reutilizables a `shared/`. Migrar feature por feature; usar `auth`/`agenda` como piloto. Ver `CLAUDE.md` → "Cómo se construye una feature nueva".
+- **Affected Files**: src/app/features/**, src/app/core/**, src/app/shared/**
+- **Complexity**: XL
+- **Risk if Ignored**: La estructura objetivo queda como cascarón; lógica acoplada y sin testear; cada feature nueva nace con deuda.
+
+### DEBT-012: Montar el runner de tests + primeros tests
+- **Priority**: High
+- **Status**: pending
+- **Created**: 2026-06-14
+- **Origin**: chore/boilerplate-scaffold (transversal)
+- **Context**: No hay runner de tests configurado (sin Karma/Jasmine ni vitest, sin `tsconfig.spec.json`). Montar el runner (Karma/Jasmine estándar de Angular 17, o vitest), agregar `tsconfig.spec.json` + target `test` en `angular.json`, escribir primeros tests (auth.service, interceptors, un componente), y agregar el step `ng test` al CI (`.github/workflows/ci.yml`).
+- **Affected Files**: package.json, angular.json, tsconfig.spec.json (nuevo), .github/workflows/ci.yml
+- **Complexity**: L
+- **Risk if Ignored**: Sin red de seguridad automatizada (ligado a DEBT-001).

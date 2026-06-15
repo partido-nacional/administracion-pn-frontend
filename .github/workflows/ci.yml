@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build (production)
+        run: npm run build -- --configuration production
+
+  secrets-scan:
+    name: Secrets Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for hardcoded secrets
+        run: |
+          FOUND=$(grep -rn \
+            --include="*.ts" --include="*.json" \
+            -E '(apiKey|api_key|secret|password|token)\s*[:=]\s*["'\''][^"'\'']{8,}["'\'']' \
+            src/ \
+            | grep -v \
+              -e 'change_me' \
+              -e 'placeholder' \
+              -e 'admin123' \
+            || true)
+
+          if [ -n "$FOUND" ]; then
+            echo "Potential hardcoded secrets found:"
+            echo "$FOUND"
+            exit 1
+          fi
+          echo "No hardcoded secrets detected"
+
+  code-quality:
+    name: Code Quality (informativo)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: List open TODOs (no bloqueante)
+        run: |
+          grep -rn --include="*.ts" --include="*.html" -E "\b(TODO|FIXME|HACK|XXX)\b" src/ \
+            || echo "Sin TODOs abiertos en src/"
