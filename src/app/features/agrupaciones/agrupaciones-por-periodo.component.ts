@@ -200,7 +200,7 @@ interface AgrupacionPeriodoRow {
                         <div class="kv"><span class="k">Clasificación</span><span class="v">{{ r.clasificacion || '—' }}</span></div>
                         <div class="kv"><span class="k">Solicita</span><span class="v">{{ r.solicita || '—' }}</span></div>
                         <div class="kv"><span class="k">Sector</span><span class="v">{{ r.sector || '—' }}</span></div>
-                        <div class="kv"><span class="k">Solic.</span><span class="v">{{ r.solic ?? '—' }}</span></div>
+                        <div class="kv"><span class="k">Solic.</span><span class="v">{{ r.solic }}</span></div>
                         <div class="kv"><span class="k">Fecha Solicitud</span><span class="v">{{ r.fechaSolicitud || '—' }}</span></div>
                         <div class="kv"><span class="k">Cod. Ant.</span><span class="v">{{ r.codAnt || '—' }}</span></div>
                         <div class="kv"><span class="k">Nombre Ant.</span><span class="v">{{ r.nombreAnt || '—' }}</span></div>

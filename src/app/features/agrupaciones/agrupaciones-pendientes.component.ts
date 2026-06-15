@@ -85,7 +85,7 @@ const DEPARTAMENTOS = [
                           <div class="kv"><span class="k">Clasificación</span><span class="v">{{ a.clasificacion || '—' }}</span></div>
                           <div class="kv"><span class="k">Solicita</span><span class="v">{{ a.solicita || '—' }}</span></div>
                           <div class="kv"><span class="k">Sector</span><span class="v">{{ a.sector || '—' }}</span></div>
-                          <div class="kv"><span class="k">Solic.</span><span class="v">{{ a.solic ?? '—' }}</span></div>
+                          <div class="kv"><span class="k">Solic.</span><span class="v">{{ a.solic }}</span></div>
                           <div class="kv"><span class="k">Fecha Solicitud</span><span class="v">{{ a.fechaSolicitud || '—' }}</span></div>
                           <div class="kv"><span class="k">Cod. Ant.</span><span class="v">{{ a.codAnt || '—' }}</span></div>
                           <div class="kv"><span class="k">Sublema Renunciado</span><span class="v">{{ a.sublemaRenunciado || '—' }}</span></div>
