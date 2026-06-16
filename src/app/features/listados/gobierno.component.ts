@@ -47,8 +47,7 @@ interface Gobierno {
               <th>
                 <select class="column-filter" [ngModel]="fOrg()" (ngModelChange)="fOrg.set($event)">
                   <option value="">Todos</option>
-                  <option>ANP</option><option>ANTEL</option><option>UTE</option>
-                  <option>CORREO</option><option>OSE</option><option>ANCAP</option>
+                  @for (n of nombresOrganismo(); track n) { <option>{{ n }}</option> }
                 </select>
               </th>
               <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fCompania()" (ngModelChange)="fCompania.set($event)"></th>
@@ -92,6 +91,10 @@ export class GobiernoComponent {
   fCortesia = signal(''); fApellidos = signal(''); fNombre = signal('');
   fTel = signal(''); fCel = signal(''); fMail = signal('');
   fPos = signal(''); fOrg = signal(''); fCompania = signal('');
+
+  nombresOrganismo = computed(() =>
+    [...new Set(this.data().map(g => g.nombreOrganismo).filter(Boolean))].sort()
+  );
 
   filtrados = computed(() => this.data().filter(g => {
     const t = (s: string, f: string) => !f || (s ?? '').toLowerCase().includes(f.toLowerCase());

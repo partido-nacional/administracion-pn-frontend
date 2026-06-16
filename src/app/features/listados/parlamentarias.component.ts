@@ -50,8 +50,7 @@ interface Parlamentario {
               <th>
                 <select class="column-filter" [ngModel]="fDepartamento()" (ngModelChange)="fDepartamento.set($event)">
                   <option value="">Todos</option>
-                  <option>Montevideo</option><option>Canelones</option><option>Maldonado</option>
-                  <option>Salto</option><option>Colonia</option><option>Paysandu</option>
+                  @for (d of deptos(); track d) { <option>{{ d }}</option> }
                 </select>
               </th>
               <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fTel()" (ngModelChange)="fTel.set($event)"></th>
@@ -60,8 +59,7 @@ interface Parlamentario {
               <th>
                 <select class="column-filter" [ngModel]="fOrg()" (ngModelChange)="fOrg.set($event)">
                   <option value="">Todos</option>
-                  <option>Camara de Representantes</option>
-                  <option>Camara de Senadores</option>
+                  @for (n of nombresOrganismo(); track n) { <option>{{ n }}</option> }
                 </select>
               </th>
               <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fCred()" (ngModelChange)="fCred.set($event)"></th>
@@ -112,6 +110,14 @@ export class ParlamentariasComponent {
   fDireccion = signal(''); fDomicilio = signal(''); fDepartamento = signal('');
   fTel = signal(''); fMail = signal(''); fPos = signal(''); fOrg = signal('');
   fCred = signal(''); fCedula = signal(''); fObs = signal('');
+
+  deptos = computed(() =>
+    [...new Set(this.data().map(p => p.departamento).filter(Boolean))].sort()
+  );
+
+  nombresOrganismo = computed(() =>
+    [...new Set(this.data().map(p => p.nombreOrganismo).filter(Boolean))].sort()
+  );
 
   filtrados = computed(() => this.data().filter(p => {
     const t = (s: string, f: string) => !f || (s ?? '').toLowerCase().includes(f.toLowerCase());

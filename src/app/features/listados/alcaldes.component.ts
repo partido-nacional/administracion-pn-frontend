@@ -48,8 +48,7 @@ interface Alcalde {
               <th>
                 <select class="column-filter" [ngModel]="fDepto()" (ngModelChange)="fDepto.set($event)">
                   <option value="">Todos</option>
-                  <option>Canelones</option><option>Colonia</option><option>Maldonado</option>
-                  <option>Montevideo</option><option>Paysandu</option><option>Salto</option>
+                  @for (d of deptos(); track d) { <option>{{ d }}</option> }
                 </select>
               </th>
             </tr>
@@ -92,6 +91,10 @@ export class AlcaldesComponent {
   data = signal<Alcalde[]>([]);
   fCortesia = signal(''); fApellidos = signal(''); fNombres = signal(''); fTel = signal(''); fCel = signal('');
   fMail = signal(''); fPos = signal(''); fOrg = signal(''); fDepto = signal('');
+
+  deptos = computed(() =>
+    [...new Set(this.data().map(a => a.departamento).filter(Boolean))].sort()
+  );
 
   filtrados = computed(() => this.data().filter(a => {
     const t = (s: string, f: string) => !f || (s ?? '').toLowerCase().includes(f.toLowerCase());
