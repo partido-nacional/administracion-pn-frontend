@@ -30,19 +30,19 @@ interface IntNac {
             </tr>
             <tr class="filter-row">
               <th>
-                <select class="column-filter" [(ngModel)]="fCortesia">
+                <select class="column-filter" [ngModel]="fCortesia()" (ngModelChange)="fCortesia.set($event)">
                   <option value="">Todos</option>
                   <option>Sr.</option><option>Sra.</option><option>Dr.</option><option>Dra.</option>
                   <option>Ing.</option><option>Lic.</option><option>Cr.</option>
                 </select>
               </th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fApellidos"></th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fNombre"></th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fTel"></th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fPos"></th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fOrg"></th>
+              <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fApellidos()" (ngModelChange)="fApellidos.set($event)"></th>
+              <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fNombre()" (ngModelChange)="fNombre.set($event)"></th>
+              <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fTel()" (ngModelChange)="fTel.set($event)"></th>
+              <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fPos()" (ngModelChange)="fPos.set($event)"></th>
+              <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fOrg()" (ngModelChange)="fOrg.set($event)"></th>
               <th>
-                <select class="column-filter" [(ngModel)]="fDepto">
+                <select class="column-filter" [ngModel]="fDepto()" (ngModelChange)="fDepto.set($event)">
                   <option value="">Todos</option>
                   <option>Canelones</option><option>Colonia</option><option>Maldonado</option>
                   <option>Paysandu</option><option>Salto</option><option>Soriano</option>
@@ -82,15 +82,15 @@ export class IntendenciasNacComponent {
   private titleSvc = inject(PageTitleService);
 
   data = signal<IntNac[]>([]);
-  fCortesia = ''; fApellidos = ''; fNombre = ''; fTel = '';
-  fPos = ''; fOrg = ''; fDepto = '';
+  fCortesia = signal(''); fApellidos = signal(''); fNombre = signal(''); fTel = signal('');
+  fPos = signal(''); fOrg = signal(''); fDepto = signal('');
 
   filtrados = computed(() => this.data().filter(i => {
     const t = (s: string, f: string) => !f || (s ?? '').toLowerCase().includes(f.toLowerCase());
     const e = (s: string, f: string) => !f || s === f;
-    return e(i.cortesia, this.fCortesia) && t(i.apellidos, this.fApellidos) && t(i.nombre, this.fNombre)
-      && t(i.telTrabajo, this.fTel) && t(i.posOrganismo, this.fPos)
-      && t(i.nombreOrganismo, this.fOrg) && e(i.departamento, this.fDepto);
+    return e(i.cortesia, this.fCortesia()) && t(i.apellidos, this.fApellidos()) && t(i.nombre, this.fNombre())
+      && t(i.telTrabajo, this.fTel()) && t(i.posOrganismo, this.fPos())
+      && t(i.nombreOrganismo, this.fOrg()) && e(i.departamento, this.fDepto());
   }));
 
   constructor() {

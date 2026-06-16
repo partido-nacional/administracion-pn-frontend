@@ -37,36 +37,36 @@ interface Parlamentario {
             </tr>
             <tr class="filter-row">
               <th>
-                <select class="column-filter" [(ngModel)]="fCortesia">
+                <select class="column-filter" [ngModel]="fCortesia()" (ngModelChange)="fCortesia.set($event)">
                   <option value="">Todos</option>
                   <option>Sr.</option><option>Sra.</option><option>Dr.</option><option>Dra.</option>
                   <option>Ing.</option><option>Lic.</option><option>Cr.</option>
                 </select>
               </th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fApellidos"></th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fNombre"></th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fDireccion"></th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fDomicilio"></th>
+              <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fApellidos()" (ngModelChange)="fApellidos.set($event)"></th>
+              <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fNombre()" (ngModelChange)="fNombre.set($event)"></th>
+              <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fDireccion()" (ngModelChange)="fDireccion.set($event)"></th>
+              <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fDomicilio()" (ngModelChange)="fDomicilio.set($event)"></th>
               <th>
-                <select class="column-filter" [(ngModel)]="fDepartamento">
+                <select class="column-filter" [ngModel]="fDepartamento()" (ngModelChange)="fDepartamento.set($event)">
                   <option value="">Todos</option>
                   <option>Montevideo</option><option>Canelones</option><option>Maldonado</option>
                   <option>Salto</option><option>Colonia</option><option>Paysandu</option>
                 </select>
               </th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fTel"></th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fMail"></th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fPos"></th>
+              <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fTel()" (ngModelChange)="fTel.set($event)"></th>
+              <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fMail()" (ngModelChange)="fMail.set($event)"></th>
+              <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fPos()" (ngModelChange)="fPos.set($event)"></th>
               <th>
-                <select class="column-filter" [(ngModel)]="fOrg">
+                <select class="column-filter" [ngModel]="fOrg()" (ngModelChange)="fOrg.set($event)">
                   <option value="">Todos</option>
                   <option>Camara de Representantes</option>
                   <option>Camara de Senadores</option>
                 </select>
               </th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fCred"></th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fCedula"></th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fObs"></th>
+              <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fCred()" (ngModelChange)="fCred.set($event)"></th>
+              <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fCedula()" (ngModelChange)="fCedula.set($event)"></th>
+              <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fObs()" (ngModelChange)="fObs.set($event)"></th>
             </tr>
           </thead>
           <tbody>
@@ -108,18 +108,19 @@ export class ParlamentariasComponent {
   private titleSvc = inject(PageTitleService);
 
   data = signal<Parlamentario[]>([]);
-  fCortesia = ''; fApellidos = ''; fNombre = ''; fDireccion = ''; fDomicilio = '';
-  fDepartamento = ''; fTel = ''; fMail = ''; fPos = ''; fOrg = '';
-  fCred = ''; fCedula = ''; fObs = '';
+  fCortesia = signal(''); fApellidos = signal(''); fNombre = signal('');
+  fDireccion = signal(''); fDomicilio = signal(''); fDepartamento = signal('');
+  fTel = signal(''); fMail = signal(''); fPos = signal(''); fOrg = signal('');
+  fCred = signal(''); fCedula = signal(''); fObs = signal('');
 
   filtrados = computed(() => this.data().filter(p => {
     const t = (s: string, f: string) => !f || (s ?? '').toLowerCase().includes(f.toLowerCase());
     const e = (s: string, f: string) => !f || s === f;
-    return e(p.cortesia, this.fCortesia) && t(p.apellidos, this.fApellidos) && t(p.nombre, this.fNombre)
-      && t(p.direccion, this.fDireccion) && t(p.domicilio, this.fDomicilio)
-      && e(p.departamento, this.fDepartamento) && t(p.telMovil, this.fTel) && t(p.mailPartido, this.fMail)
-      && t(p.posOrganismo, this.fPos) && e(p.nombreOrganismo, this.fOrg)
-      && t(p.credCivica, this.fCred) && t(p.cedulaId, this.fCedula) && t(p.observaciones, this.fObs);
+    return e(p.cortesia, this.fCortesia()) && t(p.apellidos, this.fApellidos()) && t(p.nombre, this.fNombre())
+      && t(p.direccion, this.fDireccion()) && t(p.domicilio, this.fDomicilio())
+      && e(p.departamento, this.fDepartamento()) && t(p.telMovil, this.fTel()) && t(p.mailPartido, this.fMail())
+      && t(p.posOrganismo, this.fPos()) && e(p.nombreOrganismo, this.fOrg())
+      && t(p.credCivica, this.fCred()) && t(p.cedulaId, this.fCedula()) && t(p.observaciones, this.fObs());
   }));
 
   constructor() {
