@@ -78,7 +78,7 @@ interface AgrupacionPeriodoRow {
         <thead>
           <tr>
             <th style="width:34px"></th>
-            <th class="sortable" (click)="onSort('periodoId', $event)">Id Per. <span class="ind">{{ indicador('periodoId') }}</span></th>
+            <th class="sortable" (click)="onSort('periodoId', $event)">Id <span class="ind">{{ indicador('periodoId') }}</span></th>
             <th class="sortable" (click)="onSort('periodo', $event)">Período <span class="ind">{{ indicador('periodo') }}</span></th>
             <th class="sortable" (click)="onSort('pendiente', $event)">Estado <span class="ind">{{ indicador('pendiente') }}</span></th>
             <th class="sortable" (click)="onSort('agrupacionId', $event)">Id Agr. <span class="ind">{{ indicador('agrupacionId') }}</span></th>
@@ -180,7 +180,7 @@ interface AgrupacionPeriodoRow {
                     <div class="seccion">
                       <div class="seccion-title">Período</div>
                       <div class="grid">
-                        <div class="kv"><span class="k">Id Período</span><span class="v">{{ r.periodoId }}</span></div>
+                        <div class="kv"><span class="k">Id</span><span class="v">{{ r.periodoId }}</span></div>
                         <div class="kv"><span class="k">Período</span><span class="v">{{ r.periodo }}</span></div>
                         <div class="kv"><span class="k">Estado</span><span class="v">{{ r.pendiente ? 'Pendiente' : 'Aprobada' }}</span></div>
                         <div class="kv"><span class="k">Ficha origen</span><span class="v">{{ r.fichaAgrupacionOrigenId ? '#' + r.fichaAgrupacionOrigenId : '—' }}</span></div>
