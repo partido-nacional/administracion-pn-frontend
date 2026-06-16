@@ -44,8 +44,7 @@ interface IntNac {
               <th>
                 <select class="column-filter" [ngModel]="fDepto()" (ngModelChange)="fDepto.set($event)">
                   <option value="">Todos</option>
-                  <option>Canelones</option><option>Colonia</option><option>Maldonado</option>
-                  <option>Paysandu</option><option>Salto</option><option>Soriano</option>
+                  @for (d of deptos(); track d) { <option>{{ d }}</option> }
                 </select>
               </th>
             </tr>
@@ -84,6 +83,10 @@ export class IntendenciasNacComponent {
   data = signal<IntNac[]>([]);
   fCortesia = signal(''); fApellidos = signal(''); fNombre = signal(''); fTel = signal('');
   fPos = signal(''); fOrg = signal(''); fDepto = signal('');
+
+  deptos = computed(() =>
+    [...new Set(this.data().map(i => i.departamento).filter(Boolean))].sort()
+  );
 
   filtrados = computed(() => this.data().filter(i => {
     const t = (s: string, f: string) => !f || (s ?? '').toLowerCase().includes(f.toLowerCase());
