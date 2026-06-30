@@ -5,7 +5,7 @@
   },
   "stats": {
     "total": 7,
-    "done": 4,
+    "done": 7,
     "by_layer": {
       "1": 4,
       "2": 3
@@ -111,7 +111,7 @@
       "id": "TASK-005",
       "title": "Code review",
       "description": "Revisar el diff: helpers puros y bien nombrados, sin codigo muerto (campos pendientes residuales), patron standalone intacto, sin NgModule, sin migracion fuera de alcance.",
-      "status": "pending",
+      "status": "completed",
       "layer": 2,
       "depends_on": [
         "TASK-001",
@@ -134,7 +134,7 @@
       "id": "TASK-006",
       "title": "Performance review",
       "description": "Confirmar que los helpers se evaluan en render sin costo relevante y que no se introducen recalculos innecesarios ni llamadas HTTP extra.",
-      "status": "pending",
+      "status": "completed",
       "layer": 2,
       "depends_on": [
         "TASK-001",
@@ -157,7 +157,7 @@
       "id": "TASK-007",
       "title": "Security review",
       "description": "Verificar que no se exponen datos sensibles nuevos ni se altera la autenticacion. Cambio puramente de presentacion sobre data ya consumida.",
-      "status": "pending",
+      "status": "completed",
       "layer": 2,
       "depends_on": [
         "TASK-001",
