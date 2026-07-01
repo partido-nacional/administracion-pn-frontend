@@ -37,6 +37,9 @@ type Tab = 'web' | 'locales' | 'nuevo';
     </div>
 
     @if (tab() === 'web') {
+      <div style="margin-top:16px; display:flex; justify-content:flex-end">
+        <button class="btn btn-secondary" (click)="reloadWeb(); reloadStats()">Sincronizar Nube</button>
+      </div>
       <div class="card" style="margin-top:16px">
         <div class="card-body" style="padding:0; overflow-x:auto">
           <table class="table" style="min-width:1400px">
@@ -60,7 +63,7 @@ type Tab = 'web' | 'locales' | 'nuevo';
               </tr>
             </thead>
             <tbody>
-              @for (a of web(); track a.id) {
+              @for (a of pagedWeb(); track a.id) {
                 <tr>
                   <td>{{ a.id }}</td>
                   <td><strong>{{ a.nombre }}</strong></td>
@@ -98,17 +101,16 @@ type Tab = 'web' | 'locales' | 'nuevo';
             </tbody>
           </table>
           <div class="pagination" style="padding:16px 24px">
-            <span class="pagination-info">Mostrando 1–{{ web().length }} de {{ web().length }} adhesiones pendientes en web</span>
+            <span class="pagination-info">Mostrando {{ webRangeStart() }}–{{ webRangeEnd() }} de {{ web().length }} adhesiones pendientes en web</span>
             <div class="pagination-buttons">
-              <button class="page-btn">&lt;</button>
-              <button class="page-btn active">1</button>
-              <button class="page-btn">&gt;</button>
+              <button class="page-btn" [disabled]="webPage() === 1" (click)="webPage.set(webPage() - 1)">&lt;</button>
+              @for (p of webPageNumbers(); track p) {
+                <button class="page-btn" [class.active]="webPage() === p" (click)="webPage.set(p)">{{ p }}</button>
+              }
+              <button class="page-btn" [disabled]="webPage() === webTotalPages()" (click)="webPage.set(webPage() + 1)">&gt;</button>
             </div>
           </div>
         </div>
-      </div>
-      <div style="margin-top:16px">
-        <button class="btn btn-secondary">Sincronizar Nube</button>
       </div>
     }
 
@@ -273,6 +275,17 @@ export class AdhesionesListadoComponent {
   locales = signal<AdhesionLocalDto[]>([]);
   stats = signal<StatsDto>({ locales: 0, web: 0, total: 0, duplicados: 0 });
 
+  webPageSize = 10;
+  webPage = signal(1);
+  webTotalPages = computed(() => Math.max(1, Math.ceil(this.web().length / this.webPageSize)));
+  webPageNumbers = computed(() => Array.from({ length: this.webTotalPages() }, (_, i) => i + 1));
+  pagedWeb = computed(() => {
+    const start = (this.webPage() - 1) * this.webPageSize;
+    return this.web().slice(start, start + this.webPageSize);
+  });
+  webRangeStart = computed(() => this.web().length === 0 ? 0 : (this.webPage() - 1) * this.webPageSize + 1);
+  webRangeEnd = computed(() => Math.min(this.webPage() * this.webPageSize, this.web().length));
+
   form: any = {
     contactoId: null, sector: '', sistContrib: '', aporte: null,
     titularResponsable: '', observaciones: ''
@@ -295,7 +308,7 @@ export class AdhesionesListadoComponent {
     return 'dept';
   }
 
-  reloadWeb()    { this.http.get<AdhesionWebDto[]>(`${environment.apiUrl}/adhesiones/web`).subscribe(x => this.web.set(x)); }
+  reloadWeb()    { this.http.get<AdhesionWebDto[]>(`${environment.apiUrl}/adhesiones/web`).subscribe(x => { this.web.set(x); this.webPage.set(1); }); }
   reloadLocales(){ this.http.get<AdhesionLocalDto[]>(`${environment.apiUrl}/adhesiones/locales`).subscribe(x => this.locales.set(x)); }
   reloadStats()  { this.http.get<StatsDto>(`${environment.apiUrl}/adhesiones/stats`).subscribe(x => this.stats.set(x)); }
 
