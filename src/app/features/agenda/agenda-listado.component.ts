@@ -279,6 +279,13 @@ type Tab = 'todos' | 'padron' | 'duplicados' | 'exportar';
     .action-group .btn-wa svg { display:block; flex-shrink:0; }
     .action-group .btn-wa:hover:not(:disabled) { background:#1ebe57; }
     .action-group .btn-wa:disabled { background:#bcd; cursor:not-allowed; }
+    .action-group .btn-pencil {
+      width:34px !important; height:34px !important;
+      min-width:34px; min-height:34px;
+      max-width:34px; max-height:34px;
+      flex:0 0 34px; align-self:center;
+    }
+    .action-group .btn-pencil svg { width:18px; height:18px; }
 
     .modal-backdrop {
       position:fixed; inset:0; background:rgba(15,23,42,.55);

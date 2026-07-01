@@ -17,12 +17,34 @@ export class ShellComponent {
 
   user = this.auth.session;
   openMenus = signal<Record<string, boolean>>({});
+  sidebarCollapsed = signal(false);
+  darkMode = signal(false);
+
+  constructor() {
+    if (localStorage.getItem('darkMode') === '1') {
+      this.darkMode.set(true);
+      document.documentElement.classList.add('dark');
+    }
+  }
 
   toggle(key: string) {
     this.openMenus.update(m => ({ ...m, [key]: !m[key] }));
   }
 
   isOpen(key: string) { return !!this.openMenus()[key]; }
+
+  toggleSidebar() { this.sidebarCollapsed.update(v => !v); }
+
+  toggleDarkMode() {
+    this.darkMode.update(v => !v);
+    if (this.darkMode()) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('darkMode', '1');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.removeItem('darkMode');
+    }
+  }
 
   logout() {
     this.auth.logout();

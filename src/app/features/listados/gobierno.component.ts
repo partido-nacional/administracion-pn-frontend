@@ -32,26 +32,25 @@ interface Gobierno {
             </tr>
             <tr class="filter-row">
               <th>
-                <select class="column-filter" [(ngModel)]="fCortesia">
+                <select class="column-filter" [ngModel]="fCortesia()" (ngModelChange)="fCortesia.set($event)">
                   <option value="">Todos</option>
                   <option>Sr.</option><option>Sra.</option><option>Dr.</option><option>Dra.</option>
                   <option>Ing.</option><option>Lic.</option><option>Cr.</option>
                 </select>
               </th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fApellidos"></th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fNombre"></th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fTel"></th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fCel"></th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fMail"></th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fPos"></th>
+              <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fApellidos()" (ngModelChange)="fApellidos.set($event)"></th>
+              <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fNombre()" (ngModelChange)="fNombre.set($event)"></th>
+              <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fTel()" (ngModelChange)="fTel.set($event)"></th>
+              <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fCel()" (ngModelChange)="fCel.set($event)"></th>
+              <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fMail()" (ngModelChange)="fMail.set($event)"></th>
+              <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fPos()" (ngModelChange)="fPos.set($event)"></th>
               <th>
-                <select class="column-filter" [(ngModel)]="fOrg">
+                <select class="column-filter" [ngModel]="fOrg()" (ngModelChange)="fOrg.set($event)">
                   <option value="">Todos</option>
-                  <option>ANP</option><option>ANTEL</option><option>UTE</option>
-                  <option>CORREO</option><option>OSE</option><option>ANCAP</option>
+                  @for (n of nombresOrganismo(); track n) { <option>{{ n }}</option> }
                 </select>
               </th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fCompania"></th>
+              <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fCompania()" (ngModelChange)="fCompania.set($event)"></th>
             </tr>
           </thead>
           <tbody>
@@ -89,15 +88,20 @@ export class GobiernoComponent {
   private titleSvc = inject(PageTitleService);
 
   data = signal<Gobierno[]>([]);
-  fCortesia = ''; fApellidos = ''; fNombre = ''; fTel = ''; fCel = '';
-  fMail = ''; fPos = ''; fOrg = ''; fCompania = '';
+  fCortesia = signal(''); fApellidos = signal(''); fNombre = signal('');
+  fTel = signal(''); fCel = signal(''); fMail = signal('');
+  fPos = signal(''); fOrg = signal(''); fCompania = signal('');
+
+  nombresOrganismo = computed(() =>
+    [...new Set(this.data().map(g => g.nombreOrganismo).filter(Boolean))].sort()
+  );
 
   filtrados = computed(() => this.data().filter(g => {
     const t = (s: string, f: string) => !f || (s ?? '').toLowerCase().includes(f.toLowerCase());
     const e = (s: string, f: string) => !f || s === f;
-    return e(g.cortesia, this.fCortesia) && t(g.apellidos, this.fApellidos) && t(g.nombre, this.fNombre)
-      && t(g.telTrabajo, this.fTel) && t(g.celular, this.fCel) && t(g.mail, this.fMail)
-      && t(g.posOrganismo, this.fPos) && e(g.nombreOrganismo, this.fOrg) && t(g.nombreCompania, this.fCompania);
+    return e(g.cortesia, this.fCortesia()) && t(g.apellidos, this.fApellidos()) && t(g.nombre, this.fNombre())
+      && t(g.telTrabajo, this.fTel()) && t(g.celular, this.fCel()) && t(g.mail, this.fMail())
+      && t(g.posOrganismo, this.fPos()) && e(g.nombreOrganismo, this.fOrg()) && t(g.nombreCompania, this.fCompania());
   }));
 
   constructor() {
