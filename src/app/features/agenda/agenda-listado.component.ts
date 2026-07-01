@@ -1,27 +1,22 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
-import { environment } from '../../../environments/environment';
+import { Subject, debounceTime } from 'rxjs';
 import { PageTitleService } from '../../core/page-title.service';
-import { ContactosService, Contacto } from './contactos.service';
+import { ContactosService, Contacto, ContactoListado } from './contactos.service';
 import { DuplicadosContactosComponent } from './duplicados-contactos.component';
+import { PaginatorComponent } from '../../shared/components/paginator/paginator.component';
+import { GridQuery, SortOrder, DEFAULT_PAGE_SIZE } from '../../core/models/paged';
 import { imprimirContactos } from './imprimir-contactos';
 import { exportarCSV } from '../../core/exportar-csv';
-
-interface ContactoListado {
-  id: number; nombre: string; apellido: string; cedula?: string; credencial?: string;
-  departamento?: string; celular?: string; celular2?: string; email?: string; adhesion?: string;
-  adherente?: boolean; tieneFicha?: boolean; tieneIntegranteOrganismo?: boolean;
-}
 
 type Tab = 'todos' | 'padron' | 'duplicados' | 'exportar';
 
 @Component({
   selector: 'app-agenda-listado',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, DuplicadosContactosComponent],
+  imports: [CommonModule, FormsModule, RouterLink, DuplicadosContactosComponent, PaginatorComponent],
   template: `
     <div class="topbar-inline">
       <button class="btn btn-secondary" (click)="exportarCsv()" title="Exportar CSV">📥 CSV</button>
@@ -38,38 +33,38 @@ type Tab = 'todos' | 'padron' | 'duplicados' | 'exportar';
 
     @if (tab() === 'todos') {
       <div class="sort-hint">
-        💡 Click en una columna para ordenar. <strong>Shift+Click</strong> para agregarla como orden secundario.
+        💡 Click en una columna para ordenar (server-side).
       </div>
       <div class="card">
         <div class="card-body" style="padding:0; overflow-x:auto">
           <table class="table">
             <thead>
               <tr>
-                <th class="sortable" (click)="onSort('id', $event)">ID <span class="ind">{{ indicador('id') }}</span></th>
-                <th class="sortable" (click)="onSort('apellido', $event)">Nombre <span class="ind">{{ indicador('apellido') }}</span></th>
-                <th class="sortable" (click)="onSort('cedula', $event)">Cedula <span class="ind">{{ indicador('cedula') }}</span></th>
-                <th class="sortable" (click)="onSort('credencial', $event)">Credencial <span class="ind">{{ indicador('credencial') }}</span></th>
-                <th class="sortable" (click)="onSort('departamento', $event)">Departamento <span class="ind">{{ indicador('departamento') }}</span></th>
-                <th class="sortable" (click)="onSort('celular', $event)">Celular <span class="ind">{{ indicador('celular') }}</span></th>
-                <th class="sortable" (click)="onSort('email', $event)">Email <span class="ind">{{ indicador('email') }}</span></th>
-                <th class="sortable" (click)="onSort('adhesion', $event)">Adhesion <span class="ind">{{ indicador('adhesion') }}</span></th>
+                <th class="sortable" (click)="onSort('id')">ID <span class="ind">{{ indicador('id') }}</span></th>
+                <th class="sortable" (click)="onSort('apellido')">Nombre <span class="ind">{{ indicador('apellido') }}</span></th>
+                <th class="sortable" (click)="onSort('cedula')">Cedula <span class="ind">{{ indicador('cedula') }}</span></th>
+                <th class="sortable" (click)="onSort('credencial')">Credencial <span class="ind">{{ indicador('credencial') }}</span></th>
+                <th class="sortable" (click)="onSort('departamento')">Departamento <span class="ind">{{ indicador('departamento') }}</span></th>
+                <th class="sortable" (click)="onSort('celular')">Celular <span class="ind">{{ indicador('celular') }}</span></th>
+                <th class="sortable" (click)="onSort('email')">Email <span class="ind">{{ indicador('email') }}</span></th>
+                <th class="sortable" (click)="onSort('adhesion')">Adhesion <span class="ind">{{ indicador('adhesion') }}</span></th>
                 <th></th>
               </tr>
               <tr class="filter-row">
-                <th><input class="column-filter" [ngModel]="fId()"     (ngModelChange)="fId.set($event)"     placeholder="Filtrar..."></th>
-                <th><input class="column-filter" [ngModel]="fNombre()" (ngModelChange)="fNombre.set($event)" placeholder="Filtrar..."></th>
-                <th><input class="column-filter" [ngModel]="fCedula()" (ngModelChange)="fCedula.set($event)" placeholder="Filtrar..."></th>
-                <th><input class="column-filter" [ngModel]="fCred()"   (ngModelChange)="fCred.set($event)"   placeholder="Filtrar..."></th>
+                <th><input class="column-filter" [ngModel]="fId()"     (ngModelChange)="fId.set($event); onFilter()"     placeholder="Filtrar..."></th>
+                <th><input class="column-filter" [ngModel]="fNombre()" (ngModelChange)="fNombre.set($event); onFilter()" placeholder="Filtrar..."></th>
+                <th><input class="column-filter" [ngModel]="fCedula()" (ngModelChange)="fCedula.set($event); onFilter()" placeholder="Filtrar..."></th>
+                <th><input class="column-filter" [ngModel]="fCred()"   (ngModelChange)="fCred.set($event); onFilter()"   placeholder="Filtrar..."></th>
                 <th>
-                  <select class="column-filter" [ngModel]="fDepto()" (ngModelChange)="fDepto.set($event)">
+                  <select class="column-filter" [ngModel]="fDepto()" (ngModelChange)="fDepto.set($event); onFilter()">
                     <option value="">Todos</option>
                     @for (d of deptos; track d) { @if (d) { <option>{{ d }}</option> } }
                   </select>
                 </th>
-                <th><input class="column-filter" [ngModel]="fCel()"   (ngModelChange)="fCel.set($event)"   placeholder="Filtrar..."></th>
-                <th><input class="column-filter" [ngModel]="fEmail()" (ngModelChange)="fEmail.set($event)" placeholder="Filtrar..."></th>
+                <th><input class="column-filter" [ngModel]="fCel()"   (ngModelChange)="fCel.set($event); onFilter()"   placeholder="Filtrar..."></th>
+                <th><input class="column-filter" [ngModel]="fEmail()" (ngModelChange)="fEmail.set($event); onFilter()" placeholder="Filtrar..."></th>
                 <th>
-                  <select class="column-filter" [ngModel]="fAdh()" (ngModelChange)="fAdh.set($event)">
+                  <select class="column-filter" [ngModel]="fAdh()" (ngModelChange)="fAdh.set($event); onFilter()">
                     <option value="">Todas</option>
                     <option>Activa</option>
                     <option>Pendiente</option>
@@ -80,7 +75,7 @@ type Tab = 'todos' | 'padron' | 'duplicados' | 'exportar';
               </tr>
             </thead>
             <tbody>
-              @for (c of filtrados(); track c.id) {
+              @for (c of items(); track c.id) {
                 <tr class="clickable" [class.selected]="expandedId() === c.id" (click)="toggle(c.id)">
                   <td>{{ c.id }}</td>
                   <td><strong>{{ c.apellido }}, {{ c.nombre }}</strong></td>
@@ -210,14 +205,9 @@ type Tab = 'todos' | 'padron' | 'duplicados' | 'exportar';
               }
             </tbody>
           </table>
-          <div class="pagination" style="padding:16px 24px">
-            <span class="pagination-info">Mostrando 1–{{ filtrados().length }} de {{ contactos().length }} contactos</span>
-            <div class="pagination-buttons">
-              <button class="page-btn">&lt;</button>
-              <button class="page-btn active">1</button>
-              <button class="page-btn">&gt;</button>
-            </div>
-          </div>
+          <app-paginator
+            [total]="total()" [page]="page()" [pageSize]="pageSize()"
+            (pageChange)="onPage($event)" (pageSizeChange)="onPageSize($event)" />
         </div>
       </div>
     }
@@ -329,16 +319,23 @@ type Tab = 'todos' | 'padron' | 'duplicados' | 'exportar';
     .kv .v { font-size:14px; color:#222; word-break:break-word; }
   `]
 })
-export class AgendaListadoComponent {
-  private http = inject(HttpClient);
+export class AgendaListadoComponent implements OnInit {
   private titleSvc = inject(PageTitleService);
   private svc = inject(ContactosService);
 
   tab = signal<Tab>('todos');
   deptos = ['Montevideo', 'Canelones', 'Maldonado', 'Salto'];
-  contactos = signal<ContactoListado[]>([]);
+  items = signal<ContactoListado[]>([]);
+  total = signal(0);
+  page = signal(1);
+  pageSize = signal(DEFAULT_PAGE_SIZE);
+  sort = signal<string | undefined>(undefined);
+  order = signal<SortOrder>('asc');
+  loading = signal(false);
   expandedId = signal<number | null>(null);
   detalle = signal<Contacto | null>(null);
+
+  private filter$ = new Subject<void>();
 
   toggle(id: number) {
     if (this.expandedId() === id) {
@@ -375,98 +372,70 @@ export class AgendaListadoComponent {
   fEmail = signal('');
   fAdh = signal('');
 
-  sortBy = signal<{col: keyof ContactoListado; dir: 'asc' | 'desc'}[]>([
-    { col: 'apellido', dir: 'asc' }
-  ]);
+  private buildQuery(all = false): GridQuery {
+    return {
+      page: this.page(), pageSize: this.pageSize(),
+      sort: this.sort(), order: this.order(), all,
+      filters: {
+        id: this.fId(), nombre: this.fNombre(), cedula: this.fCedula(),
+        credencial: this.fCred(), departamento: this.fDepto(), celular: this.fCel(),
+        email: this.fEmail(), adhesion: this.fAdh(),
+      },
+    };
+  }
 
-  filtrados = computed(() => {
-    const norm = (s: any) => (s ?? '').toString().toLowerCase();
-    const m = (val: any, q: string) => !q || norm(val).includes(q.toLowerCase());
-    const fId = this.fId(), fNom = this.fNombre(), fCed = this.fCedula(), fCre = this.fCred(),
-          fDep = this.fDepto(), fCel = this.fCel(), fMail = this.fEmail(), fAdh = this.fAdh();
-    const filtered = this.contactos().filter(c =>
-      m(c.id, fId) &&
-      m(`${c.apellido}, ${c.nombre}`, fNom) &&
-      m(c.cedula, fCed) &&
-      m(c.credencial, fCre) &&
-      (!fDep || c.departamento === fDep) &&
-      m(c.celular, fCel) &&
-      m(c.email, fMail) &&
-      (!fAdh || (c.adhesion ?? '') === fAdh)
-    );
-
-    const sorts = this.sortBy();
-    if (sorts.length === 0) return filtered;
-    return [...filtered].sort((a, b) => {
-      for (const { col, dir } of sorts) {
-        const av = (a as any)[col], bv = (b as any)[col];
-        const c = this.cmp(av, bv);
-        if (c !== 0) return dir === 'asc' ? c : -c;
-      }
-      return 0;
+  private load() {
+    this.loading.set(true);
+    this.svc.listado(this.buildQuery()).subscribe({
+      next: r => { this.items.set(r.items); this.total.set(r.total); this.loading.set(false); },
+      error: () => this.loading.set(false),
     });
-  });
+  }
 
-  onSort(col: keyof ContactoListado, ev: MouseEvent) {
-    const current = [...this.sortBy()];
-    const idx = current.findIndex(s => s.col === col);
-    if (ev.shiftKey) {
-      if (idx >= 0) {
-        current[idx] = { col, dir: current[idx].dir === 'asc' ? 'desc' : 'asc' };
-      } else {
-        current.push({ col, dir: 'asc' });
-      }
-      this.sortBy.set(current);
+  onFilter() { this.filter$.next(); }
+  onPage(p: number) { this.page.set(p); this.load(); }
+  onPageSize(size: number) { this.pageSize.set(size); this.page.set(1); this.load(); }
+
+  onSort(col: string) {
+    if (this.sort() === col) {
+      this.order.set(this.order() === 'asc' ? 'desc' : 'asc');
     } else {
-      if (idx === 0 && current.length === 1) {
-        this.sortBy.set([{ col, dir: current[0].dir === 'asc' ? 'desc' : 'asc' }]);
-      } else {
-        this.sortBy.set([{ col, dir: 'asc' }]);
-      }
+      this.sort.set(col);
+      this.order.set('asc');
     }
+    this.page.set(1);
+    this.load();
   }
 
-  indicador(col: keyof ContactoListado): string {
-    const sorts = this.sortBy();
-    const idx = sorts.findIndex(s => s.col === col);
-    if (idx < 0) return '';
-    const arrow = sorts[idx].dir === 'asc' ? '▲' : '▼';
-    return sorts.length > 1 ? `${arrow}${idx + 1}` : arrow;
-  }
-
-  private cmp(a: any, b: any): number {
-    if (a == null && b == null) return 0;
-    if (a == null) return 1;
-    if (b == null) return -1;
-    if (typeof a === 'number' && typeof b === 'number') return a - b;
-    return String(a).localeCompare(String(b), 'es', { sensitivity: 'base', numeric: true });
+  indicador(col: string): string {
+    if (this.sort() !== col) return '';
+    return this.order() === 'asc' ? '▲' : '▼';
   }
 
   imprimir() {
-    const rows = this.filtrados();
-    const filtros = [
-      { campo: 'ID', valor: this.fId() },
-      { campo: 'Nombre', valor: this.fNombre() },
-      { campo: 'Cédula', valor: this.fCedula() },
-      { campo: 'Credencial', valor: this.fCred() },
-      { campo: 'Departamento', valor: this.fDepto() },
-      { campo: 'Celular', valor: this.fCel() },
-      { campo: 'Email', valor: this.fEmail() },
-      { campo: 'Adhesión', valor: this.fAdh() }
-    ];
-    const labels: Record<string, string> = {
-      id: 'ID', apellido: 'Nombre', cedula: 'Cédula', credencial: 'Credencial',
-      departamento: 'Departamento', celular: 'Celular', email: 'Email', adhesion: 'Adhesión'
-    };
-    const orden = this.sortBy().map(s => ({
-      campo: labels[s.col as string] || (s.col as string),
-      dir: s.dir
-    }));
-    imprimirContactos(rows.map(c => ({
-      id: c.id, nombre: c.nombre, apellido: c.apellido,
-      cedula: c.cedula, credencial: c.credencial, departamento: c.departamento,
-      celular: c.celular, email: c.email, adhesion: c.adhesion
-    })), { filtros, orden });
+    this.svc.listado(this.buildQuery(true)).subscribe(r => {
+      const filtros = [
+        { campo: 'ID', valor: this.fId() },
+        { campo: 'Nombre', valor: this.fNombre() },
+        { campo: 'Cédula', valor: this.fCedula() },
+        { campo: 'Credencial', valor: this.fCred() },
+        { campo: 'Departamento', valor: this.fDepto() },
+        { campo: 'Celular', valor: this.fCel() },
+        { campo: 'Email', valor: this.fEmail() },
+        { campo: 'Adhesión', valor: this.fAdh() }
+      ];
+      const labels: Record<string, string> = {
+        id: 'ID', apellido: 'Nombre', nombre: 'Nombre', cedula: 'Cédula', credencial: 'Credencial',
+        departamento: 'Departamento', celular: 'Celular', email: 'Email', adhesion: 'Adhesión'
+      };
+      const s = this.sort();
+      const orden = s ? [{ campo: labels[s] || s, dir: this.order() }] : [];
+      imprimirContactos(r.items.map(c => ({
+        id: c.id, nombre: c.nombre, apellido: c.apellido,
+        cedula: c.cedula, credencial: c.credencial, departamento: c.departamento,
+        celular: c.celular, email: c.email, adhesion: c.adhesion
+      })), { filtros, orden });
+    });
   }
 
   waChoice = signal<ContactoListado | null>(null);
@@ -498,25 +467,27 @@ export class AgendaListadoComponent {
   }
 
   exportarCsv() {
-    exportarCSV(this.filtrados(), [
-      { get: 'id', label: 'ID' },
-      { get: (c) => `${c.apellido}, ${c.nombre}`, label: 'Nombre' },
-      { get: 'cedula', label: 'Cédula' },
-      { get: 'credencial', label: 'Credencial' },
-      { get: 'departamento', label: 'Departamento' },
-      { get: 'celular', label: 'Celular' },
-      { get: 'email', label: 'Email' },
-      { get: 'adhesion', label: 'Adhesión' }
-    ], `contactos-${new Date().toISOString().slice(0, 10)}.csv`);
+    this.svc.listado(this.buildQuery(true)).subscribe(r => {
+      exportarCSV(r.items, [
+        { get: 'id', label: 'ID' },
+        { get: (c) => `${c.apellido}, ${c.nombre}`, label: 'Nombre' },
+        { get: 'cedula', label: 'Cédula' },
+        { get: 'credencial', label: 'Credencial' },
+        { get: 'departamento', label: 'Departamento' },
+        { get: 'celular', label: 'Celular' },
+        { get: 'email', label: 'Email' },
+        { get: 'adhesion', label: 'Adhesión' }
+      ], `contactos-${new Date().toISOString().slice(0, 10)}.csv`);
+    });
   }
 
   constructor() {
     this.titleSvc.set('Agenda');
-    this.reload();
+    this.filter$.pipe(debounceTime(300)).subscribe(() => {
+      this.page.set(1);
+      this.load();
+    });
   }
 
-  reload() {
-    this.http.get<ContactoListado[]>(`${environment.apiUrl}/contactos`)
-      .subscribe(x => this.contactos.set(x));
-  }
+  ngOnInit() { this.load(); }
 }
