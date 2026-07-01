@@ -9,7 +9,7 @@
   },
   "stats": {
     "total": 15,
-    "done": 2,
+    "done": 4,
     "by_layer": {
       "1": 12,
       "2": 3
@@ -128,7 +128,7 @@
       "id": "TASK-005",
       "title": "Piloto movimientos (atómico BE+FE)",
       "description": "Backend: /listados/movimientos acepta PagedQuery + filtros (accion, modulo, usuario, detalle, fecha), aplica whitelist de sort (default fecha desc) y devuelve PagedResult<Movimiento>. Frontend: movimientos.component consume paginado, reemplaza la paginación decorativa por <app-paginator>, mueve filtros a server-side con debounce, sort por columna, y export con all=true via exportar-csv.",
-      "status": "pending",
+      "status": "done",
       "layer": 1,
       "depends_on": [
         "TASK-001",
@@ -150,13 +150,14 @@
         "US-3",
         "US-4",
         "TODO-004"
-      ]
+      ],
+      "note": "BE escrito sin compilar (sin dotnet); FE build OK"
     },
     {
       "id": "TASK-006",
       "title": "Piloto contactos (atómico BE+FE)",
       "description": "Backend: /contactos extiende ?q y ?departamento con PagedQuery (page/pageSize/sort/order, default id desc) devolviendo PagedResult<ContactoListado>. Frontend: agenda-listado.component consume paginado, filtros server-side con debounce, paginador y sort por columna.",
-      "status": "pending",
+      "status": "done",
       "layer": 1,
       "depends_on": [
         "TASK-001",
@@ -178,7 +179,8 @@
         "US-2",
         "US-3",
         "TODO-005"
-      ]
+      ],
+      "note": "sort simple + 8 filtros server-side; multi-sort retirado; FE build OK; BE sin compilar local"
     },
     {
       "id": "TASK-007",
