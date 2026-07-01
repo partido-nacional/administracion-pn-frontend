@@ -77,7 +77,7 @@ body {
 .sidebar.collapsed .sidebar-toggle { margin-left: 0; }
 .sidebar.collapsed .user-info { display: none; }
 .sidebar.collapsed .user-badge { flex-direction: column; gap: 6px; align-items: center; }
-.sidebar.collapsed .user-badge .btn { display: none; }
+.sidebar.collapsed .user-badge .btn-logout { display: none; }
 
 .sidebar-header {
     display: flex;
@@ -866,6 +866,28 @@ select.column-filter {
     flex-shrink: 0;
 }
 .btn-icon-sidebar:hover { color: white; background: rgba(255,255,255,0.1); }
+
+.btn-logout {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.6);
+    cursor: pointer;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    flex-shrink: 0;
+    transition: color 0.15s, background 0.15s, border-color 0.15s, transform 0.15s;
+}
+.btn-logout:hover {
+    color: #fca5a5;
+    background: rgba(239,68,68,0.12);
+    border-color: rgba(239,68,68,0.35);
+}
+.btn-logout:active { transform: scale(0.93); }
 
 /* ---- Dark Mode ---- */
 html.dark {

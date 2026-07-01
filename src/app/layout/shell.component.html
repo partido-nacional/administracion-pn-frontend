@@ -2,7 +2,7 @@
   <aside class="sidebar" [class.collapsed]="sidebarCollapsed()">
     <div class="sidebar-header">
       <div class="logo">PN</div>
-      <span class="logo-text">AdministracionPN</span>
+      <span class="logo-text">Agenda</span>
       <button class="sidebar-toggle" (click)="toggleSidebar()" [title]="sidebarCollapsed() ? 'Expandir menú' : 'Colapsar menú'">
         @if (!sidebarCollapsed()) {
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
@@ -147,7 +147,13 @@
             </svg>
           }
         </button>
-        <button class="btn btn-sm btn-secondary" (click)="logout()" title="Salir">⎋</button>
+        <button class="btn-logout" (click)="logout()" title="Cerrar sesión">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+            <polyline points="16 17 21 12 16 7"/>
+            <line x1="21" y1="12" x2="9" y2="12"/>
+          </svg>
+        </button>
       </div>
     </div>
   </aside>
