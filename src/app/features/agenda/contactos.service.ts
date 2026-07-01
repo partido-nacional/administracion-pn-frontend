@@ -2,6 +2,8 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { Observable } from 'rxjs';
+import { GridQuery, PagedResult } from '../../core/models/paged';
+import { buildPagedParams } from '../../core/services/paged';
 
 export interface Contacto {
   id: number;
@@ -97,11 +99,21 @@ export interface FichaAdhesionDetalle {
   carnetEntregado?: string;
 }
 
+/** Fila del listado de contactos (endpoint paginado /contactos). */
+export interface ContactoListado {
+  id: number; nombre: string; apellido: string; cedula?: string; credencial?: string;
+  departamento?: string; celular?: string; celular2?: string; email?: string; adhesion?: string;
+  adherente?: boolean; tieneFicha?: boolean; tieneIntegranteOrganismo?: boolean;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ContactosService {
   private http = inject(HttpClient);
   private base = `${environment.apiUrl}/contactos`;
-  list(q?: string): Observable<Contacto[]> { return this.http.get<Contacto[]>(this.base, { params: q ? { q } : {} }); }
+  /** Listado paginado + orden + filtros server-side. */
+  listado(query: GridQuery): Observable<PagedResult<ContactoListado>> {
+    return this.http.get<PagedResult<ContactoListado>>(this.base, { params: buildPagedParams(query) });
+  }
   get(id: number) { return this.http.get<Contacto>(`${this.base}/${id}`); }
   create(c: Partial<Contacto>) { return this.http.post<Contacto>(this.base, c); }
   update(c: Contacto) { return this.http.put<void>(`${this.base}/${c.id}`, c); }
