@@ -1,29 +1,27 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
-import { environment } from '../../../environments/environment';
+import { Subject, debounceTime } from 'rxjs';
 import { PageTitleService } from '../../core/page-title.service';
-
-interface ConvL {
-  idContacto: number; credCivica: string; apellidos: string; nombres: string; celular: string;
-  mail: string; posOrganismo: string; nombreOrganismo: string; condicion: string; adherente: boolean;
-}
+import { PaginatorComponent } from '../../shared/components/paginator/paginator.component';
+import { ListadosService, ConvL } from '../../core/services/listados.service';
+import { GridQuery, SortOrder, DEFAULT_PAGE_SIZE } from '../../core/models/paged';
+import { exportarCSV } from '../../core/exportar-csv';
 
 @Component({
   selector: 'app-listados-convencionales',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PaginatorComponent],
   template: `
     <div class="card">
       <div class="card-body" style="padding:0; overflow-x:auto">
         <table class="table" style="min-width:1350px">
           <thead>
             <tr>
-              <th style="width:70px">ID Contacto</th>
+              <th style="width:70px" class="sortable" (click)="sortBy('id')">ID Contacto {{ arrow('id') }}</th>
               <th style="min-width:85px">Cred. Civica</th>
-              <th style="min-width:110px">Apellidos</th>
-              <th style="min-width:90px">Nombres</th>
+              <th style="min-width:110px" class="sortable" (click)="sortBy('apellidos')">Apellidos {{ arrow('apellidos') }}</th>
+              <th style="min-width:90px" class="sortable" (click)="sortBy('nombres')">Nombres {{ arrow('nombres') }}</th>
               <th style="min-width:95px">Celular</th>
               <th style="min-width:160px">Mail</th>
               <th style="min-width:130px">Posicion Organismo</th>
@@ -32,23 +30,23 @@ interface ConvL {
               <th style="min-width:70px; text-align:center">Adherente</th>
             </tr>
             <tr class="filter-row">
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fId"></th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fCred"></th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fApellidos"></th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fNombres"></th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fCel"></th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fMail"></th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fPos"></th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fOrg"></th>
+              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fId" (ngModelChange)="onFilter()"></th>
+              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fCred" (ngModelChange)="onFilter()"></th>
+              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fApellidos" (ngModelChange)="onFilter()"></th>
+              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fNombres" (ngModelChange)="onFilter()"></th>
+              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fCel" (ngModelChange)="onFilter()"></th>
+              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fMail" (ngModelChange)="onFilter()"></th>
+              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fPos" (ngModelChange)="onFilter()"></th>
+              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fOrg" (ngModelChange)="onFilter()"></th>
               <th>
-                <select class="column-filter" [(ngModel)]="fCondicion">
+                <select class="column-filter" [(ngModel)]="fCondicion" (ngModelChange)="onFilter()">
                   <option value="">Todos</option>
                   <option>Titular</option>
                   <option>Suplente</option>
                 </select>
               </th>
               <th>
-                <select class="column-filter" [(ngModel)]="fAdherente">
+                <select class="column-filter" [(ngModel)]="fAdherente" (ngModelChange)="onFilter()">
                   <option value="">Todos</option>
                   <option value="si">Si</option>
                   <option value="no">No</option>
@@ -57,7 +55,7 @@ interface ConvL {
             </tr>
           </thead>
           <tbody>
-            @for (c of filtrados(); track c.idContacto) {
+            @for (c of items(); track c.idContacto) {
               <tr>
                 <td>{{ c.idContacto }}</td>
                 <td>{{ c.credCivica }}</td>
@@ -70,47 +68,97 @@ interface ConvL {
                 <td>{{ c.condicion }}</td>
                 <td style="text-align:center">{{ c.adherente ? '☑' : '☐' }}</td>
               </tr>
+            } @empty {
+              <tr><td colspan="10" style="text-align:center; padding:24px; color:var(--gray-500)">
+                {{ loading() ? 'Cargando…' : 'Sin resultados' }}
+              </td></tr>
             }
           </tbody>
         </table>
-        <div class="pagination" style="padding:16px 24px">
-          <span class="pagination-info">Mostrando 1–{{ filtrados().length }} de 500 convencionales</span>
-          <button class="btn btn-export btn-sm">📄 Exportar a Excel</button>
-          <div class="pagination-buttons">
-            <button class="page-btn">&lt;</button>
-            <button class="page-btn active">1</button>
-            <button class="page-btn">2</button>
-            <button class="page-btn">3</button>
-            <button class="page-btn">...</button>
-            <button class="page-btn">100</button>
-            <button class="page-btn">&gt;</button>
-          </div>
+        <div style="display:flex; justify-content:flex-end; padding:12px 24px 0">
+          <button class="btn btn-export btn-sm" (click)="exportar()" [disabled]="exporting()">
+            {{ exporting() ? 'Exportando…' : '📄 Exportar a Excel' }}
+          </button>
         </div>
+        <app-paginator
+          [total]="total()" [page]="page()" [pageSize]="pageSize()"
+          (pageChange)="onPage($event)" (pageSizeChange)="onPageSize($event)" />
       </div>
     </div>
-  `
+  `,
+  styles: [`.sortable { cursor: pointer; user-select: none; }`]
 })
-export class ConvencionalesListadoComponent {
-  private http = inject(HttpClient);
+export class ConvencionalesListadoComponent implements OnInit {
+  private svc = inject(ListadosService);
   private titleSvc = inject(PageTitleService);
 
-  data = signal<ConvL[]>([]);
+  items = signal<ConvL[]>([]);
+  total = signal(0);
+  page = signal(1);
+  pageSize = signal(DEFAULT_PAGE_SIZE);
+  sort = signal<string | undefined>(undefined);
+  order = signal<SortOrder>('asc');
+  loading = signal(false);
+  exporting = signal(false);
+
   fId = ''; fCred = ''; fApellidos = ''; fNombres = ''; fCel = '';
   fMail = ''; fPos = ''; fOrg = ''; fCondicion = ''; fAdherente = '';
 
-  filtrados = computed(() => this.data().filter(c => {
-    const t = (s: string, f: string) => !f || (s ?? '').toLowerCase().includes(f.toLowerCase());
-    if (this.fId && !String(c.idContacto).includes(this.fId)) return false;
-    if (this.fCondicion && c.condicion !== this.fCondicion) return false;
-    if (this.fAdherente === 'si' && !c.adherente) return false;
-    if (this.fAdherente === 'no' && c.adherente) return false;
-    return t(c.credCivica, this.fCred) && t(c.apellidos, this.fApellidos) && t(c.nombres, this.fNombres)
-      && t(c.celular, this.fCel) && t(c.mail, this.fMail)
-      && t(c.posOrganismo, this.fPos) && t(c.nombreOrganismo, this.fOrg);
-  }));
+  private filter$ = new Subject<void>();
 
   constructor() {
     this.titleSvc.set('Listados — Convencionales');
-    this.http.get<ConvL[]>(`${environment.apiUrl}/listados/convencionales`).subscribe(x => this.data.set(x));
+    this.filter$.pipe(debounceTime(300)).subscribe(() => { this.page.set(1); this.load(); });
+  }
+
+  ngOnInit() { this.load(); }
+
+  private query(all = false): GridQuery {
+    const adherente = this.fAdherente === 'si' ? 'true' : this.fAdherente === 'no' ? 'false' : '';
+    return {
+      page: this.page(), pageSize: this.pageSize(), sort: this.sort(), order: this.order(), all,
+      filters: {
+        id: this.fId, cred: this.fCred, apellidos: this.fApellidos, nombres: this.fNombres,
+        cel: this.fCel, mail: this.fMail, pos: this.fPos, org: this.fOrg,
+        condicion: this.fCondicion, adherente,
+      },
+    };
+  }
+
+  private load() {
+    this.loading.set(true);
+    this.svc.convencionales(this.query()).subscribe({
+      next: r => { this.items.set(r.items); this.total.set(r.total); this.loading.set(false); },
+      error: () => this.loading.set(false),
+    });
+  }
+
+  onFilter() { this.filter$.next(); }
+  onPage(p: number) { this.page.set(p); this.load(); }
+  onPageSize(size: number) { this.pageSize.set(size); this.page.set(1); this.load(); }
+
+  sortBy(field: string) {
+    if (this.sort() === field) this.order.set(this.order() === 'asc' ? 'desc' : 'asc');
+    else { this.sort.set(field); this.order.set('asc'); }
+    this.page.set(1);
+    this.load();
+  }
+  arrow(field: string) { return this.sort() !== field ? '' : (this.order() === 'asc' ? '▲' : '▼'); }
+
+  exportar() {
+    this.exporting.set(true);
+    this.svc.convencionales(this.query(true)).subscribe({
+      next: r => {
+        exportarCSV(r.items, [
+          { get: 'idContacto', label: 'ID Contacto' }, { get: 'credCivica', label: 'Cred. Civica' },
+          { get: 'apellidos', label: 'Apellidos' }, { get: 'nombres', label: 'Nombres' },
+          { get: 'celular', label: 'Celular' }, { get: 'mail', label: 'Mail' },
+          { get: 'posOrganismo', label: 'Posicion Organismo' }, { get: 'nombreOrganismo', label: 'Nombre Organismo' },
+          { get: 'condicion', label: 'Condicion' }, { get: 'adherente', label: 'Adherente' },
+        ], 'convencionales.csv');
+        this.exporting.set(false);
+      },
+      error: () => this.exporting.set(false),
+    });
   }
 }

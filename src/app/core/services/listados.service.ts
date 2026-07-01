@@ -28,6 +28,35 @@ export interface Joven {
   apellidos: string; nombres: string; celular: string; mail: string; posOrganismo: string;
 }
 
+export interface Gobierno {
+  cortesia: string; apellidos: string; nombre: string; telTrabajo: string; celular: string;
+  mail: string; posOrganismo: string; nombreOrganismo: string; nombreCompania: string;
+}
+
+export interface ComDep {
+  cortesia: string; apellidos: string; nombre: string; telefono: string; celular: string;
+  mail: string; posOrganismo: string; departamento: string; dirOrganizacion: string; ciudadOrganizacion: string;
+}
+
+export interface IntNac {
+  cortesia: string; apellidos: string; nombre: string; telTrabajo: string;
+  posOrganismo: string; nombreOrganismo: string; departamento: string;
+}
+
+export interface Alcalde {
+  cortesia: string; apellidos: string; nombres: string; telTrabajo: string; celular: string;
+  mail: string; posOrganismo: string; nombreOrganismo: string; departamento: string;
+}
+
+export interface ConvL {
+  idContacto: number; credCivica: string; apellidos: string; nombres: string; celular: string;
+  mail: string; posOrganismo: string; nombreOrganismo: string; condicion: string; adherente: boolean;
+}
+
+export interface DirEntry {
+  apellidos: string; nombres: string; celular: string; mail: string; posOrganismo: string;
+}
+
 /**
  * Service por dominio para los listados (feature `listados`).
  * Todas las llamadas devuelven PagedResult<T> (paginado/orden server-side).
@@ -51,4 +80,10 @@ export class ListadosService {
   parlamentarias(query: GridQuery) { return this.paged<Parlamentario>('parlamentarias', query); }
   intendenciasPn(query: GridQuery) { return this.paged<IntPN>('intendencias-pn', query); }
   jovenes(query: GridQuery)        { return this.paged<Joven>('jovenes', query); }
+  gobierno(query: GridQuery)       { return this.paged<Gobierno>('gobierno', query); }
+  comDepartamentales(query: GridQuery) { return this.paged<ComDep>('com-departamentales', query); }
+  intendenciasNac(query: GridQuery)    { return this.paged<IntNac>('intendencias-nacionalistas', query); }
+  alcaldes(query: GridQuery)       { return this.paged<Alcalde>('alcaldes', query); }
+  convencionales(query: GridQuery) { return this.paged<ConvL>('convencionales', query); }
+  directorio(query: GridQuery)     { return this.paged<DirEntry>('directorio', query); }
 }
