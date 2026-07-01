@@ -1,0 +1,477 @@
+{
+  "feature": "paginacion-ordenamiento-server-side",
+  "local_config": {
+    "database": "existing",
+    "repos": {
+      "frontend": "/Users/chrisreznio/Documents/partido-nacional/administracion-pn-frontend",
+      "backend": "/Users/chrisreznio/Documents/partido-nacional/administracion-pn-backend"
+    }
+  },
+  "stats": {
+    "total": 15,
+    "done": 4,
+    "by_layer": {
+      "1": 12,
+      "2": 3
+    }
+  },
+  "notes": {
+    "toolchain": "Backend .NET SDK NO instalado en la máquina de build; los cambios de backend se escriben sin compilar/testear local (verificación diferida a CI / entorno con dotnet). Frontend se compila y testea normalmente.",
+    "backend_verification": "pending-dotnet"
+  },
+  "execution_strategy": "batched",
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "[BE] Fundaciones de paginado (DTOs + helper)",
+      "description": "Crear PagedQuery (page, pageSize, sort, order, all) y PagedResult<T> en AdministracionPn.DTOs. Agregar QueryablePagingExtensions con ApplySort (whitelist por endpoint, fallback a orden por defecto) y ToPagedResultAsync (Count + Skip/Take, clamps page>=1 y 1<=pageSize<=100, all=true devuelve todo respetando filtros/orden).",
+      "status": "done",
+      "layer": 1,
+      "depends_on": [],
+      "files": [
+        "[backend] src/AdministracionPn.DTOs/Paging/PagedQuery.cs",
+        "[backend] src/AdministracionPn.DTOs/Paging/PagedResult.cs",
+        "[backend] src/AdministracionPn.DTOs/Paging/QueryablePagingExtensions.cs"
+      ],
+      "acceptance_criteria": [
+        "AC-1: PagedQuery y PagedResult<T> definidos en AdministracionPn.DTOs",
+        "AC-2: ApplySort ignora sort fuera de whitelist y usa defaultKey/defaultDesc",
+        "AC-3: ToPagedResultAsync clampa page/pageSize (max 100) y soporta all=true",
+        "GATE: dotnet build (backend) passes"
+      ],
+      "references": [
+        "BR-1",
+        "BR-2",
+        "BR-3",
+        "Technical:Backend"
+      ],
+      "note": "code-complete (backend compile pending dotnet)"
+    },
+    {
+      "id": "TASK-002",
+      "title": "[BE] Tests del helper de paginado",
+      "description": "Tests unitarios en AdministracionPn.Tests para QueryablePagingExtensions: clamps de page/pageSize, capeo a 100, whitelist fallback en ApplySort, y all=true (ignora paginado pero mantiene filtros/orden). Usar IQueryable en memoria.",
+      "status": "pending",
+      "layer": 1,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "files": [
+        "[backend] tests/AdministracionPn.Tests/Paging/QueryablePagingExtensionsTests.cs"
+      ],
+      "acceptance_criteria": [
+        "AC-1: Cubre clamps (page<1, pageSize>100, pageSize<1)",
+        "AC-2: Cubre sort inválido -> orden por defecto",
+        "AC-3: Cubre all=true (devuelve todos, ordenados/filtrados)",
+        "GATE: dotnet test (backend) passes"
+      ],
+      "references": [
+        "EC-1",
+        "EC-2",
+        "EC-3",
+        "US-4"
+      ]
+    },
+    {
+      "id": "TASK-003",
+      "title": "[FE] Fundaciones de paginado (modelos, params, paginador)",
+      "description": "Crear core/models/paged.ts (PagedResult<T>, GridQuery, SortOrder), core/services/paged.ts (buildPagedParams -> HttpParams con page/pageSize/sort/order/filtros no vacíos y all=true), y el componente standalone shared/components/paginator con inputs total/page/pageSize y outputs pageChange/pageSizeChange, selector 25/50/100 y texto 'Mostrando X-Y de N'.",
+      "status": "done",
+      "layer": 1,
+      "depends_on": [],
+      "files": [
+        "src/app/core/models/paged.ts",
+        "src/app/core/services/paged.ts",
+        "src/app/shared/components/paginator/paginator.component.ts"
+      ],
+      "acceptance_criteria": [
+        "AC-1: PagedResult<T> y GridQuery tipados en core/models",
+        "AC-2: buildPagedParams omite filtros vacíos y agrega all=true cuando corresponde",
+        "AC-3: <app-paginator> emite pageChange/pageSizeChange y muestra X-Y de N",
+        "GATE: npm run build (frontend) passes"
+      ],
+      "references": [
+        "US-1",
+        "US-2",
+        "US-3",
+        "Technical:Frontend"
+      ],
+      "note": "done"
+    },
+    {
+      "id": "TASK-004",
+      "title": "[FE] Montar test runner + tests de fundaciones",
+      "description": "Configurar Karma/Jasmine mínimo (DEBT-001) y escribir tests para buildPagedParams (pura) y el componente paginator (navegación y emisión de eventos). Agregar script npm test.",
+      "status": "pending",
+      "layer": 1,
+      "depends_on": [
+        "TASK-003"
+      ],
+      "files": [
+        "src/app/core/services/paged.spec.ts",
+        "src/app/shared/components/paginator/paginator.component.spec.ts",
+        "angular.json",
+        "package.json"
+      ],
+      "acceptance_criteria": [
+        "AC-1: npm test corre y pasa en local/CI",
+        "AC-2: buildPagedParams cubierto (filtros vacíos, all=true, sort/order)",
+        "AC-3: paginator cubre cambio de página y de pageSize",
+        "GATE: npm test passes"
+      ],
+      "references": [
+        "DEBT-001",
+        "US-1"
+      ]
+    },
+    {
+      "id": "TASK-005",
+      "title": "Piloto movimientos (atómico BE+FE)",
+      "description": "Backend: /listados/movimientos acepta PagedQuery + filtros (accion, modulo, usuario, detalle, fecha), aplica whitelist de sort (default fecha desc) y devuelve PagedResult<Movimiento>. Frontend: movimientos.component consume paginado, reemplaza la paginación decorativa por <app-paginator>, mueve filtros a server-side con debounce, sort por columna, y export con all=true via exportar-csv.",
+      "status": "done",
+      "layer": 1,
+      "depends_on": [
+        "TASK-001",
+        "TASK-003"
+      ],
+      "files": [
+        "[backend] src/AdministracionPn.Api/Controllers/StubControllers.cs",
+        "src/app/features/listados/movimientos.component.ts"
+      ],
+      "acceptance_criteria": [
+        "AC-1: GET movimientos devuelve { items, total, page, pageSize }",
+        "AC-2: Filtros y orden resueltos en backend; grilla sin filtrado client-side",
+        "AC-3: Paginador funcional + contador con total real; export = dataset filtrado completo",
+        "GATE: dotnet build + npm run build passes"
+      ],
+      "references": [
+        "US-1",
+        "US-2",
+        "US-3",
+        "US-4",
+        "TODO-004"
+      ],
+      "note": "BE escrito sin compilar (sin dotnet); FE build OK"
+    },
+    {
+      "id": "TASK-006",
+      "title": "Piloto contactos (atómico BE+FE)",
+      "description": "Backend: /contactos extiende ?q y ?departamento con PagedQuery (page/pageSize/sort/order, default id desc) devolviendo PagedResult<ContactoListado>. Frontend: agenda-listado.component consume paginado, filtros server-side con debounce, paginador y sort por columna.",
+      "status": "done",
+      "layer": 1,
+      "depends_on": [
+        "TASK-001",
+        "TASK-003"
+      ],
+      "files": [
+        "[backend] src/AdministracionPn.Api/Controllers/ContactosController.cs",
+        "src/app/features/agenda/agenda-listado.component.ts",
+        "src/app/features/agenda/contactos.service.ts"
+      ],
+      "acceptance_criteria": [
+        "AC-1: GET contactos devuelve PagedResult preservando q/departamento",
+        "AC-2: agenda-listado usa el service paginado (no HttpClient directo ni filtrado client-side)",
+        "AC-3: Paginador funcional + sort por columna server-side",
+        "GATE: dotnet build + npm run build passes"
+      ],
+      "references": [
+        "US-1",
+        "US-2",
+        "US-3",
+        "TODO-005"
+      ],
+      "note": "sort simple + 8 filtros server-side; multi-sort retirado; FE build OK; BE sin compilar local"
+    },
+    {
+      "id": "TASK-007",
+      "title": "Checkpoint de validación del piloto",
+      "description": "Verificar end-to-end movimientos y contactos con backend en :5000: paginación, filtros, orden, export y ausencia de regresiones. Confirmar el contrato/patrón antes de replicar. Documentar hallazgos en progress/.",
+      "status": "pending",
+      "layer": 1,
+      "depends_on": [
+        "TASK-005",
+        "TASK-006"
+      ],
+      "files": [
+        "project/wip/002-paginacion-ordenamiento-server-side/progress/pilot-validation.md"
+      ],
+      "acceptance_criteria": [
+        "AC-1: Ambas grillas paginan/filtran/ordenan/exportan correctamente contra la DB real",
+        "AC-2: Sin regresiones vs comportamiento previo",
+        "AC-3: Patrón confirmado (o ajustado) para la replicación",
+        "GATE: build de ambos repos passes"
+      ],
+      "references": [
+        "US-1",
+        "US-2",
+        "US-3",
+        "US-4"
+      ]
+    },
+    {
+      "id": "TASK-008",
+      "title": "Replicar listados restantes (BE+FE)",
+      "description": "Aplicar el patrón a parlamentarias, gobierno, com-departamentales, intendencias-nacionalistas, intendencias-pn, alcaldes, jovenes, convencionales y directorio. Cada endpoint atómico BE+FE con su whitelist de sort y filtros existentes.",
+      "status": "pending",
+      "layer": 1,
+      "depends_on": [
+        "TASK-007"
+      ],
+      "files": [
+        "[backend] src/AdministracionPn.Api/Controllers/StubControllers.cs",
+        "src/app/features/listados/parlamentarias.component.ts",
+        "src/app/features/listados/gobierno.component.ts",
+        "src/app/features/listados/departamentales.component.ts",
+        "src/app/features/listados/intendencias-nac.component.ts",
+        "src/app/features/listados/intendencias-pn.component.ts",
+        "src/app/features/listados/alcaldes.component.ts",
+        "src/app/features/listados/jovenes.component.ts",
+        "src/app/features/listados/convencionales-listado.component.ts",
+        "src/app/features/listados/directorio.component.ts"
+      ],
+      "acceptance_criteria": [
+        "AC-1: Cada endpoint devuelve PagedResult con su whitelist de sort",
+        "AC-2: Cada grilla usa <app-paginator> y filtros server-side",
+        "AC-3: Sin filtrado/paginación client-side remanente",
+        "GATE: dotnet build + npm run build passes"
+      ],
+      "references": [
+        "US-1",
+        "US-2",
+        "US-3",
+        "TODO-004"
+      ]
+    },
+    {
+      "id": "TASK-009",
+      "title": "Replicar adhesiones (BE+FE)",
+      "description": "Aplicar paginado/orden a /adhesiones/web y /adhesiones/locales. Front: adhesiones-listado consume paginado (stats queda como agregado aparte, fuera de paginado).",
+      "status": "pending",
+      "layer": 1,
+      "depends_on": [
+        "TASK-007"
+      ],
+      "files": [
+        "[backend] src/AdministracionPn.Api/Controllers/AdhesionesController.cs",
+        "src/app/features/adhesiones/adhesiones-listado.component.ts"
+      ],
+      "acceptance_criteria": [
+        "AC-1: web y locales devuelven PagedResult",
+        "AC-2: Grilla usa paginador + filtros/orden server-side",
+        "AC-3: stats se mantiene como endpoint agregado (no paginado)",
+        "GATE: dotnet build + npm run build passes"
+      ],
+      "references": [
+        "US-1",
+        "US-2",
+        "US-3"
+      ]
+    },
+    {
+      "id": "TASK-010",
+      "title": "Replicar agrupaciones (BE+FE)",
+      "description": "Aplicar paginado/orden a /agrupaciones, /agrupaciones-periodos, /fichas-agrupacion y /agrupaciones-pendientes. Front: agrupaciones, agrupaciones-por-periodo, fichas-agrupacion, agrupaciones-pendientes.",
+      "status": "pending",
+      "layer": 1,
+      "depends_on": [
+        "TASK-007"
+      ],
+      "files": [
+        "[backend] src/AdministracionPn.Api/Controllers/AgrupacionesController.cs",
+        "[backend] src/AdministracionPn.Api/Controllers/AgrupacionesPeriodosController.cs",
+        "[backend] src/AdministracionPn.Api/Controllers/FichasAgrupacionController.cs",
+        "[backend] src/AdministracionPn.Api/Controllers/AgrupacionesPendientesController.cs",
+        "src/app/features/agrupaciones/agrupaciones.component.ts",
+        "src/app/features/agrupaciones/agrupaciones-por-periodo.component.ts",
+        "src/app/features/agrupaciones/fichas-agrupacion.component.ts",
+        "src/app/features/agrupaciones/agrupaciones-pendientes.component.ts"
+      ],
+      "acceptance_criteria": [
+        "AC-1: Los 4 endpoints devuelven PagedResult con whitelist de sort",
+        "AC-2: Las 4 grillas usan paginador + filtros/orden server-side",
+        "AC-3: padron queda fuera (stub en memoria, out of scope)",
+        "GATE: dotnet build + npm run build passes"
+      ],
+      "references": [
+        "US-1",
+        "US-2",
+        "US-3"
+      ]
+    },
+    {
+      "id": "TASK-011",
+      "title": "Replicar productos (BE+FE)",
+      "description": "Aplicar paginado/orden a /productos y /productos/movimientos. Front: productos.component (stats queda como agregado; ventas/donaciones son stub, out of scope).",
+      "status": "pending",
+      "layer": 1,
+      "depends_on": [
+        "TASK-007"
+      ],
+      "files": [
+        "[backend] src/AdministracionPn.Api/Controllers/ProductosController.cs",
+        "src/app/features/productos/productos.component.ts"
+      ],
+      "acceptance_criteria": [
+        "AC-1: productos y productos/movimientos devuelven PagedResult",
+        "AC-2: Grillas usan paginador + filtros/orden server-side",
+        "AC-3: ventas/donaciones/stats no se tocan (out of scope / agregado)",
+        "GATE: dotnet build + npm run build passes"
+      ],
+      "references": [
+        "US-1",
+        "US-2",
+        "US-3"
+      ]
+    },
+    {
+      "id": "TASK-012",
+      "title": "[BE] Tests de controllers (subconjunto representativo)",
+      "description": "Tests de integración/controller para movimientos, contactos y un endpoint replicado (p. ej. adhesiones/web): verifican shape PagedResult, total real, filtros server-side, sort whitelist y all=true.",
+      "status": "pending",
+      "layer": 1,
+      "depends_on": [
+        "TASK-008",
+        "TASK-009",
+        "TASK-010",
+        "TASK-011"
+      ],
+      "files": [
+        "[backend] tests/AdministracionPn.Tests/Controllers/PaginadoControllersTests.cs"
+      ],
+      "acceptance_criteria": [
+        "AC-1: Verifica shape PagedResult y total real",
+        "AC-2: Verifica filtro + sort whitelist server-side",
+        "AC-3: Verifica all=true devuelve dataset completo filtrado",
+        "GATE: dotnet test passes"
+      ],
+      "references": [
+        "US-2",
+        "US-3",
+        "US-4"
+      ]
+    },
+    {
+      "id": "TASK-013",
+      "title": "Code Review",
+      "description": "Revisar diseño del helper y de la capa front, dead code, naming, y paridad 1:1 de filtros/orden migrados vs comportamiento previo. Verificar que ninguna grilla quede con filtrado/paginación client-side remanente.",
+      "status": "pending",
+      "layer": 2,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002",
+        "TASK-003",
+        "TASK-004",
+        "TASK-005",
+        "TASK-006",
+        "TASK-007",
+        "TASK-008",
+        "TASK-009",
+        "TASK-010",
+        "TASK-011",
+        "TASK-012"
+      ],
+      "acceptance_criteria": [
+        "AC-1: Sin dead code ni paginación decorativa remanente",
+        "AC-2: Paridad de filtros/orden verificada por grilla",
+        "AC-3: Contrato uniforme aplicado consistentemente"
+      ],
+      "references": [
+        "BR-1"
+      ]
+    },
+    {
+      "id": "TASK-014",
+      "title": "Performance Review",
+      "description": "Verificar ausencia de N+1 (uso correcto de Include/proyección), que orden/filtro se resuelvan en SQL (no en memoria), índices en columnas de sort/filtro de alto uso, y capeo razonable de all=true en export.",
+      "status": "pending",
+      "layer": 2,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002",
+        "TASK-003",
+        "TASK-004",
+        "TASK-005",
+        "TASK-006",
+        "TASK-007",
+        "TASK-008",
+        "TASK-009",
+        "TASK-010",
+        "TASK-011",
+        "TASK-012"
+      ],
+      "acceptance_criteria": [
+        "AC-1: Sin N+1; orden/filtro en SQL",
+        "AC-2: Índices revisados en columnas sort/filtro clave",
+        "AC-3: all=true acotado / documentado"
+      ],
+      "references": [
+        "NFR:Performance"
+      ]
+    },
+    {
+      "id": "TASK-015",
+      "title": "Security Review",
+      "description": "Verificar que sort/filtros pasen solo por whitelist (sin inyección ni input crudo en la query), que authz de cada endpoint quede intacta, y que no se expongan datos fuera de lo previo.",
+      "status": "pending",
+      "layer": 2,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002",
+        "TASK-003",
+        "TASK-004",
+        "TASK-005",
+        "TASK-006",
+        "TASK-007",
+        "TASK-008",
+        "TASK-009",
+        "TASK-010",
+        "TASK-011",
+        "TASK-012"
+      ],
+      "acceptance_criteria": [
+        "AC-1: sort/filtros solo por whitelist, sin interpolación cruda",
+        "AC-2: [Authorize] intacto en endpoints migrados",
+        "AC-3: Sin exposición de datos nueva"
+      ],
+      "references": [
+        "NFR:Security",
+        "BR-3"
+      ]
+    }
+  ],
+  "dependency_graph": {
+    "by_layer": {
+      "1": {
+        "level_0": [
+          "TASK-001",
+          "TASK-003"
+        ],
+        "level_1": [
+          "TASK-002",
+          "TASK-004",
+          "TASK-005",
+          "TASK-006"
+        ],
+        "level_2": [
+          "TASK-007"
+        ],
+        "level_3": [
+          "TASK-008",
+          "TASK-009",
+          "TASK-010",
+          "TASK-011"
+        ],
+        "level_4": [
+          "TASK-012"
+        ]
+      },
+      "2": {
+        "level_0": [
+          "TASK-013",
+          "TASK-014",
+          "TASK-015"
+        ]
+      }
+    }
+  }
+}

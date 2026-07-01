@@ -2,8 +2,8 @@
 
 > Items captured during development. Use `/project.backlog` to manage.
 
-**Last Updated**: 2026-06-14
-**Total Items**: 22 (10 TODO, 12 DEBT, 0 IDEA)
+**Last Updated**: 2026-06-30
+**Total Items**: 23 (10 TODO, 13 DEBT, 0 IDEA)
 
 > Origen común: ingeniería inversa a máximo detalle (reverse-eng) del frontend Angular, 2026-06-14. Cada ítem fue verificado contra el código por un agente lector. Confirmar `archivo:línea` antes de arreglar.
 
@@ -38,7 +38,7 @@
 
 ### TODO-004: Paginación decorativa (sin handlers, render del array completo)
 - **Priority**: Medium
-- **Status**: pending
+- **Status**: in-progress → `project/wip/002-paginacion-ordenamiento-server-side`
 - **Created**: 2026-06-14
 - **Origin**: transversal
 - **Context**: Los controles de paginación (`<` `1` `>`) en agenda, adhesiones, listados y productos no tienen handlers; se renderiza todo el array en memoria. No escala con volumen real (ver `docs/migracion` del backend).
@@ -47,7 +47,7 @@
 
 ### TODO-005: Búsqueda de contactos resuelta 100% en cliente
 - **Priority**: Medium
-- **Status**: pending
+- **Status**: in-progress → `project/wip/002-paginacion-ordenamiento-server-side`
 - **Created**: 2026-06-14
 - **Origin**: feature/agenda
 - **Context**: `AgendaListado` hace `GET /contactos` sin `?q=&departamento=` y filtra/ordena client-side; el backend ya soporta búsqueda server-side. No escala.
@@ -220,3 +220,13 @@
 - **Affected Files**: package.json, angular.json, tsconfig.spec.json (nuevo), .github/workflows/ci.yml
 - **Complexity**: L
 - **Risk if Ignored**: Sin red de seguridad automatizada (ligado a DEBT-001).
+
+### DEBT-013: Limpiar "pendientes" del contrato de /debitos/dashboard (espejo backend)
+- **Priority**: Low
+- **Status**: pending
+- **Created**: 2026-06-30
+- **Origin**: feature/eliminar-debitos-pendientes (espejo cross-repo)
+- **Context**: La feature `001-eliminar-debitos-pendientes` quitó el estado "Pendientes" del frontend y dejó que el componente recalcule `total`/`pct*` sobre `aceptados + rechazados`, tolerando que el backend siga enviando `pendientes`/`pctPendientes` (que el front ignora). Para cerrar la deuda: en `administracion-pn-backend`, quitar `stats.pendientes`, `stats.pctPendientes` y `porTarjeta[].pendientes` de la respuesta de `/api/debitos/dashboard`, y recalcular `total`/`pctAceptados`/`pctRechazados`/`pctAceptacion` server-side sobre aceptados+rechazados. Una vez hecho, el frontend puede simplificar los helpers (o volver a confiar en los campos del backend). Convención de IDs cruzados (ver `CLAUDE.md` → Workspace).
+- **Affected Files**: administracion-pn-backend → endpoint `/debitos/dashboard`; (front) src/app/features/debitos/debitos.component.ts
+- **Complexity**: S
+- **Risk if Ignored**: El contrato sigue exponiendo un estado inexistente; los totales/porcentajes server-side quedan inflados para cualquier otro consumidor del endpoint.

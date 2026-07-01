@@ -1,0 +1,204 @@
+{
+  "feature": "eliminar-debitos-pendientes",
+  "local_config": {
+    "database": null
+  },
+  "stats": {
+    "total": 7,
+    "done": 7,
+    "by_layer": {
+      "1": 4,
+      "2": 3
+    }
+  },
+  "execution_strategy": "sequential",
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "Quitar pendientes/pctPendientes de interfaces y signal inicial",
+      "description": "En debitos.component.ts, eliminar el campo `pendientes` de las interfaces `Tarjeta` y `Stats`, y `pctPendientes` de `Stats`. Quitar esos campos del objeto inicial del `signal<Dashboard>`. Es seguro frente a campos JSON extra del backend.",
+      "status": "completed",
+      "layer": 1,
+      "depends_on": [],
+      "files": [
+        "src/app/features/debitos/debitos.component.ts"
+      ],
+      "acceptance_criteria": [
+        "AC-5: las interfaces ya no declaran pendientes/pctPendientes y el componente compila",
+        "GATE: npm run build pasa"
+      ],
+      "references": [
+        "US-1",
+        "AC-5"
+      ]
+    },
+    {
+      "id": "TASK-002",
+      "title": "Agregar helpers de calculo (total y %) con guarda de division por cero",
+      "description": "Agregar metodos puros en DebitosComponent: totalTarjeta, pctAceptacion (por tarjeta), pctAceptados y pctRechazados (sobre stats), todos con base = aceptados + rechazados y guarda `base === 0 ? 0`. Redondeo con Math.round para mantener formato entero.",
+      "status": "completed",
+      "layer": 1,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "files": [
+        "src/app/features/debitos/debitos.component.ts"
+      ],
+      "acceptance_criteria": [
+        "BR-1: totalTarjeta = aceptados + rechazados",
+        "BR-2/BR-3: porcentajes calculados sobre aceptados + rechazados",
+        "EC-1: base 0 devuelve 0 sin NaN ni division por cero",
+        "GATE: npm run build pasa"
+      ],
+      "references": [
+        "BR-1",
+        "BR-2",
+        "BR-3",
+        "EC-1"
+      ]
+    },
+    {
+      "id": "TASK-003",
+      "title": "Actualizar template: quitar card+columna Pendientes y cablear Total/% a helpers",
+      "description": "En el template inline: eliminar la stat-card 'Pendientes', el <th> y <td> de la columna 'Pendientes'. Cablear pctAceptados/pctRechazados de las stat-cards y Total/% Aceptacion de la tabla a los helpers de TASK-002. Mantener intacta la tabla 'Ultimos Debitos Rechazados'.",
+      "status": "completed",
+      "layer": 1,
+      "depends_on": [
+        "TASK-002"
+      ],
+      "files": [
+        "src/app/features/debitos/debitos.component.ts"
+      ],
+      "acceptance_criteria": [
+        "AC-1: no aparece la stat-card Pendientes",
+        "AC-2: la tabla no tiene columna Pendientes",
+        "AC-3/AC-4: Total y % usan los helpers (aceptados + rechazados)",
+        "AC-6: tabla 'Ultimos Debitos Rechazados' sin cambios",
+        "GATE: npm run build pasa"
+      ],
+      "references": [
+        "US-1",
+        "AC-1",
+        "AC-2",
+        "AC-3",
+        "AC-4",
+        "AC-6"
+      ]
+    },
+    {
+      "id": "TASK-004",
+      "title": "Build + verificacion manual en /debitos",
+      "description": "Correr npm run build y levantar la app (npm start) para verificar visualmente en /debitos: ningun rastro de 'Pendientes', y Total/% cuadran con aceptados + rechazados. Cubre EC-2 (placeholder en ceros si no hay backend). No hay runner de tests automatizados (DEBT-001).",
+      "status": "completed",
+      "layer": 1,
+      "depends_on": [
+        "TASK-003"
+      ],
+      "files": [
+        "src/app/features/debitos/debitos.component.ts"
+      ],
+      "acceptance_criteria": [
+        "GATE: npm run build pasa sin errores",
+        "La palabra 'Pendientes' no aparece en la seccion Debitos",
+        "EC-2: sin backend, la vista muestra ceros sin romperse"
+      ],
+      "references": [
+        "US-1",
+        "EC-2"
+      ]
+    },
+    {
+      "id": "TASK-005",
+      "title": "Code review",
+      "description": "Revisar el diff: helpers puros y bien nombrados, sin codigo muerto (campos pendientes residuales), patron standalone intacto, sin NgModule, sin migracion fuera de alcance.",
+      "status": "completed",
+      "layer": 2,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002",
+        "TASK-003",
+        "TASK-004"
+      ],
+      "files": [
+        "src/app/features/debitos/debitos.component.ts"
+      ],
+      "acceptance_criteria": [
+        "Sin referencias residuales a pendientes/pctPendientes",
+        "Helpers legibles y consistentes con el estilo del repo"
+      ],
+      "references": [
+        "US-1"
+      ]
+    },
+    {
+      "id": "TASK-006",
+      "title": "Performance review",
+      "description": "Confirmar que los helpers se evaluan en render sin costo relevante y que no se introducen recalculos innecesarios ni llamadas HTTP extra.",
+      "status": "completed",
+      "layer": 2,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002",
+        "TASK-003",
+        "TASK-004"
+      ],
+      "files": [
+        "src/app/features/debitos/debitos.component.ts"
+      ],
+      "acceptance_criteria": [
+        "Sin llamadas HTTP adicionales",
+        "Calculos triviales, sin impacto perceptible en render"
+      ],
+      "references": [
+        "US-1"
+      ]
+    },
+    {
+      "id": "TASK-007",
+      "title": "Security review",
+      "description": "Verificar que no se exponen datos sensibles nuevos ni se altera la autenticacion. Cambio puramente de presentacion sobre data ya consumida.",
+      "status": "completed",
+      "layer": 2,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002",
+        "TASK-003",
+        "TASK-004"
+      ],
+      "files": [
+        "src/app/features/debitos/debitos.component.ts"
+      ],
+      "acceptance_criteria": [
+        "Sin cambios en auth ni exposicion de datos nuevos"
+      ],
+      "references": [
+        "US-1"
+      ]
+    }
+  ],
+  "dependency_graph": {
+    "by_layer": {
+      "1": {
+        "level_0": [
+          "TASK-001"
+        ],
+        "level_1": [
+          "TASK-002"
+        ],
+        "level_2": [
+          "TASK-003"
+        ],
+        "level_3": [
+          "TASK-004"
+        ]
+      },
+      "2": {
+        "level_0": [
+          "TASK-005",
+          "TASK-006",
+          "TASK-007"
+        ]
+      }
+    }
+  }
+}
