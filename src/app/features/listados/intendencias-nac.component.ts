@@ -1,19 +1,17 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
-import { environment } from '../../../environments/environment';
+import { Subject, debounceTime } from 'rxjs';
 import { PageTitleService } from '../../core/page-title.service';
-
-interface IntNac {
-  cortesia: string; apellidos: string; nombre: string; telTrabajo: string;
-  posOrganismo: string; nombreOrganismo: string; departamento: string;
-}
+import { PaginatorComponent } from '../../shared/components/paginator/paginator.component';
+import { ListadosService, IntNac } from '../../core/services/listados.service';
+import { GridQuery, SortOrder, DEFAULT_PAGE_SIZE } from '../../core/models/paged';
+import { exportarCSV } from '../../core/exportar-csv';
 
 @Component({
   selector: 'app-listados-int-nac',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PaginatorComponent],
   template: `
     <div class="card">
       <div class="card-body" style="padding:0; overflow-x:auto">
@@ -21,8 +19,8 @@ interface IntNac {
           <thead>
             <tr>
               <th style="width:60px">Cortesia</th>
-              <th style="min-width:110px">Apellidos</th>
-              <th style="min-width:90px">Nombre</th>
+              <th style="min-width:110px" class="sortable" (click)="sortBy('apellidos')">Apellidos {{ arrow('apellidos') }}</th>
+              <th style="min-width:90px" class="sortable" (click)="sortBy('nombre')">Nombre {{ arrow('nombre') }}</th>
               <th style="min-width:95px">Tel. Trabajo</th>
               <th style="min-width:130px">Posicion Organismo</th>
               <th style="min-width:140px">Nombre Organismo</th>
@@ -30,27 +28,28 @@ interface IntNac {
             </tr>
             <tr class="filter-row">
               <th>
-                <select class="column-filter" [ngModel]="fCortesia()" (ngModelChange)="fCortesia.set($event)">
+                <select class="column-filter" [(ngModel)]="fCortesia" (ngModelChange)="onFilter()">
                   <option value="">Todos</option>
                   <option>Sr.</option><option>Sra.</option><option>Dr.</option><option>Dra.</option>
                   <option>Ing.</option><option>Lic.</option><option>Cr.</option>
                 </select>
               </th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fApellidos()" (ngModelChange)="fApellidos.set($event)"></th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fNombre()" (ngModelChange)="fNombre.set($event)"></th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fTel()" (ngModelChange)="fTel.set($event)"></th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fPos()" (ngModelChange)="fPos.set($event)"></th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fOrg()" (ngModelChange)="fOrg.set($event)"></th>
+              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fApellidos" (ngModelChange)="onFilter()"></th>
+              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fNombre" (ngModelChange)="onFilter()"></th>
+              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fTel" (ngModelChange)="onFilter()"></th>
+              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fPos" (ngModelChange)="onFilter()"></th>
+              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fOrg" (ngModelChange)="onFilter()"></th>
               <th>
-                <select class="column-filter" [ngModel]="fDepto()" (ngModelChange)="fDepto.set($event)">
+                <select class="column-filter" [(ngModel)]="fDepto" (ngModelChange)="onFilter()">
                   <option value="">Todos</option>
-                  @for (d of deptos(); track d) { <option>{{ d }}</option> }
+                  <option>Canelones</option><option>Colonia</option><option>Maldonado</option>
+                  <option>Paysandu</option><option>Salto</option><option>Soriano</option>
                 </select>
               </th>
             </tr>
           </thead>
           <tbody>
-            @for (i of filtrados(); track $index) {
+            @for (i of items(); track $index) {
               <tr>
                 <td>{{ i.cortesia }}</td>
                 <td><strong>{{ i.apellidos }}</strong></td>
@@ -60,44 +59,94 @@ interface IntNac {
                 <td>{{ i.nombreOrganismo }}</td>
                 <td><span class="badge dept">{{ i.departamento }}</span></td>
               </tr>
+            } @empty {
+              <tr><td colspan="7" style="text-align:center; padding:24px; color:var(--gray-500)">
+                {{ loading() ? 'Cargando…' : 'Sin resultados' }}
+              </td></tr>
             }
           </tbody>
         </table>
-        <div class="pagination" style="padding:16px 24px">
-          <span class="pagination-info">Mostrando 1–{{ filtrados().length }} de 8 intendencias nacionalistas</span>
-          <button class="btn btn-export btn-sm">📄 Exportar a Excel</button>
-          <div class="pagination-buttons">
-            <button class="page-btn">&lt;</button>
-            <button class="page-btn active">1</button>
-            <button class="page-btn">&gt;</button>
-          </div>
+        <div style="display:flex; justify-content:flex-end; padding:12px 24px 0">
+          <button class="btn btn-export btn-sm" (click)="exportar()" [disabled]="exporting()">
+            {{ exporting() ? 'Exportando…' : '📄 Exportar a Excel' }}
+          </button>
         </div>
+        <app-paginator
+          [total]="total()" [page]="page()" [pageSize]="pageSize()"
+          (pageChange)="onPage($event)" (pageSizeChange)="onPageSize($event)" />
       </div>
     </div>
-  `
+  `,
+  styles: [`.sortable { cursor: pointer; user-select: none; }`]
 })
-export class IntendenciasNacComponent {
-  private http = inject(HttpClient);
+export class IntendenciasNacComponent implements OnInit {
+  private svc = inject(ListadosService);
   private titleSvc = inject(PageTitleService);
 
-  data = signal<IntNac[]>([]);
-  fCortesia = signal(''); fApellidos = signal(''); fNombre = signal(''); fTel = signal('');
-  fPos = signal(''); fOrg = signal(''); fDepto = signal('');
+  items = signal<IntNac[]>([]);
+  total = signal(0);
+  page = signal(1);
+  pageSize = signal(DEFAULT_PAGE_SIZE);
+  sort = signal<string | undefined>(undefined);
+  order = signal<SortOrder>('asc');
+  loading = signal(false);
+  exporting = signal(false);
 
-  deptos = computed(() =>
-    [...new Set(this.data().map(i => i.departamento).filter(Boolean))].sort()
-  );
+  fCortesia = ''; fApellidos = ''; fNombre = ''; fTel = '';
+  fPos = ''; fOrg = ''; fDepto = '';
 
-  filtrados = computed(() => this.data().filter(i => {
-    const t = (s: string, f: string) => !f || (s ?? '').toLowerCase().includes(f.toLowerCase());
-    const e = (s: string, f: string) => !f || s === f;
-    return e(i.cortesia, this.fCortesia()) && t(i.apellidos, this.fApellidos()) && t(i.nombre, this.fNombre())
-      && t(i.telTrabajo, this.fTel()) && t(i.posOrganismo, this.fPos())
-      && t(i.nombreOrganismo, this.fOrg()) && e(i.departamento, this.fDepto());
-  }));
+  private filter$ = new Subject<void>();
 
   constructor() {
     this.titleSvc.set('Listados — Intendencias Nacionalistas');
-    this.http.get<IntNac[]>(`${environment.apiUrl}/listados/intendencias-nacionalistas`).subscribe(x => this.data.set(x));
+    this.filter$.pipe(debounceTime(300)).subscribe(() => { this.page.set(1); this.load(); });
+  }
+
+  ngOnInit() { this.load(); }
+
+  private query(all = false): GridQuery {
+    return {
+      page: this.page(), pageSize: this.pageSize(), sort: this.sort(), order: this.order(), all,
+      filters: {
+        cortesia: this.fCortesia, apellidos: this.fApellidos, nombre: this.fNombre,
+        tel: this.fTel, pos: this.fPos, org: this.fOrg, depto: this.fDepto,
+      },
+    };
+  }
+
+  private load() {
+    this.loading.set(true);
+    this.svc.intendenciasNac(this.query()).subscribe({
+      next: r => { this.items.set(r.items); this.total.set(r.total); this.loading.set(false); },
+      error: () => this.loading.set(false),
+    });
+  }
+
+  onFilter() { this.filter$.next(); }
+  onPage(p: number) { this.page.set(p); this.load(); }
+  onPageSize(size: number) { this.pageSize.set(size); this.page.set(1); this.load(); }
+
+  sortBy(field: string) {
+    if (this.sort() === field) this.order.set(this.order() === 'asc' ? 'desc' : 'asc');
+    else { this.sort.set(field); this.order.set('asc'); }
+    this.page.set(1);
+    this.load();
+  }
+  arrow(field: string) { return this.sort() !== field ? '' : (this.order() === 'asc' ? '▲' : '▼'); }
+
+  exportar() {
+    this.exporting.set(true);
+    this.svc.intendenciasNac(this.query(true)).subscribe({
+      next: r => {
+        exportarCSV(r.items, [
+          { get: 'cortesia', label: 'Cortesia' }, { get: 'apellidos', label: 'Apellidos' },
+          { get: 'nombre', label: 'Nombre' }, { get: 'telTrabajo', label: 'Tel. Trabajo' },
+          { get: 'posOrganismo', label: 'Posicion Organismo' }, { get: 'nombreOrganismo', label: 'Nombre Organismo' },
+          { get: 'departamento', label: 'Departamento' },
+        ], 'intendencias-nacionalistas.csv');
+        this.exporting.set(false);
+      },
+      error: () => this.exporting.set(false),
+    });
   }
 }
