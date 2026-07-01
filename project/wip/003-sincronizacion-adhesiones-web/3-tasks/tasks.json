@@ -1,0 +1,176 @@
+{
+  "feature": "sincronizacion-adhesiones-web",
+  "local_config": {
+    "database": null,
+    "cross_repo_dependency": "administracion-pn-backend: POST /adhesiones/web/sincronizar debe existir y correr para la verificacion E2E (TASK-003)"
+  },
+  "stats": {
+    "total": 6,
+    "done": 5,
+    "by_layer": {
+      "1": 3,
+      "2": 3
+    }
+  },
+  "execution_strategy": "sequential",
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "AdhesionesService.sincronizarWeb() + tipo SincronizacionResult",
+      "description": "Agregar a AdhesionesService el metodo sincronizarWeb() que hace POST a `${base}/web/sincronizar` con body vacio y tipa la respuesta como SincronizacionResult { nuevas, duplicadasIgnoradas, desde, ultimaSincronizacion: string|null }. Exportar la interfaz.",
+      "status": "completed",
+      "layer": 1,
+      "depends_on": [],
+      "files": [
+        "src/app/features/adhesiones/adhesiones.service.ts"
+      ],
+      "acceptance_criteria": [
+        "sincronizarWeb() hace POST a /adhesiones/web/sincronizar y retorna Observable<SincronizacionResult>",
+        "SincronizacionResult exportada con nuevas/duplicadasIgnoradas/desde/ultimaSincronizacion",
+        "GATE: npm run build passes"
+      ],
+      "references": [
+        "US-1",
+        "AC-1",
+        "tech: Frontend/AdhesionesService"
+      ]
+    },
+    {
+      "id": "TASK-002",
+      "title": "Cablear boton Sincronizar Nube (estado de carga + resumen + reload)",
+      "description": "En AdhesionesListadoComponent inyectar AdhesionesService y reemplazar (click)=\"reloadWeb(); reloadStats()\" por sincronizarNube(). Agregar signal sincronizando; deshabilitar el boton y mostrar 'Sincronizando...' mientras corre; al exito mostrar resumen inline (ej. 'X nuevas, Y ya existian') y hacer reloadWeb()+reloadStats(); al error mostrar mensaje. No usar alert() bloqueante.",
+      "status": "completed",
+      "layer": 1,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "files": [
+        "src/app/features/adhesiones/adhesiones-listado.component.ts"
+      ],
+      "acceptance_criteria": [
+        "AC-1: el boton llama al endpoint de sync via AdhesionesService (no data mockeada)",
+        "AC-6: boton deshabilitado con estado de carga mientras corre; muestra resumen al terminar",
+        "AC-3: al exito recarga listado web y stats",
+        "Error de sync se muestra en UI sin bloquear (sin alert)",
+        "GATE: npm run build passes"
+      ],
+      "references": [
+        "US-1",
+        "AC-1",
+        "AC-3",
+        "AC-6",
+        "tech: Frontend/AdhesionesListadoComponent"
+      ]
+    },
+    {
+      "id": "TASK-003",
+      "title": "Verificacion manual E2E contra backend",
+      "description": "Con el backend espejo corriendo (endpoint /adhesiones/web/sincronizar implementado), verificar via /verify: presionar Sincronizar Nube dispara la sync, muestra estado de carga, luego el resumen, y recarga listado+stats con adhesiones reales. Probar caso sin novedades y caso de error. Requiere backend disponible (dependencia cross-repo).",
+      "status": "pending",
+      "layer": 1,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002"
+      ],
+      "files": [],
+      "acceptance_criteria": [
+        "npm run build passes",
+        "El boton dispara sync real y refleja estado de carga",
+        "Se ve el resumen (nuevas / ya existian) y el listado+stats se recargan",
+        "Caso vacio y caso de error se manejan sin romper la UI",
+        "GATE: verificacion manual documentada"
+      ],
+      "references": [
+        "US-1",
+        "AC-2",
+        "AC-3",
+        "AC-5"
+      ]
+    },
+    {
+      "id": "TASK-004",
+      "title": "Code review",
+      "description": "Revisar los cambios FE: consistencia con el patron de service por dominio, manejo de loading/error/vacio, naming, ausencia de codigo muerto o mock residual en el FE.",
+      "status": "completed",
+      "layer": 2,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002",
+        "TASK-003"
+      ],
+      "files": [],
+      "acceptance_criteria": [
+        "Sin codigo muerto ni referencias a mock en el FE",
+        "Manejo de loading/error/vacio presente en la vista",
+        "Naming y estilo consistentes con el codebase"
+      ],
+      "references": [
+        "tech: Implementation Notes"
+      ]
+    },
+    {
+      "id": "TASK-005",
+      "title": "Performance review",
+      "description": "Verificar que la UI no dispara syncs concurrentes (boton deshabilitado durante la corrida) y que reloadWeb/reloadStats no generan llamadas redundantes.",
+      "status": "completed",
+      "layer": 2,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002",
+        "TASK-003"
+      ],
+      "files": [],
+      "acceptance_criteria": [
+        "Boton deshabilitado evita syncs concurrentes",
+        "Sin llamadas HTTP redundantes tras la sync"
+      ],
+      "references": [
+        "NFR: Performance"
+      ]
+    },
+    {
+      "id": "TASK-006",
+      "title": "Security review",
+      "description": "Confirmar que el password del endpoint externo (MiPn.2024) nunca aparece en el FE ni en src/environments/*, que la llamada externa es solo server-side, y que no se commiten secretos (CLAUDE.md -> Secrets).",
+      "status": "completed",
+      "layer": 2,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002",
+        "TASK-003"
+      ],
+      "files": [],
+      "acceptance_criteria": [
+        "El password no aparece en ningun archivo del repo frontend",
+        "El FE solo llama al backend propio (no al endpoint externo directo)",
+        "src/environments/* sin secretos de terceros"
+      ],
+      "references": [
+        "NFR: Security",
+        "BR-4"
+      ]
+    }
+  ],
+  "dependency_graph": {
+    "by_layer": {
+      "1": {
+        "level_0": [
+          "TASK-001"
+        ],
+        "level_1": [
+          "TASK-002"
+        ],
+        "level_2": [
+          "TASK-003"
+        ]
+      },
+      "2": {
+        "level_0": [
+          "TASK-004",
+          "TASK-005",
+          "TASK-006"
+        ]
+      }
+    }
+  }
+}
