@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { PageTitleService } from '../../core/page-title.service';
+import { AdhesionesService } from './adhesiones.service';
+import { finalize } from 'rxjs';
 
 interface AdhesionWebDto {
   id: number; nombre: string; apellido: string; cedula?: string; credCivica?: string;
@@ -37,8 +39,13 @@ type Tab = 'web' | 'locales' | 'nuevo';
     </div>
 
     @if (tab() === 'web') {
-      <div style="margin-top:16px; display:flex; justify-content:flex-end">
-        <button class="btn btn-secondary" (click)="reloadWeb(); reloadStats()">Sincronizar Nube</button>
+      <div style="margin-top:16px; display:flex; justify-content:flex-end; align-items:center; gap:12px">
+        @if (syncMensaje()) {
+          <span class="sync-msg" [class.error]="syncError()">{{ syncMensaje() }}</span>
+        }
+        <button class="btn btn-secondary" (click)="sincronizarNube()" [disabled]="sincronizando()">
+          {{ sincronizando() ? 'Sincronizando…' : 'Sincronizar Nube' }}
+        </button>
       </div>
       <div class="card" style="margin-top:16px">
         <div class="card-body" style="padding:0; overflow-x:auto">
@@ -258,6 +265,8 @@ type Tab = 'web' | 'locales' | 'nuevo';
   `,
   styles: [`
     .topbar-inline { display:flex; justify-content:flex-end; margin-bottom:16px; }
+    .sync-msg { font-size:13px; color:#2e7d32; }
+    .sync-msg.error { color:#c62828; }
     .form-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:16px; }
     .form-group { display:flex; flex-direction:column; gap:4px; }
     .form-group label { font-size:12px; color:#666; font-weight:600; }
@@ -269,11 +278,16 @@ type Tab = 'web' | 'locales' | 'nuevo';
 export class AdhesionesListadoComponent {
   private http = inject(HttpClient);
   private titleSvc = inject(PageTitleService);
+  private adhesionesSvc = inject(AdhesionesService);
 
   tab = signal<Tab>('locales');
   web = signal<AdhesionWebDto[]>([]);
   locales = signal<AdhesionLocalDto[]>([]);
   stats = signal<StatsDto>({ locales: 0, web: 0, total: 0, duplicados: 0 });
+
+  sincronizando = signal(false);
+  syncMensaje = signal('');
+  syncError = signal(false);
 
   webPageSize = 10;
   webPage = signal(1);
@@ -306,6 +320,27 @@ export class AdhesionesListadoComponent {
     if (k === 'ebrou') return 'ebrou';
     if (k === 'antel') return 'antel';
     return 'dept';
+  }
+
+  sincronizarNube() {
+    if (this.sincronizando()) return;
+    this.sincronizando.set(true);
+    this.syncMensaje.set('');
+    this.syncError.set(false);
+    this.adhesionesSvc.sincronizarWeb()
+      .pipe(finalize(() => this.sincronizando.set(false)))
+      .subscribe({
+        next: r => {
+          this.syncError.set(false);
+          this.syncMensaje.set(`${r.nuevas} nuevas, ${r.duplicadasIgnoradas} ya existían`);
+          this.reloadWeb();
+          this.reloadStats();
+        },
+        error: () => {
+          this.syncError.set(true);
+          this.syncMensaje.set('No se pudo sincronizar. Intentá de nuevo.');
+        }
+      });
   }
 
   reloadWeb()    { this.http.get<AdhesionWebDto[]>(`${environment.apiUrl}/adhesiones/web`).subscribe(x => { this.web.set(x); this.webPage.set(1); }); }

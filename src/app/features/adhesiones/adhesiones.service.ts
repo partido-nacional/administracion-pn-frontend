@@ -3,6 +3,13 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { FichaAdhesionDetalle } from '../agenda/contactos.service';
 
+export interface SincronizacionResult {
+  nuevas: number;
+  duplicadasIgnoradas: number;
+  desde: string;
+  ultimaSincronizacion: string | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AdhesionesService {
   private http = inject(HttpClient);
@@ -11,4 +18,6 @@ export class AdhesionesService {
   getLocal(id: number) { return this.http.get<FichaAdhesionDetalle>(`${this.base}/locales/${id}`); }
   updateLocal(f: FichaAdhesionDetalle) { return this.http.put<void>(`${this.base}/locales/${f.id}`, f); }
   createLocal(f: Partial<FichaAdhesionDetalle>) { return this.http.post<FichaAdhesionDetalle>(`${this.base}/locales`, f); }
+
+  sincronizarWeb() { return this.http.post<SincronizacionResult>(`${this.base}/web/sincronizar`, {}); }
 }
