@@ -1,33 +1,34 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
-import { environment } from '../../../environments/environment';
+import { Subject, debounceTime } from 'rxjs';
 import { PageTitleService } from '../../core/page-title.service';
-
-interface Movimiento { fechaHora: string; usuario: string; accion: string; modulo: string; detalle: string; }
+import { PaginatorComponent } from '../../shared/components/paginator/paginator.component';
+import { ListadosService, Movimiento } from '../../core/services/listados.service';
+import { GridQuery, SortOrder, DEFAULT_PAGE_SIZE } from '../../core/models/paged';
+import { exportarCSV } from '../../core/exportar-csv';
 
 @Component({
   selector: 'app-listados-movimientos',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PaginatorComponent],
   template: `
     <div class="card">
       <div class="card-body" style="padding:0">
         <table class="table">
           <thead>
             <tr>
-              <th>Fecha/Hora</th>
-              <th>Usuario</th>
-              <th>Accion</th>
-              <th>Modulo</th>
-              <th>Detalle</th>
+              <th class="sortable" (click)="sortBy('fecha')">Fecha/Hora {{ arrow('fecha') }}</th>
+              <th class="sortable" (click)="sortBy('usuario')">Usuario {{ arrow('usuario') }}</th>
+              <th class="sortable" (click)="sortBy('accion')">Accion {{ arrow('accion') }}</th>
+              <th class="sortable" (click)="sortBy('modulo')">Modulo {{ arrow('modulo') }}</th>
+              <th class="sortable" (click)="sortBy('detalle')">Detalle {{ arrow('detalle') }}</th>
             </tr>
             <tr class="filter-row">
-              <th><input type="text" class="column-filter" placeholder="dd/mm/aaaa" [(ngModel)]="fFecha"></th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fUsuario"></th>
+              <th><input type="text" class="column-filter" placeholder="dd/mm/aaaa" [(ngModel)]="fFecha" (ngModelChange)="onFilter()"></th>
+              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fUsuario" (ngModelChange)="onFilter()"></th>
               <th>
-                <select class="column-filter" [(ngModel)]="fAccion">
+                <select class="column-filter" [(ngModel)]="fAccion" (ngModelChange)="onFilter()">
                   <option value="">Todas</option>
                   <option>Alta</option>
                   <option>Modificacion</option>
@@ -35,7 +36,7 @@ interface Movimiento { fechaHora: string; usuario: string; accion: string; modul
                 </select>
               </th>
               <th>
-                <select class="column-filter" [(ngModel)]="fModulo">
+                <select class="column-filter" [(ngModel)]="fModulo" (ngModelChange)="onFilter()">
                   <option value="">Todos</option>
                   <option>Agenda</option>
                   <option>Adhesiones</option>
@@ -45,11 +46,11 @@ interface Movimiento { fechaHora: string; usuario: string; accion: string; modul
                   <option>Productos</option>
                 </select>
               </th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fDetalle"></th>
+              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fDetalle" (ngModelChange)="onFilter()"></th>
             </tr>
           </thead>
           <tbody>
-            @for (m of filtrados(); track $index) {
+            @for (m of items(); track $index) {
               <tr>
                 <td>{{ formatFecha(m.fechaHora) }}</td>
                 <td><strong>{{ m.usuario }}</strong></td>
@@ -57,51 +58,126 @@ interface Movimiento { fechaHora: string; usuario: string; accion: string; modul
                 <td>{{ m.modulo }}</td>
                 <td>{{ m.detalle }}</td>
               </tr>
+            } @empty {
+              <tr><td colspan="5" style="text-align:center; padding:24px; color:var(--gray-500)">
+                {{ loading() ? 'Cargando…' : 'Sin movimientos' }}
+              </td></tr>
             }
           </tbody>
         </table>
-        <div class="pagination" style="padding:16px 24px">
-          <span class="pagination-info">Mostrando 1–{{ filtrados().length }} de 2,341 movimientos</span>
-          <button class="btn btn-export btn-sm">📄 Exportar a Excel</button>
-          <div class="pagination-buttons">
-            <button class="page-btn">&lt;</button>
-            <button class="page-btn active">1</button>
-            <button class="page-btn">2</button>
-            <button class="page-btn">3</button>
-            <button class="page-btn">...</button>
-            <button class="page-btn">335</button>
-            <button class="page-btn">&gt;</button>
-          </div>
+
+        <div style="display:flex; align-items:center; justify-content:flex-end; padding:12px 24px 0">
+          <button class="btn btn-export btn-sm" (click)="exportar()" [disabled]="exporting()">
+            {{ exporting() ? 'Exportando…' : '📄 Exportar a Excel' }}
+          </button>
         </div>
+
+        <app-paginator
+          [total]="total()" [page]="page()" [pageSize]="pageSize()"
+          (pageChange)="onPage($event)" (pageSizeChange)="onPageSize($event)" />
       </div>
     </div>
-  `
+  `,
+  styles: [`.sortable { cursor: pointer; user-select: none; }`]
 })
-export class MovimientosComponent {
-  private http = inject(HttpClient);
+export class MovimientosComponent implements OnInit {
+  private svc = inject(ListadosService);
   private titleSvc = inject(PageTitleService);
 
-  movs = signal<Movimiento[]>([]);
+  items = signal<Movimiento[]>([]);
+  total = signal(0);
+  page = signal(1);
+  pageSize = signal(DEFAULT_PAGE_SIZE);
+  sort = signal<string | undefined>(undefined);
+  order = signal<SortOrder>('asc');
+  loading = signal(false);
+  exporting = signal(false);
+
   fFecha = '';
   fUsuario = '';
   fAccion = '';
   fModulo = '';
   fDetalle = '';
 
-  filtrados = computed(() => {
-    return this.movs().filter(m => {
-      if (this.fFecha && !this.formatFecha(m.fechaHora).includes(this.fFecha)) return false;
-      if (this.fUsuario && !m.usuario.toLowerCase().includes(this.fUsuario.toLowerCase())) return false;
-      if (this.fAccion && m.accion !== this.fAccion) return false;
-      if (this.fModulo && m.modulo !== this.fModulo) return false;
-      if (this.fDetalle && !m.detalle.toLowerCase().includes(this.fDetalle.toLowerCase())) return false;
-      return true;
-    });
-  });
+  private filter$ = new Subject<void>();
 
   constructor() {
     this.titleSvc.set('Listados — Mov. de Sistema');
-    this.http.get<Movimiento[]>(`${environment.apiUrl}/listados/movimientos`).subscribe(x => this.movs.set(x));
+    this.filter$.pipe(debounceTime(300)).subscribe(() => {
+      this.page.set(1);
+      this.load();
+    });
+  }
+
+  ngOnInit() { this.load(); }
+
+  private query(all = false): GridQuery {
+    return {
+      page: this.page(),
+      pageSize: this.pageSize(),
+      sort: this.sort(),
+      order: this.order(),
+      all,
+      filters: {
+        usuario: this.fUsuario,
+        accion: this.fAccion,
+        modulo: this.fModulo,
+        detalle: this.fDetalle,
+        fecha: this.toIsoDate(this.fFecha),
+      },
+    };
+  }
+
+  private load() {
+    this.loading.set(true);
+    this.svc.movimientos(this.query()).subscribe({
+      next: r => { this.items.set(r.items); this.total.set(r.total); this.loading.set(false); },
+      error: () => { this.loading.set(false); },
+    });
+  }
+
+  onFilter() { this.filter$.next(); }
+
+  onPage(p: number) { this.page.set(p); this.load(); }
+  onPageSize(size: number) { this.pageSize.set(size); this.page.set(1); this.load(); }
+
+  sortBy(field: string) {
+    if (this.sort() === field) {
+      this.order.set(this.order() === 'asc' ? 'desc' : 'asc');
+    } else {
+      this.sort.set(field);
+      this.order.set('asc');
+    }
+    this.page.set(1);
+    this.load();
+  }
+
+  arrow(field: string) {
+    if (this.sort() !== field) return '';
+    return this.order() === 'asc' ? '▲' : '▼';
+  }
+
+  exportar() {
+    this.exporting.set(true);
+    this.svc.movimientos(this.query(true)).subscribe({
+      next: r => {
+        exportarCSV(r.items, [
+          { get: m => this.formatFecha(m.fechaHora), label: 'Fecha/Hora' },
+          { get: 'usuario', label: 'Usuario' },
+          { get: 'accion', label: 'Accion' },
+          { get: 'modulo', label: 'Modulo' },
+          { get: 'detalle', label: 'Detalle' },
+        ], 'movimientos.csv');
+        this.exporting.set(false);
+      },
+      error: () => { this.exporting.set(false); },
+    });
+  }
+
+  /** dd/mm/aaaa -> yyyy-mm-dd (undefined si no es una fecha completa válida). */
+  private toIsoDate(s: string): string | undefined {
+    const m = s.trim().match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    return m ? `${m[3]}-${m[2]}-${m[1]}` : undefined;
   }
 
   formatFecha(s: string) {
