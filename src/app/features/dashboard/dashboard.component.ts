@@ -43,12 +43,9 @@ const DIAS_SEM = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
   imports: [CommonModule, FormsModule],
   template: `
     <div class="stats-grid">
-      <div class="stat-card"><div class="stat-value">{{ resumen()?.contactos ?? '—' }}</div><div class="stat-label">Contactos en Agenda</div></div>
-      <div class="stat-card"><div class="stat-value">{{ resumen()?.adhesionesWebPendientes ?? '—' }}</div><div class="stat-label">Adhesiones Web Pendientes</div></div>
-      <div class="stat-card"><div class="stat-value">{{ resumen()?.adhesionesLocales ?? '—' }}</div><div class="stat-label">Adhesiones Locales</div></div>
-      <div class="stat-card"><div class="stat-value">{{ resumen()?.productos ?? '—' }}</div><div class="stat-label">Productos</div></div>
-      <div class="stat-card"><div class="stat-value">{{ resumen()?.ventasMes ?? '—' }}</div><div class="stat-label">Ventas este mes</div></div>
-      <div class="stat-card"><div class="stat-value">\${{ resumen()?.donacionesMes ?? 0 }}</div><div class="stat-label">Donaciones este mes</div></div>
+      <div class="stat-card"><div class="stat-value">{{ resumen()?.contactos ?? '—' }}</div><div class="stat-label">Todos los contactos</div></div>
+      <div class="stat-card"><div class="stat-value">{{ resumen()?.adhesionesLocales ?? '—' }}</div><div class="stat-label">Adhesiones locales</div></div>
+      <div class="stat-card"><div class="stat-value">{{ resumen()?.ventasMes ?? '—' }}</div><div class="stat-label">Ventas</div></div>
     </div>
 
     <div class="card">
