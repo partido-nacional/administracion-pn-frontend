@@ -38,7 +38,7 @@
 
 ### TODO-004: Paginación decorativa (sin handlers, render del array completo)
 - **Priority**: Medium
-- **Status**: pending
+- **Status**: in-progress → `project/wip/002-paginacion-ordenamiento-server-side`
 - **Created**: 2026-06-14
 - **Origin**: transversal
 - **Context**: Los controles de paginación (`<` `1` `>`) en agenda, adhesiones, listados y productos no tienen handlers; se renderiza todo el array en memoria. No escala con volumen real (ver `docs/migracion` del backend).
@@ -47,7 +47,7 @@
 
 ### TODO-005: Búsqueda de contactos resuelta 100% en cliente
 - **Priority**: Medium
-- **Status**: pending
+- **Status**: in-progress → `project/wip/002-paginacion-ordenamiento-server-side`
 - **Created**: 2026-06-14
 - **Origin**: feature/agenda
 - **Context**: `AgendaListado` hace `GET /contactos` sin `?q=&departamento=` y filtra/ordena client-side; el backend ya soporta búsqueda server-side. No escala.
