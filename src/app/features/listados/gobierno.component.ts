@@ -1,19 +1,17 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
-import { environment } from '../../../environments/environment';
+import { Subject, debounceTime } from 'rxjs';
 import { PageTitleService } from '../../core/page-title.service';
-
-interface Gobierno {
-  cortesia: string; apellidos: string; nombre: string; telTrabajo: string; celular: string;
-  mail: string; posOrganismo: string; nombreOrganismo: string; nombreCompania: string;
-}
+import { PaginatorComponent } from '../../shared/components/paginator/paginator.component';
+import { ListadosService, Gobierno } from '../../core/services/listados.service';
+import { GridQuery, SortOrder, DEFAULT_PAGE_SIZE } from '../../core/models/paged';
+import { exportarCSV } from '../../core/exportar-csv';
 
 @Component({
   selector: 'app-listados-gobierno',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PaginatorComponent],
   template: `
     <div class="card">
       <div class="card-body" style="padding:0; overflow-x:auto">
@@ -21,40 +19,41 @@ interface Gobierno {
           <thead>
             <tr>
               <th style="width:60px">Cortesia</th>
-              <th style="min-width:110px">Apellidos</th>
-              <th style="min-width:90px">Nombre</th>
+              <th style="min-width:110px" class="sortable" (click)="sortBy('apellidos')">Apellidos {{ arrow('apellidos') }}</th>
+              <th style="min-width:90px" class="sortable" (click)="sortBy('nombre')">Nombre {{ arrow('nombre') }}</th>
               <th style="min-width:95px">Tel. Trabajo</th>
               <th style="min-width:95px">Celular</th>
               <th style="min-width:150px">Mail</th>
               <th style="min-width:130px">Posicion Organismo</th>
-              <th style="min-width:100px">Nombre Organismo</th>
+              <th style="min-width:100px" class="sortable" (click)="sortBy('org')">Nombre Organismo {{ arrow('org') }}</th>
               <th style="min-width:200px">Nombre Compania</th>
             </tr>
             <tr class="filter-row">
               <th>
-                <select class="column-filter" [ngModel]="fCortesia()" (ngModelChange)="fCortesia.set($event)">
+                <select class="column-filter" [(ngModel)]="fCortesia" (ngModelChange)="onFilter()">
                   <option value="">Todos</option>
                   <option>Sr.</option><option>Sra.</option><option>Dr.</option><option>Dra.</option>
                   <option>Ing.</option><option>Lic.</option><option>Cr.</option>
                 </select>
               </th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fApellidos()" (ngModelChange)="fApellidos.set($event)"></th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fNombre()" (ngModelChange)="fNombre.set($event)"></th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fTel()" (ngModelChange)="fTel.set($event)"></th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fCel()" (ngModelChange)="fCel.set($event)"></th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fMail()" (ngModelChange)="fMail.set($event)"></th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fPos()" (ngModelChange)="fPos.set($event)"></th>
+              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fApellidos" (ngModelChange)="onFilter()"></th>
+              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fNombre" (ngModelChange)="onFilter()"></th>
+              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fTel" (ngModelChange)="onFilter()"></th>
+              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fCel" (ngModelChange)="onFilter()"></th>
+              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fMail" (ngModelChange)="onFilter()"></th>
+              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fPos" (ngModelChange)="onFilter()"></th>
               <th>
-                <select class="column-filter" [ngModel]="fOrg()" (ngModelChange)="fOrg.set($event)">
+                <select class="column-filter" [(ngModel)]="fOrg" (ngModelChange)="onFilter()">
                   <option value="">Todos</option>
-                  @for (n of nombresOrganismo(); track n) { <option>{{ n }}</option> }
+                  <option>ANP</option><option>ANTEL</option><option>UTE</option>
+                  <option>CORREO</option><option>OSE</option><option>ANCAP</option>
                 </select>
               </th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fCompania()" (ngModelChange)="fCompania.set($event)"></th>
+              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fCompania" (ngModelChange)="onFilter()"></th>
             </tr>
           </thead>
           <tbody>
-            @for (g of filtrados(); track $index) {
+            @for (g of items(); track $index) {
               <tr>
                 <td>{{ g.cortesia }}</td>
                 <td><strong>{{ g.apellidos }}</strong></td>
@@ -66,46 +65,96 @@ interface Gobierno {
                 <td>{{ g.nombreOrganismo }}</td>
                 <td>{{ g.nombreCompania }}</td>
               </tr>
+            } @empty {
+              <tr><td colspan="9" style="text-align:center; padding:24px; color:var(--gray-500)">
+                {{ loading() ? 'Cargando…' : 'Sin resultados' }}
+              </td></tr>
             }
           </tbody>
         </table>
-        <div class="pagination" style="padding:16px 24px">
-          <span class="pagination-info">Mostrando 1–{{ filtrados().length }} de 28 cargos de gobierno</span>
-          <button class="btn btn-export btn-sm">📄 Exportar a Excel</button>
-          <div class="pagination-buttons">
-            <button class="page-btn">&lt;</button>
-            <button class="page-btn active">1</button>
-            <button class="page-btn">2</button>
-            <button class="page-btn">&gt;</button>
-          </div>
+        <div style="display:flex; justify-content:flex-end; padding:12px 24px 0">
+          <button class="btn btn-export btn-sm" (click)="exportar()" [disabled]="exporting()">
+            {{ exporting() ? 'Exportando…' : '📄 Exportar a Excel' }}
+          </button>
         </div>
+        <app-paginator
+          [total]="total()" [page]="page()" [pageSize]="pageSize()"
+          (pageChange)="onPage($event)" (pageSizeChange)="onPageSize($event)" />
       </div>
     </div>
-  `
+  `,
+  styles: [`.sortable { cursor: pointer; user-select: none; }`]
 })
-export class GobiernoComponent {
-  private http = inject(HttpClient);
+export class GobiernoComponent implements OnInit {
+  private svc = inject(ListadosService);
   private titleSvc = inject(PageTitleService);
 
-  data = signal<Gobierno[]>([]);
-  fCortesia = signal(''); fApellidos = signal(''); fNombre = signal('');
-  fTel = signal(''); fCel = signal(''); fMail = signal('');
-  fPos = signal(''); fOrg = signal(''); fCompania = signal('');
+  items = signal<Gobierno[]>([]);
+  total = signal(0);
+  page = signal(1);
+  pageSize = signal(DEFAULT_PAGE_SIZE);
+  sort = signal<string | undefined>(undefined);
+  order = signal<SortOrder>('asc');
+  loading = signal(false);
+  exporting = signal(false);
 
-  nombresOrganismo = computed(() =>
-    [...new Set(this.data().map(g => g.nombreOrganismo).filter(Boolean))].sort()
-  );
+  fCortesia = ''; fApellidos = ''; fNombre = ''; fTel = ''; fCel = '';
+  fMail = ''; fPos = ''; fOrg = ''; fCompania = '';
 
-  filtrados = computed(() => this.data().filter(g => {
-    const t = (s: string, f: string) => !f || (s ?? '').toLowerCase().includes(f.toLowerCase());
-    const e = (s: string, f: string) => !f || s === f;
-    return e(g.cortesia, this.fCortesia()) && t(g.apellidos, this.fApellidos()) && t(g.nombre, this.fNombre())
-      && t(g.telTrabajo, this.fTel()) && t(g.celular, this.fCel()) && t(g.mail, this.fMail())
-      && t(g.posOrganismo, this.fPos()) && e(g.nombreOrganismo, this.fOrg()) && t(g.nombreCompania, this.fCompania());
-  }));
+  private filter$ = new Subject<void>();
 
   constructor() {
     this.titleSvc.set('Listados — Agrup. de Gobierno');
-    this.http.get<Gobierno[]>(`${environment.apiUrl}/listados/gobierno`).subscribe(x => this.data.set(x));
+    this.filter$.pipe(debounceTime(300)).subscribe(() => { this.page.set(1); this.load(); });
+  }
+
+  ngOnInit() { this.load(); }
+
+  private query(all = false): GridQuery {
+    return {
+      page: this.page(), pageSize: this.pageSize(), sort: this.sort(), order: this.order(), all,
+      filters: {
+        cortesia: this.fCortesia, apellidos: this.fApellidos, nombre: this.fNombre,
+        tel: this.fTel, cel: this.fCel, mail: this.fMail, pos: this.fPos,
+        org: this.fOrg, compania: this.fCompania,
+      },
+    };
+  }
+
+  private load() {
+    this.loading.set(true);
+    this.svc.gobierno(this.query()).subscribe({
+      next: r => { this.items.set(r.items); this.total.set(r.total); this.loading.set(false); },
+      error: () => this.loading.set(false),
+    });
+  }
+
+  onFilter() { this.filter$.next(); }
+  onPage(p: number) { this.page.set(p); this.load(); }
+  onPageSize(size: number) { this.pageSize.set(size); this.page.set(1); this.load(); }
+
+  sortBy(field: string) {
+    if (this.sort() === field) this.order.set(this.order() === 'asc' ? 'desc' : 'asc');
+    else { this.sort.set(field); this.order.set('asc'); }
+    this.page.set(1);
+    this.load();
+  }
+  arrow(field: string) { return this.sort() !== field ? '' : (this.order() === 'asc' ? '▲' : '▼'); }
+
+  exportar() {
+    this.exporting.set(true);
+    this.svc.gobierno(this.query(true)).subscribe({
+      next: r => {
+        exportarCSV(r.items, [
+          { get: 'cortesia', label: 'Cortesia' }, { get: 'apellidos', label: 'Apellidos' },
+          { get: 'nombre', label: 'Nombre' }, { get: 'telTrabajo', label: 'Tel. Trabajo' },
+          { get: 'celular', label: 'Celular' }, { get: 'mail', label: 'Mail' },
+          { get: 'posOrganismo', label: 'Posicion Organismo' }, { get: 'nombreOrganismo', label: 'Nombre Organismo' },
+          { get: 'nombreCompania', label: 'Nombre Compania' },
+        ], 'gobierno.csv');
+        this.exporting.set(false);
+      },
+      error: () => this.exporting.set(false),
+    });
   }
 }

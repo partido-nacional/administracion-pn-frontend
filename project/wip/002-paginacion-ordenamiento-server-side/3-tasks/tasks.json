@@ -9,7 +9,7 @@
   },
   "stats": {
     "total": 15,
-    "done": 4,
+    "done": 5,
     "by_layer": {
       "1": 12,
       "2": 3
@@ -212,7 +212,7 @@
       "id": "TASK-008",
       "title": "Replicar listados restantes (BE+FE)",
       "description": "Aplicar el patrón a parlamentarias, gobierno, com-departamentales, intendencias-nacionalistas, intendencias-pn, alcaldes, jovenes, convencionales y directorio. Cada endpoint atómico BE+FE con su whitelist de sort y filtros existentes.",
-      "status": "pending",
+      "status": "done",
       "layer": 1,
       "depends_on": [
         "TASK-007"
@@ -240,7 +240,8 @@
         "US-2",
         "US-3",
         "TODO-004"
-      ]
+      ],
+      "note": "9 listados paginados BE+FE; CI verde; falta deploy/validacion prod"
     },
     {
       "id": "TASK-009",
