@@ -5,6 +5,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ContactosService, FichaAdhesion, FichaAdhesionDetalle } from '../agenda/contactos.service';
 import { AdhesionesService } from './adhesiones.service';
 import { PageTitleService } from '../../core/page-title.service';
+import { CatalogosService } from '../../core/catalogos.service';
 
 @Component({
   selector: 'app-fichas-contacto',
@@ -119,7 +120,7 @@ import { PageTitleService } from '../../core/page-title.service';
                               <label class="form-label">Aporte a un Sector</label>
                               <select class="form-select" [(ngModel)]="detalle()!.sector" name="sector" [disabled]="!editMode()">
                                 <option [ngValue]="undefined">-</option>
-                                @for (s of sectores; track s) { <option [ngValue]="s">{{ s }}</option> }
+                                @for (s of sectores(); track s) { <option [ngValue]="s">{{ s }}</option> }
                               </select>
                             </div>
                             <div class="form-group">
@@ -206,6 +207,7 @@ export class FichasContactoComponent {
   private svc = inject(ContactosService);
   private adhSvc = inject(AdhesionesService);
   private titleSvc = inject(PageTitleService);
+  private catSvc = inject(CatalogosService);
 
   contactoId!: number;
   fichas = signal<FichaAdhesion[]>([]);
@@ -224,10 +226,7 @@ export class FichasContactoComponent {
     'Agrupacion', 'SAS', 'CNJ', 'Centro Josefa Oribe', 'CEPN',
     'Comision Departamental', 'C. Cultura', 'Movimiento Afro-Nacionalista (MAN)'
   ];
-  sectores = [
-    'ALIANZA NACIONAL', 'TODO POR EL PUEBLO', 'AIRE FRESCO', 'MEJOR PAIS',
-    'D CENTRO', 'ESPACIO 40', 'HERRERISMO', 'POR LA PATRIA'
-  ];
+  sectores = signal<string[]>([]);
 
   showTelefonoAntel(s?: string) { return s === 'Antel'; }
   showCedula(s?: string) { return s === 'OCA' || s === 'VISA' || s === 'MASTER' || s === 'EBROU'; }
@@ -277,6 +276,9 @@ export class FichasContactoComponent {
 
   constructor() {
     this.titleSvc.set('Fichas de Adhesión');
+    this.catSvc.sectores().subscribe(list =>
+      this.sectores.set(list.map(s => s.descripcion))
+    );
     this.contactoId = +this.route.snapshot.paramMap.get('contactoId')!;
     this.svc.fichasAdhesion(this.contactoId).subscribe(x => this.fichas.set(x));
   }
