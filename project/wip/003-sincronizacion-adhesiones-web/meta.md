@@ -24,5 +24,7 @@ stages:
     approved_at: 2026-07-01
   implementation:
     status: in-progress
-    completed_tasks: 2
+    completed_tasks: 5
     total_tasks: 6
+    blocked_tasks:
+      - TASK-003  # E2E: bloqueada por endpoint backend en repo espejo
