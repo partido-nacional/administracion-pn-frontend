@@ -1,25 +1,14 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { finalize } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { PageTitleService } from '../../core/page-title.service';
-import { AdhesionesService } from './adhesiones.service';
-import { finalize } from 'rxjs';
+import { AdhesionesService, AdhesionWebDto, AdhesionLocalDto } from './adhesiones.service';
+import { PaginatorComponent } from '../../shared/components/paginator/paginator.component';
+import { GridQuery, SortOrder, DEFAULT_PAGE_SIZE } from '../../core/models/paged';
 
-interface AdhesionWebDto {
-  id: number; nombre: string; apellido: string; cedula?: string; credCivica?: string;
-  email?: string; telefono?: string; celular?: string; departamento?: string;
-  fechaNacimiento?: string; fechaSistema?: string; sistContrib?: string;
-  importe?: number; observaciones?: string; estado: string;
-}
-interface AdhesionLocalDto {
-  id: number; idContacto: number; nombre: string; apellido: string; cedula?: string;
-  sector?: string; sistContrib?: string; aporte?: number;
-  fechaAlta?: string; fechaSalida?: string;
-  aporteConfirmado: boolean | null; art46: boolean;
-  titularResp?: string; observaciones?: string;
-}
 interface StatsDto { locales: number; web: number; total: number; duplicados: number; }
 
 type Tab = 'web' | 'locales' | 'nuevo';
@@ -27,7 +16,7 @@ type Tab = 'web' | 'locales' | 'nuevo';
 @Component({
   selector: 'app-adhesiones',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PaginatorComponent],
   template: `
     <div class="topbar-inline">
       <a class="btn btn-primary" (click)="tab.set('nuevo')">+ Nuevo Adherente</a>
@@ -53,16 +42,16 @@ type Tab = 'web' | 'locales' | 'nuevo';
             <thead>
               <tr>
                 <th style="width:45px">ID</th>
-                <th>Nombre</th>
-                <th>Apellidos</th>
+                <th class="sortable" (click)="sortWeb('nombre')">Nombre {{ arrowWeb('nombre') }}</th>
+                <th class="sortable" (click)="sortWeb('apellido')">Apellidos {{ arrowWeb('apellido') }}</th>
                 <th>Cedula</th>
                 <th>Cred. Civica</th>
                 <th>Email</th>
                 <th>Telefono</th>
                 <th>Celular</th>
-                <th>Departamento</th>
+                <th class="sortable" (click)="sortWeb('departamento')">Departamento {{ arrowWeb('departamento') }}</th>
                 <th>Fecha Nac.</th>
-                <th>Fecha en Sist.</th>
+                <th class="sortable" (click)="sortWeb('fecha')">Fecha en Sist. {{ arrowWeb('fecha') }}</th>
                 <th>Sist. Contrib.</th>
                 <th>Importe</th>
                 <th>Observaciones</th>
@@ -70,7 +59,7 @@ type Tab = 'web' | 'locales' | 'nuevo';
               </tr>
             </thead>
             <tbody>
-              @for (a of pagedWeb(); track a.id) {
+              @for (a of web(); track a.id) {
                 <tr>
                   <td>{{ a.id }}</td>
                   <td><strong>{{ a.nombre }}</strong></td>
@@ -103,20 +92,15 @@ type Tab = 'web' | 'locales' | 'nuevo';
                   </td>
                 </tr>
               } @empty {
-                <tr><td colspan="15"><div class="empty-state"><div class="empty-state-text">No hay adhesiones pendientes</div></div></td></tr>
+                <tr><td colspan="15"><div class="empty-state"><div class="empty-state-text">
+                  {{ loadingWeb() ? 'Cargando…' : 'No hay adhesiones pendientes' }}
+                </div></div></td></tr>
               }
             </tbody>
           </table>
-          <div class="pagination" style="padding:16px 24px">
-            <span class="pagination-info">Mostrando {{ webRangeStart() }}–{{ webRangeEnd() }} de {{ web().length }} adhesiones pendientes en web</span>
-            <div class="pagination-buttons">
-              <button class="page-btn" [disabled]="webPage() === 1" (click)="webPage.set(webPage() - 1)">&lt;</button>
-              @for (p of webPageNumbers(); track p) {
-                <button class="page-btn" [class.active]="webPage() === p" (click)="webPage.set(p)">{{ p }}</button>
-              }
-              <button class="page-btn" [disabled]="webPage() === webTotalPages()" (click)="webPage.set(webPage() + 1)">&gt;</button>
-            </div>
-          </div>
+          <app-paginator
+            [total]="webTotal()" [page]="webPage()" [pageSize]="webPageSize()"
+            (pageChange)="onWebPage($event)" (pageSizeChange)="onWebPageSize($event)" />
         </div>
       </div>
     }
@@ -149,13 +133,13 @@ type Tab = 'web' | 'locales' | 'nuevo';
               <tr>
                 <th style="width:45px">ID</th>
                 <th style="width:65px">ID Contacto</th>
-                <th>Nombre</th>
-                <th>Apellidos</th>
+                <th class="sortable" (click)="sortLocales('nombre')">Nombre {{ arrowLocales('nombre') }}</th>
+                <th class="sortable" (click)="sortLocales('apellido')">Apellidos {{ arrowLocales('apellido') }}</th>
                 <th>Cedula</th>
-                <th>Sector</th>
+                <th class="sortable" (click)="sortLocales('sector')">Sector {{ arrowLocales('sector') }}</th>
                 <th>Sist. Contrib.</th>
                 <th>Aporte</th>
-                <th>Fecha Alta</th>
+                <th class="sortable" (click)="sortLocales('fecha')">Fecha Alta {{ arrowLocales('fecha') }}</th>
                 <th>Fecha Salida</th>
                 <th style="text-align:center">Aporte Conf.</th>
                 <th style="text-align:center">Art. 46</th>
@@ -196,18 +180,15 @@ type Tab = 'web' | 'locales' | 'nuevo';
                   </td>
                 </tr>
               } @empty {
-                <tr><td colspan="15"><div class="empty-state"><div class="empty-state-text">Sin adhesiones locales</div></div></td></tr>
+                <tr><td colspan="15"><div class="empty-state"><div class="empty-state-text">
+                  {{ loadingLocales() ? 'Cargando…' : 'Sin adhesiones locales' }}
+                </div></div></td></tr>
               }
             </tbody>
           </table>
-          <div class="pagination" style="padding:16px 24px">
-            <span class="pagination-info">Mostrando 1–{{ locales().length }} de {{ locales().length }} adhesiones locales</span>
-            <div class="pagination-buttons">
-              <button class="page-btn">&lt;</button>
-              <button class="page-btn active">1</button>
-              <button class="page-btn">&gt;</button>
-            </div>
-          </div>
+          <app-paginator
+            [total]="localesTotal()" [page]="localesPage()" [pageSize]="localesPageSize()"
+            (pageChange)="onLocalesPage($event)" (pageSizeChange)="onLocalesPageSize($event)" />
         </div>
       </div>
     }
@@ -273,6 +254,7 @@ type Tab = 'web' | 'locales' | 'nuevo';
     .form-group input, .form-group select, .form-group textarea {
       padding:8px 10px; border:1px solid #ddd; border-radius:4px; font-size:14px;
     }
+    th.sortable { cursor:pointer; user-select:none; }
   `]
 })
 export class AdhesionesListadoComponent {
@@ -289,16 +271,21 @@ export class AdhesionesListadoComponent {
   syncMensaje = signal('');
   syncError = signal(false);
 
-  webPageSize = 10;
+  // Paginación web
+  webTotal = signal(0);
   webPage = signal(1);
-  webTotalPages = computed(() => Math.max(1, Math.ceil(this.web().length / this.webPageSize)));
-  webPageNumbers = computed(() => Array.from({ length: this.webTotalPages() }, (_, i) => i + 1));
-  pagedWeb = computed(() => {
-    const start = (this.webPage() - 1) * this.webPageSize;
-    return this.web().slice(start, start + this.webPageSize);
-  });
-  webRangeStart = computed(() => this.web().length === 0 ? 0 : (this.webPage() - 1) * this.webPageSize + 1);
-  webRangeEnd = computed(() => Math.min(this.webPage() * this.webPageSize, this.web().length));
+  webPageSize = signal(DEFAULT_PAGE_SIZE);
+  webSort = signal<string | undefined>(undefined);
+  webOrder = signal<SortOrder>('asc');
+  loadingWeb = signal(false);
+
+  // Paginación locales
+  localesTotal = signal(0);
+  localesPage = signal(1);
+  localesPageSize = signal(DEFAULT_PAGE_SIZE);
+  localesSort = signal<string | undefined>(undefined);
+  localesOrder = signal<SortOrder>('asc');
+  loadingLocales = signal(false);
 
   form: any = {
     contactoId: null, sector: '', sistContrib: '', aporte: null,
@@ -322,6 +309,49 @@ export class AdhesionesListadoComponent {
     return 'dept';
   }
 
+  private webQuery(): GridQuery {
+    return { page: this.webPage(), pageSize: this.webPageSize(), sort: this.webSort(), order: this.webOrder() };
+  }
+  private localesQuery(): GridQuery {
+    return { page: this.localesPage(), pageSize: this.localesPageSize(), sort: this.localesSort(), order: this.localesOrder() };
+  }
+
+  reloadWeb() {
+    this.loadingWeb.set(true);
+    this.adhesionesSvc.web(this.webQuery()).subscribe({
+      next: r => { this.web.set(r.items); this.webTotal.set(r.total); this.loadingWeb.set(false); },
+      error: () => this.loadingWeb.set(false),
+    });
+  }
+  reloadLocales() {
+    this.loadingLocales.set(true);
+    this.adhesionesSvc.locales(this.localesQuery()).subscribe({
+      next: r => { this.locales.set(r.items); this.localesTotal.set(r.total); this.loadingLocales.set(false); },
+      error: () => this.loadingLocales.set(false),
+    });
+  }
+  reloadStats() { this.http.get<StatsDto>(`${environment.apiUrl}/adhesiones/stats`).subscribe(x => this.stats.set(x)); }
+
+  onWebPage(p: number) { this.webPage.set(p); this.reloadWeb(); }
+  onWebPageSize(s: number) { this.webPageSize.set(s); this.webPage.set(1); this.reloadWeb(); }
+  sortWeb(field: string) {
+    if (this.webSort() === field) this.webOrder.set(this.webOrder() === 'asc' ? 'desc' : 'asc');
+    else { this.webSort.set(field); this.webOrder.set('asc'); }
+    this.webPage.set(1);
+    this.reloadWeb();
+  }
+  arrowWeb(field: string) { return this.webSort() !== field ? '' : (this.webOrder() === 'asc' ? '▲' : '▼'); }
+
+  onLocalesPage(p: number) { this.localesPage.set(p); this.reloadLocales(); }
+  onLocalesPageSize(s: number) { this.localesPageSize.set(s); this.localesPage.set(1); this.reloadLocales(); }
+  sortLocales(field: string) {
+    if (this.localesSort() === field) this.localesOrder.set(this.localesOrder() === 'asc' ? 'desc' : 'asc');
+    else { this.localesSort.set(field); this.localesOrder.set('asc'); }
+    this.localesPage.set(1);
+    this.reloadLocales();
+  }
+  arrowLocales(field: string) { return this.localesSort() !== field ? '' : (this.localesOrder() === 'asc' ? '▲' : '▼'); }
+
   sincronizarNube() {
     if (this.sincronizando()) return;
     this.sincronizando.set(true);
@@ -333,6 +363,7 @@ export class AdhesionesListadoComponent {
         next: r => {
           this.syncError.set(false);
           this.syncMensaje.set(`${r.nuevas} nuevas, ${r.duplicadasIgnoradas} ya existían`);
+          this.webPage.set(1);
           this.reloadWeb();
           this.reloadStats();
         },
@@ -342,10 +373,6 @@ export class AdhesionesListadoComponent {
         }
       });
   }
-
-  reloadWeb()    { this.http.get<AdhesionWebDto[]>(`${environment.apiUrl}/adhesiones/web`).subscribe(x => { this.web.set(x); this.webPage.set(1); }); }
-  reloadLocales(){ this.http.get<AdhesionLocalDto[]>(`${environment.apiUrl}/adhesiones/locales`).subscribe(x => this.locales.set(x)); }
-  reloadStats()  { this.http.get<StatsDto>(`${environment.apiUrl}/adhesiones/stats`).subscribe(x => this.stats.set(x)); }
 
   pasar(id: number) {
     this.http.post(`${environment.apiUrl}/adhesiones/web/${id}/pasar-a-local`, {}).subscribe(() => {
