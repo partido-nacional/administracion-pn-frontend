@@ -9,7 +9,7 @@
   },
   "stats": {
     "total": 15,
-    "done": 5,
+    "done": 6,
     "by_layer": {
       "1": 12,
       "2": 3
@@ -247,7 +247,7 @@
       "id": "TASK-009",
       "title": "Replicar adhesiones (BE+FE)",
       "description": "Aplicar paginado/orden a /adhesiones/web y /adhesiones/locales. Front: adhesiones-listado consume paginado (stats queda como agregado aparte, fuera de paginado).",
-      "status": "pending",
+      "status": "done",
       "layer": 1,
       "depends_on": [
         "TASK-007"
@@ -266,7 +266,8 @@
         "US-1",
         "US-2",
         "US-3"
-      ]
+      ],
+      "note": "adhesiones web/locales paginadas BE+FE; CI verde; sin filtros por columna (no existian)"
     },
     {
       "id": "TASK-010",
