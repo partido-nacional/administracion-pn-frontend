@@ -1,23 +1,16 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ContactosService, FichaAdhesion, FichaAdhesionDetalle } from '../agenda/contactos.service';
 import { AdhesionesService } from './adhesiones.service';
 import { PageTitleService } from '../../core/page-title.service';
 import { CatalogosService } from '../../core/catalogos.service';
-import {
-  SISTEMAS, DEPARTAMENTOS, APORTES_SEC_AGR,
-  showTelefonoAntel as showTelefonoAntelFn,
-  showCedula as showCedulaFn,
-  showFechasPago as showFechasPagoFn,
-  applySistContrib, applyAporteTodo, applyConfirmado, defaultFechaSalidaPrompt,
-} from '../../shared/adhesiones/ficha-adhesion.constants';
+import { FichaAdhesionFormComponent } from '../../shared/adhesiones/ficha-adhesion-form.component';
 
 @Component({
   selector: 'app-fichas-contacto',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, RouterLink, FichaAdhesionFormComponent],
   template: `
     <div class="topbar-inline">
       <a routerLink="/agenda" class="btn btn-secondary">← Volver a contactos</a>
@@ -70,121 +63,14 @@ import {
                             </div>
                           }
                         </div>
-                        <div class="form-grid" (click)="$event.stopPropagation()">
-                          <div class="form-group">
-                            <label class="form-label">Id Adhesión</label>
-                            <input class="form-input" [value]="detalle()!.id" disabled>
-                          </div>
-                          <div class="form-group">
-                            <label class="form-label">Fecha de Sistema</label>
-                            <input class="form-input" type="date" [(ngModel)]="detalle()!.fechaAdhesion" name="fechaAdh" [disabled]="!editMode()">
-                          </div>
-                          <div class="form-group">
-                            <label class="form-label">Importe</label>
-                            <input class="form-input" type="number" [(ngModel)]="detalle()!.aporte" name="importe" [disabled]="!editMode()">
-                          </div>
-                          <div class="form-group">
-                            <label class="form-label">Sistema de Contribución</label>
-                            <select class="form-select" [ngModel]="detalle()!.sistContrib" (ngModelChange)="onSistContribChange($event)" name="sistContrib" [disabled]="!editMode()">
-                              @for (s of sistemas; track s) { <option [ngValue]="s">{{ s }}</option> }
-                            </select>
-                          </div>
-                          <div class="form-group full-width">
-                            <label class="form-label">Observaciones</label>
-                            <input class="form-input" [(ngModel)]="detalle()!.observaciones" name="observaciones" [disabled]="!editMode()">
-                          </div>
-                          @if (showCedula(detalle()!.sistContrib)) {
-                            <div class="form-group">
-                              <label class="form-label">Cédula responsable</label>
-                              <input class="form-input" [(ngModel)]="detalle()!.cedulaResponsable" name="cedResp" [disabled]="!editMode()">
-                            </div>
-                          }
-                          @if (showTelefonoAntel(detalle()!.sistContrib)) {
-                            <div class="form-group">
-                              <label class="form-label">Teléfono Antel</label>
-                              <input class="form-input" [(ngModel)]="detalle()!.telefonoAntel" name="telAntel" [disabled]="!editMode()">
-                            </div>
-                          }
-                          @if (showFechasPago(detalle()!.sistContrib)) {
-                            <div class="form-group">
-                              <label class="form-label">Fecha Vencimiento</label>
-                              <input class="form-input" type="date" [(ngModel)]="detalle()!.fechaVencimiento" name="fechaVenc" [disabled]="!editMode()">
-                            </div>
-                            <div class="form-group">
-                              <label class="form-label">Fecha Ult. Pago</label>
-                              <input class="form-input" type="date" [(ngModel)]="detalle()!.fechaUltimoPago" name="fechaUltPago" [disabled]="!editMode()">
-                            </div>
-                          }
-                          <div class="form-group">
-                            <label class="form-label">Aporte Todo al Partido</label>
-                            <select class="form-select" [ngModel]="detalle()!.aporteTodoAlPartido" (ngModelChange)="onAporteTodoChange($event)" name="aporteTodo" [disabled]="!editMode()">
-                              <option [ngValue]="true">SI</option>
-                              <option [ngValue]="false">NO</option>
-                            </select>
-                          </div>
-                          @if (!detalle()!.aporteTodoAlPartido) {
-                            <div class="form-group">
-                              <label class="form-label">Aporte a un Sector</label>
-                              <select class="form-select" [(ngModel)]="detalle()!.sector" name="sector" [disabled]="!editMode()">
-                                <option [ngValue]="undefined">-</option>
-                                @for (s of sectores(); track s) { <option [ngValue]="s">{{ s }}</option> }
-                              </select>
-                            </div>
-                            <div class="form-group">
-                              <label class="form-label">Aporte a Secretaría/Agrupación</label>
-                              <select class="form-select" [(ngModel)]="detalle()!.aporteSecretariaAgrupacion" name="aporteSec" [disabled]="!editMode()">
-                                <option [ngValue]="undefined">-</option>
-                                @for (a of aportesSecAgr; track a) { <option [ngValue]="a">{{ a }}</option> }
-                              </select>
-                            </div>
-                            <div class="form-group">
-                              <label class="form-label">Aporte Agrupación</label>
-                              <input class="form-input" [(ngModel)]="detalle()!.aporteAgrupacion" name="aporteAgr" [disabled]="!editMode()">
-                            </div>
-                            <div class="form-group">
-                              <label class="form-label">Departamento Agrupación</label>
-                              <select class="form-select" [(ngModel)]="detalle()!.departamentoAgrupacion" name="depAgr" [disabled]="!editMode()">
-                                <option [ngValue]="undefined">-</option>
-                                @for (d of departamentos; track d) { <option [ngValue]="d">{{ d }}</option> }
-                              </select>
-                            </div>
-                            <div class="form-group">
-                              <label class="form-label">Código de Agrupación</label>
-                              <input class="form-input" [(ngModel)]="detalle()!.codigoAgrupacion" name="codAgr" [disabled]="!editMode()">
-                            </div>
-                          }
-                          <div class="form-group">
-                            <label class="form-label">Confirmado</label>
-                            <select class="form-select" [ngModel]="detalle()!.aporteConfirmado" (ngModelChange)="onConfirmadoChange($event)" name="confirmado" [disabled]="!editMode()">
-                              <option [ngValue]="null">-</option>
-                              <option [ngValue]="false">D</option>
-                              <option [ngValue]="true">S</option>
-                            </select>
-                          </div>
-                          @if (detalle()!.aporteConfirmado === false) {
-                            <div class="form-group">
-                              <label class="form-label">Fecha de salida</label>
-                              <input class="form-input" type="date" [(ngModel)]="detalle()!.fechaSalida" name="fechaSalidaCond" [disabled]="!editMode()">
-                            </div>
-                          }
-                          <div class="form-group">
-                            <label class="form-label">Carnet Entregado</label>
-                            <input class="form-input" type="date" [(ngModel)]="detalle()!.carnetEntregado" name="carnetEntregado" [disabled]="!editMode()">
-                          </div>
-                          <div class="form-group">
-                            <label class="form-label">Art. 46</label>
-                            <label style="display:flex; align-items:center; gap:8px; padding-top:8px">
-                              <input type="checkbox" [(ngModel)]="detalle()!.art46" name="art46" [disabled]="!editMode()">
-                              <span>Sí</span>
-                            </label>
-                          </div>
-                          <div class="form-group">
-                            <label class="form-label">Departamental</label>
-                            <label style="display:flex; align-items:center; gap:8px; padding-top:8px">
-                              <input type="checkbox" [(ngModel)]="detalle()!.departamental" name="departamental" [disabled]="!editMode()">
-                              <span>Sí</span>
-                            </label>
-                          </div>
+                        <div (click)="$event.stopPropagation()">
+                          <app-ficha-adhesion-form
+                            [ficha]="detalle()!"
+                            (fichaChange)="detalle.set($event)"
+                            [disabled]="!editMode()"
+                            [showId]="true"
+                            [sectores]="sectores()">
+                          </app-ficha-adhesion-form>
                         </div>
                       </div>
                     </td>
@@ -223,32 +109,7 @@ export class FichasContactoComponent {
   editMode = signal(false);
   private original: FichaAdhesionDetalle | null = null;
 
-  sistemas = SISTEMAS;
-  departamentos = DEPARTAMENTOS;
-  aportesSecAgr = APORTES_SEC_AGR;
   sectores = signal<string[]>([]);
-
-  showTelefonoAntel = showTelefonoAntelFn;
-  showCedula = showCedulaFn;
-  showFechasPago = showFechasPagoFn;
-
-  onSistContribChange(s: string) {
-    const f = this.detalle();
-    if (!f) return;
-    this.detalle.set(applySistContrib(f, s));
-  }
-
-  onAporteTodoChange(v: boolean) {
-    const f = this.detalle();
-    if (!f) return;
-    this.detalle.set(applyAporteTodo(f, v));
-  }
-
-  onConfirmadoChange(v: boolean | null) {
-    const f = this.detalle();
-    if (!f) return;
-    this.detalle.set(applyConfirmado(f, v, defaultFechaSalidaPrompt));
-  }
 
   constructor() {
     this.titleSvc.set('Fichas de Adhesión');

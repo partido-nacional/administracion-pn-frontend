@@ -5,7 +5,7 @@
   },
   "stats": {
     "total": 11,
-    "done": 4,
+    "done": 8,
     "by_layer": {
       "1": 8,
       "2": 3
@@ -107,7 +107,7 @@
       "id": "TASK-005",
       "title": "Componente presentacional FichaAdhesionFormComponent",
       "description": "Crear src/app/shared/adhesiones/ficha-adhesion-form.component.ts (standalone) con ficha=model.required<FichaAdhesionDetalle>(), disabled=input<boolean>(), sectores=input<string[]>(). Mueve el bloque de markup condicional del formulario; los handlers internos delegan en las funciones puras de TASK-001.",
-      "status": "pending",
+      "status": "completed",
       "layer": 1,
       "depends_on": [
         "TASK-001"
@@ -130,7 +130,7 @@
       "id": "TASK-006",
       "title": "Cablear nueva-ficha al componente de formulario",
       "description": "Reemplazar el markup del form en nueva-ficha por <app-ficha-adhesion-form [(ficha)]=... [sectores]=...> siempre editable. Quitar el markup duplicado del template. Preservar defaults y guardado.",
-      "status": "pending",
+      "status": "completed",
       "layer": 1,
       "depends_on": [
         "TASK-005",
@@ -152,7 +152,7 @@
       "id": "TASK-007",
       "title": "Cablear la fila expandible de fichas-contacto al componente de formulario",
       "description": "Reemplazar el markup del detalle en fichas-contacto por <app-ficha-adhesion-form [(ficha)]=detalle [disabled]=!editMode() [sectores]=...>. Quitar el markup duplicado. Preservar toggle Editar/Cancelar/Guardar.",
-      "status": "pending",
+      "status": "completed",
       "layer": 1,
       "depends_on": [
         "TASK-005",
@@ -174,7 +174,7 @@
       "id": "TASK-008",
       "title": "Unit test de FichaAdhesionFormComponent",
       "description": "Especificar ficha-adhesion-form.component.spec.ts: render de campos condicionales según sistContrib, estado disabled deshabilita inputs, two-way model refleja cambios de reglas.",
-      "status": "pending",
+      "status": "completed",
       "layer": 1,
       "depends_on": [
         "TASK-005"
