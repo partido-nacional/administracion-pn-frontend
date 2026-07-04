@@ -8,6 +8,7 @@ import { FichasAgrupacionComponent } from './fichas-agrupacion.component';
 import { AgrupacionesPendientesComponent } from './agrupaciones-pendientes.component';
 import { AgrupacionesPorPeriodoComponent } from './agrupaciones-por-periodo.component';
 import { PaginatorComponent } from '../../shared/components/paginator/paginator.component';
+import { ModalFormComponent } from '../../shared/components/modal-form/modal-form.component';
 import { GridQuery, PagedResult, SortOrder, DEFAULT_PAGE_SIZE } from '../../core/models/paged';
 import { buildPagedParams } from '../../core/services/paged';
 
@@ -31,20 +32,20 @@ type Tab = 'todas' | 'pendientes' | 'fichas' | 'periodo' | 'padron';
 @Component({
   selector: 'app-agrupaciones',
   standalone: true,
-  imports: [CommonModule, FormsModule, FichasAgrupacionComponent, AgrupacionesPendientesComponent, AgrupacionesPorPeriodoComponent, PaginatorComponent],
+  imports: [CommonModule, FormsModule, FichasAgrupacionComponent, AgrupacionesPendientesComponent, AgrupacionesPorPeriodoComponent, PaginatorComponent, ModalFormComponent],
   template: `
     <div class="topbar-inline">
       <button class="btn btn-primary" (click)="abrirNueva()">+ Nueva Agrupación</button>
     </div>
 
     @if (modoModal()) {
-      <div class="modal-backdrop" (click)="cerrarNueva()">
-        <div class="nv-modal" (click)="$event.stopPropagation()">
-          <div class="nv-header">
-            <div class="nv-title">{{ modoModal() === 'editar' ? 'Editar Agrupación' : 'Nueva Agrupación (entrará como pendiente)' }}</div>
-            <button class="nv-close" (click)="cerrarNueva()">×</button>
-          </div>
-          <div class="nv-body">
+      <app-modal-form
+        [wide]="true"
+        [title]="modoModal() === 'editar' ? 'Editar Agrupación' : 'Nueva Agrupación (entrará como pendiente)'"
+        [busy]="nuevoBusy()"
+        [error]="nuevoError()"
+        [saveLabel]="modoModal() === 'editar' ? 'Guardar cambios' : 'Crear pendiente'"
+        (save)="guardarNueva()" (cancel)="cerrarNueva()">
             @if (modoModal() === 'nueva') {
               <p class="nv-sub">
                 Esta agrupación se creará y quedará en la pestaña <strong>Agrupaciones Pendientes</strong>
@@ -59,7 +60,7 @@ type Tab = 'todas' | 'pendientes' | 'fichas' | 'periodo' | 'padron';
             }
 
             <h4 class="sec-h">Identificación</h4>
-            <div class="nv-grid">
+            <div class="nv-grid g3">
               <div class="fg full"><label>Nombre *</label><input [(ngModel)]="nuevoForm.nombre" name="n-nombre"></div>
               <div class="fg"><label>Sigla</label><input [(ngModel)]="nuevoForm.sigla" name="n-sigla"></div>
               <div class="fg"><label>Cod. Agrupación</label><input [(ngModel)]="nuevoForm.codAgrup" name="n-codAgrup"></div>
@@ -87,7 +88,7 @@ type Tab = 'todas' | 'pendientes' | 'fichas' | 'periodo' | 'padron';
             </div>
 
             <h4 class="sec-h">Domicilio y Contacto</h4>
-            <div class="nv-grid">
+            <div class="nv-grid g3">
               <div class="fg full"><label>Domicilio Legal</label><input [(ngModel)]="nuevoForm.domicilioLegal" name="n-dom"></div>
               <div class="fg"><label>Ciudad</label><input [(ngModel)]="nuevoForm.ciudad" name="n-ciudad"></div>
               <div class="fg"><label>Tel. 1</label><input [(ngModel)]="nuevoForm.tel1" name="n-tel1"></div>
@@ -97,7 +98,7 @@ type Tab = 'todas' | 'pendientes' | 'fichas' | 'periodo' | 'padron';
             </div>
 
             <h4 class="sec-h">Comisión Electoral</h4>
-            <div class="nv-grid">
+            <div class="nv-grid g3">
               <div class="fg"><label>Forma Representación</label><input [(ngModel)]="nuevoForm.formaRepresentacion" name="n-fr"></div>
               <div class="fg"><label>Representante</label><input [(ngModel)]="nuevoForm.representante" name="n-rep"></div>
               <div class="fg"><label>Delegado C.E.</label><input [(ngModel)]="nuevoForm.delegadoCE" name="n-del"></div>
@@ -110,7 +111,7 @@ type Tab = 'todas' | 'pendientes' | 'fichas' | 'periodo' | 'padron';
 
             @if (modoModal() === 'nueva') {
               <h4 class="sec-h">Sublemas (período 2025-2030)</h4>
-              <div class="nv-grid">
+              <div class="nv-grid g3">
                 <div class="fg"><label>Sublema 1</label><input [(ngModel)]="nuevoForm.sublema1" name="n-s1"></div>
                 <div class="fg"><label>Sublema 2</label><input [(ngModel)]="nuevoForm.sublema2" name="n-s2"></div>
                 <div class="fg"><label>Sublema 3</label><input [(ngModel)]="nuevoForm.sublema3" name="n-s3"></div>
@@ -121,7 +122,7 @@ type Tab = 'todas' | 'pendientes' | 'fichas' | 'periodo' | 'padron';
             }
 
             <h4 class="sec-h">Observaciones</h4>
-            <div class="nv-grid">
+            <div class="nv-grid g3">
               <div class="fg full"><label>Antecedentes</label><textarea rows="2" [(ngModel)]="nuevoForm.antecedentes" name="n-ant"></textarea></div>
               <div class="fg full"><label>Resolución de la Comisión</label><textarea rows="2" [(ngModel)]="nuevoForm.resolucionComision" name="n-res"></textarea></div>
               <div class="fg"><label>Observaciones</label><input [(ngModel)]="nuevoForm.observaciones" name="n-obs"></div>
@@ -129,16 +130,7 @@ type Tab = 'todas' | 'pendientes' | 'fichas' | 'periodo' | 'padron';
               <div class="fg full"><label>Nota</label><input [(ngModel)]="nuevoForm.nota" name="n-nota"></div>
             </div>
 
-            @if (nuevoError()) { <div class="nv-err">{{ nuevoError() }}</div> }
-          </div>
-          <div class="nv-footer">
-            <button class="btn btn-secondary" (click)="cerrarNueva()">Cancelar</button>
-            <button class="btn btn-primary" (click)="guardarNueva()" [disabled]="nuevoBusy()">
-              {{ nuevoBusy() ? 'Guardando…' : (modoModal() === 'editar' ? 'Guardar cambios' : 'Crear pendiente') }}
-            </button>
-          </div>
-        </div>
-      </div>
+      </app-modal-form>
     }
 
     <div class="tabs">
@@ -369,54 +361,6 @@ type Tab = 'todas' | 'pendientes' | 'fichas' | 'periodo' | 'padron';
       margin-left:2px;
     }
 
-    .modal-backdrop {
-      position:fixed; inset:0; background:rgba(15,23,42,.55);
-      display:flex; align-items:center; justify-content:center; z-index:1000; padding:20px;
-    }
-    .nv-modal {
-      background:#fff; border-radius:10px; width:min(960px, 100%);
-      height:min(780px, 92vh); display:flex; flex-direction:column;
-      box-shadow:0 20px 50px rgba(0,0,0,.3); overflow:hidden;
-    }
-    .nv-header {
-      display:flex; justify-content:space-between; align-items:center;
-      padding:14px 20px; background:#1e3a8a; color:#fff;
-    }
-    .nv-title { font-size:16px; font-weight:600; }
-    .nv-close { background:transparent; border:none; color:#fff; font-size:24px; cursor:pointer; }
-    .nv-body { padding:18px 22px; overflow-y:auto; flex:1; }
-    .nv-sub {
-      background:#f0f6ff; border:1px solid #d6e4f5; border-radius:6px;
-      padding:10px 12px; font-size:13px; color:#3d4f6b; margin:0 0 14px 0;
-    }
-    .nv-footer {
-      padding:12px 20px; border-top:1px solid #eef1f5; background:#fafbfd;
-      display:flex; gap:10px; justify-content:flex-end;
-    }
-    .sec-h {
-      margin:16px 0 8px 0; font-size:13px; font-weight:600; color:#4a5568;
-      text-transform:uppercase; letter-spacing:.5px;
-      padding-bottom:4px; border-bottom:1px solid #eef1f5;
-    }
-    .sec-h:first-child { margin-top:0; }
-    .nv-grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:10px 16px; }
-    @media (max-width:900px) { .nv-grid { grid-template-columns:repeat(2, 1fr); } }
-    @media (max-width:600px) { .nv-grid { grid-template-columns:1fr; } }
-    .fg { display:flex; flex-direction:column; gap:4px; }
-    .fg.full { grid-column:1 / -1; }
-    .fg label { font-size:11px; font-weight:600; color:#666; text-transform:uppercase; letter-spacing:.4px; }
-    .fg input, .fg select, .fg textarea {
-      padding:8px 10px; font-size:13px; font-family:inherit;
-      border:1px solid #cfd6e0; border-radius:5px; outline:none;
-    }
-    .fg input:focus, .fg select:focus, .fg textarea:focus {
-      border-color:#1e3a8a; box-shadow:0 0 0 3px rgba(30,58,138,.12);
-    }
-    .fg textarea { resize:vertical; }
-    .nv-err {
-      margin-top:12px; padding:8px 12px; background:#fdecea; color:#a8261b;
-      border-radius:5px; font-size:13px;
-    }
   `]
 })
 export class AgrupacionesComponent {

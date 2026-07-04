@@ -6,6 +6,7 @@ import { environment } from '../../../environments/environment';
 import { PageTitleService } from '../../core/page-title.service';
 import { exportarCSV, CsvColumn } from '../../core/exportar-csv';
 import { OrganismosService } from '../../core/services/organismos.service';
+import { ModalFormComponent } from '../../shared/components/modal-form/modal-form.component';
 import {
   Ambito, OrganismoTodosDto, OrganismoInput,
   TipoOrganismoDto, InfoOrganizacionDto, InfoOrganizacionInput,
@@ -25,7 +26,7 @@ const m = (val: any, q: string) => !q || norm(val).includes(q.toLowerCase());
 @Component({
   selector: 'app-organismos',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ModalFormComponent],
   template: `
     <div class="topbar-inline">
       @if (tab()==='todos') { <button class="btn btn-primary" (click)="abrirNuevoOrganismo()">+ Nuevo Organismo</button> }
@@ -239,13 +240,12 @@ const m = (val: any, q: string) => !q || norm(val).includes(q.toLowerCase());
     }
 
     @if (modalKind()) {
-      <div class="modal-backdrop" (click)="cerrarModal()">
-        <div class="nv-modal" (click)="$event.stopPropagation()">
-          <div class="nv-header">
-            <div class="nv-title">{{ tituloModal() }}</div>
-            <button class="nv-close" (click)="cerrarModal()">×</button>
-          </div>
-          <div class="nv-body">
+      <app-modal-form
+        [title]="tituloModal()"
+        [busy]="modalBusy()"
+        [error]="modalError()"
+        [saveLabel]="modalMode()==='editar' ? 'Guardar cambios' : 'Crear'"
+        (save)="guardar()" (cancel)="cerrarModal()">
             @if (modalKind()==='organismo') {
               <div class="nv-grid">
                 <div class="fg"><label>Ámbito *</label>
@@ -293,16 +293,7 @@ const m = (val: any, q: string) => !q || norm(val).includes(q.toLowerCase());
                 <div class="fg full"><label>Observaciones</label><input [(ngModel)]="form.observaciones" name="i-obs"></div>
               </div>
             }
-            @if (modalError()) { <div class="nv-err">{{ modalError() }}</div> }
-          </div>
-          <div class="nv-footer">
-            <button class="btn btn-secondary" (click)="cerrarModal()">Cancelar</button>
-            <button class="btn btn-primary" (click)="guardar()" [disabled]="modalBusy()">
-              {{ modalBusy() ? 'Guardando…' : (modalMode()==='editar' ? 'Guardar cambios' : 'Crear') }}
-            </button>
-          </div>
-        </div>
-      </div>
+      </app-modal-form>
     }
   `,
   styles: [`
@@ -310,46 +301,6 @@ const m = (val: any, q: string) => !q || norm(val).includes(q.toLowerCase());
     .footer { padding:12px 18px; font-size:13px; color:#666; border-top:1px solid #eef1f5; }
     .badge.amb-est { background:#e6f0ff; color:#1a4f8a; }
     .badge.amb-part { background:#fdeede; color:#8a5a1a; }
-
-    .modal-backdrop {
-      position:fixed; inset:0; background:rgba(15,23,42,.55);
-      display:flex; align-items:center; justify-content:center; z-index:1000; padding:20px;
-    }
-    .nv-modal {
-      background:#fff; border-radius:10px; width:min(760px, 100%);
-      max-height:92vh; display:flex; flex-direction:column;
-      box-shadow:0 20px 50px rgba(0,0,0,.3); overflow:hidden;
-    }
-    .nv-header {
-      display:flex; justify-content:space-between; align-items:center;
-      padding:14px 20px; background:#1e3a8a; color:#fff;
-    }
-    .nv-title { font-size:16px; font-weight:600; }
-    .nv-close { background:transparent; border:none; color:#fff; font-size:24px; cursor:pointer; }
-    .nv-body { padding:18px 22px; overflow-y:auto; flex:1; }
-    .nv-footer {
-      padding:12px 20px; border-top:1px solid #eef1f5; background:#fafbfd;
-      display:flex; gap:10px; justify-content:flex-end;
-    }
-    .nv-grid { display:grid; grid-template-columns:repeat(2, 1fr); gap:12px 16px; }
-    @media (max-width:600px) { .nv-grid { grid-template-columns:1fr; } }
-    .fg { display:flex; flex-direction:column; gap:4px; }
-    .fg.full { grid-column:1 / -1; }
-    .fg.check { justify-content:flex-end; }
-    .fg.check label { flex-direction:row; display:flex; align-items:center; gap:8px; text-transform:none; font-size:13px; color:#222; }
-    .fg label { font-size:11px; font-weight:600; color:#666; text-transform:uppercase; letter-spacing:.4px; }
-    .fg input:not([type=checkbox]), .fg select {
-      padding:8px 10px; font-size:13px; font-family:inherit;
-      border:1px solid #cfd6e0; border-radius:5px; outline:none;
-    }
-    .fg input:focus, .fg select:focus {
-      border-color:#1e3a8a; box-shadow:0 0 0 3px rgba(30,58,138,.12);
-    }
-    .fg select:disabled { background:#f0f2f5; color:#888; }
-    .nv-err {
-      margin-top:12px; padding:8px 12px; background:#fdecea; color:#a8261b;
-      border-radius:5px; font-size:13px;
-    }
   `]
 })
 export class OrganismosComponent {
