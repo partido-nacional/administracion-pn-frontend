@@ -5,8 +5,9 @@ import { FichaAdhesionDetalle } from '../../features/agenda/contactos.service';
 import {
   SISTEMAS, DEPARTAMENTOS, APORTES_SEC_AGR,
   showTelefonoAntel, showCedula, showFechasPago,
-  applySistContrib, applyAporteTodo, applyConfirmado, defaultFechaSalidaPrompt,
+  applySistContrib, applyAporteTodo,
 } from './ficha-adhesion.constants';
+import { resolverConfirmado } from './confirmado-baja.util';
 
 /**
  * Formulario presentacional de ficha de adhesión, compartido entre el alta
@@ -173,6 +174,9 @@ export class FichaAdhesionFormComponent {
   }
 
   onConfirmadoChange(v: boolean | null) {
-    this.ficha.set(applyConfirmado(this.ficha(), v, defaultFechaSalidaPrompt));
+    // Sin window.prompt: la Baja prellena la fecha de salida (o conserva la
+    // existente) y queda editable inline en el <input type="date">. (TODO-012)
+    const f = this.ficha();
+    this.ficha.set({ ...f, ...resolverConfirmado(v, f.fechaSalida) });
   }
 }

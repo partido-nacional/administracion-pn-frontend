@@ -88,4 +88,40 @@ describe('FichaAdhesionFormComponent', () => {
     expect(component.ficha().aporteTodoAlPartido).toBeTrue();
     expect(component.ficha().sector).toBeUndefined();
   });
+
+  describe('onConfirmadoChange (BR-3 / TODO-012, sin window.prompt)', () => {
+    it('baja (false) setea aporteConfirmado=false y prellena fechaSalida', () => {
+      setFicha(ficha({ aporteConfirmado: true, fechaSalida: undefined }));
+      component.onConfirmadoChange(false);
+      expect(component.ficha().aporteConfirmado).toBeFalse();
+      expect(component.ficha().fechaSalida).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    });
+
+    it('baja (false) conserva la fecha de salida existente', () => {
+      setFicha(ficha({ aporteConfirmado: true, fechaSalida: '2020-05-05' }));
+      component.onConfirmadoChange(false);
+      expect(component.ficha().fechaSalida).toBe('2020-05-05');
+    });
+
+    it('activa (true) limpia fechaSalida', () => {
+      setFicha(ficha({ aporteConfirmado: false, fechaSalida: '2020-01-01' }));
+      component.onConfirmadoChange(true);
+      expect(component.ficha().aporteConfirmado).toBeTrue();
+      expect(component.ficha().fechaSalida).toBeUndefined();
+    });
+
+    it('pendiente (null) limpia fechaSalida', () => {
+      setFicha(ficha({ aporteConfirmado: false, fechaSalida: '2020-01-01' }));
+      component.onConfirmadoChange(null);
+      expect(component.ficha().aporteConfirmado).toBeNull();
+      expect(component.ficha().fechaSalida).toBeUndefined();
+    });
+
+    it('re-emite el model con nueva referencia en cada cambio', () => {
+      const first = ficha({ aporteConfirmado: true });
+      setFicha(first);
+      component.onConfirmadoChange(false);
+      expect(component.ficha()).not.toBe(first);
+    });
+  });
 });

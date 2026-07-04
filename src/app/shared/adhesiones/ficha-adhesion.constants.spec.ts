@@ -1,7 +1,7 @@
 import {
   SISTEMAS, DEPARTAMENTOS, APORTES_SEC_AGR,
   showTelefonoAntel, showCedula, showFechasPago,
-  applySistContrib, applyAporteTodo, applyConfirmado,
+  applySistContrib, applyAporteTodo,
 } from './ficha-adhesion.constants';
 import { FichaAdhesionDetalle } from '../../features/agenda/contactos.service';
 
@@ -97,39 +97,4 @@ describe('applyAporteTodo (BR-2)', () => {
   });
 });
 
-describe('applyConfirmado (BR-3)', () => {
-  it('valor true limpia fechaSalida', () => {
-    const f = ficha({ aporteConfirmado: false, fechaSalida: '2025-01-01' });
-    const r = applyConfirmado(f, true, () => null);
-    expect(r.aporteConfirmado).toBeTrue();
-    expect(r.fechaSalida).toBeUndefined();
-  });
-  it('valor null limpia fechaSalida', () => {
-    const f = ficha({ aporteConfirmado: false, fechaSalida: '2025-01-01' });
-    const r = applyConfirmado(f, null, () => null);
-    expect(r.aporteConfirmado).toBeNull();
-    expect(r.fechaSalida).toBeUndefined();
-  });
-  it('false con fecha válida setea la baja', () => {
-    const f = ficha();
-    const r = applyConfirmado(f, false, () => '2025-06-30');
-    expect(r.aporteConfirmado).toBeFalse();
-    expect(r.fechaSalida).toBe('2025-06-30');
-  });
-  it('false con prompt cancelado devuelve la ficha sin cambios', () => {
-    const f = ficha({ aporteConfirmado: true });
-    const r = applyConfirmado(f, false, () => null);
-    expect(r).toBe(f);
-  });
-  it('false con fecha inválida devuelve la ficha sin cambios', () => {
-    const f = ficha({ aporteConfirmado: true });
-    const r = applyConfirmado(f, false, () => '30/06/2025');
-    expect(r).toBe(f);
-  });
-  it('pasa la fecha de salida actual (o hoy) como default al prompt', () => {
-    const f = ficha({ fechaSalida: '2024-12-31' });
-    const spy = jasmine.createSpy('prompt').and.returnValue('2025-06-30');
-    applyConfirmado(f, false, spy);
-    expect(spy).toHaveBeenCalledWith('2024-12-31');
-  });
-});
+// BR-3 (campo "Confirmado" / baja) se testea en confirmado-baja.util.spec.ts.

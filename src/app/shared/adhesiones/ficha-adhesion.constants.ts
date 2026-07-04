@@ -58,28 +58,6 @@ export function applyAporteTodo(f: FichaAdhesionDetalle, v: boolean): FichaAdhes
   return next;
 }
 
-/**
- * BR-3: cambia el estado de confirmación. Si pasa a `false` (dado de baja), se exige
- * una fecha de salida vía `promptFn`; si el usuario cancela o la fecha es inválida
- * (no `YYYY-MM-DD`), devuelve la ficha **sin cambios** (misma referencia). Cualquier
- * otro valor limpia la fecha de salida.
- */
-export function applyConfirmado(
-  f: FichaAdhesionDetalle,
-  v: boolean | null,
-  promptFn: (defaultDate: string) => string | null
-): FichaAdhesionDetalle {
-  if (v === false) {
-    const today = new Date().toISOString().slice(0, 10);
-    const fecha = promptFn(f.fechaSalida || today);
-    if (!fecha || !/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
-      return f;
-    }
-    return { ...f, aporteConfirmado: false, fechaSalida: fecha };
-  }
-  return { ...f, aporteConfirmado: v, fechaSalida: undefined };
-}
-
-/** Prompt por defecto (mismo comportamiento actual con `window.prompt`). */
-export const defaultFechaSalidaPrompt = (defaultDate: string): string | null =>
-  window.prompt('Ingrese la fecha de salida (YYYY-MM-DD):', defaultDate);
+// BR-3 (campo "Confirmado" / baja) vive en `confirmado-baja.util.ts`:
+// `resolverConfirmado` (sin window.prompt, prellena fecha de salida y se edita
+// inline) y `normalizarFechaSalida` (coherencia al guardar).

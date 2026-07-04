@@ -44,16 +44,16 @@ const m = (val: any, q: string) => !q || norm(val).includes(q.toLowerCase());
             <tr class="filter-row">
               <th><input class="column-filter" [ngModel]="fOrgId()"     (ngModelChange)="fOrgId.set($event)"     placeholder="Filtrar..."></th>
               <th><input class="column-filter" [ngModel]="fOrgNom()"    (ngModelChange)="fOrgNom.set($event)"    placeholder="Filtrar..."></th>
-              <th><input class="column-filter" [ngModel]="fOrgDesc()"   (ngModelChange)="fOrgDesc.set($event)"   placeholder="Filtrar..."></th>
-              <th><input class="column-filter" [ngModel]="fOrgDir()"    (ngModelChange)="fOrgDir.set($event)"    placeholder="Filtrar..."></th>
-              <th><input class="column-filter" [ngModel]="fOrgCiu()"    (ngModelChange)="fOrgCiu.set($event)"    placeholder="Filtrar..."></th>
+              <th></th>
+              <th></th>
+              <th></th>
               <th>
                 <select class="column-filter" [ngModel]="fOrgDep()" (ngModelChange)="fOrgDep.set($event)">
                   <option value="">Todos</option>
                   @for (d of orgDeptos(); track d) { <option [ngValue]="d">{{ d }}</option> }
                 </select>
               </th>
-              <th><input class="column-filter" [ngModel]="fOrgPais()"   (ngModelChange)="fOrgPais.set($event)"   placeholder="Filtrar..."></th>
+              <th></th>
               <th>
                 <select class="column-filter" [ngModel]="fOrgArt()" (ngModelChange)="fOrgArt.set($event)">
                   <option value="">Todos</option>
@@ -62,7 +62,7 @@ const m = (val: any, q: string) => !q || norm(val).includes(q.toLowerCase());
                 </select>
               </th>
               <th><input class="column-filter" [ngModel]="fOrgOrd()"    (ngModelChange)="fOrgOrd.set($event)"    placeholder="Filtrar..."></th>
-              <th><input class="column-filter" [ngModel]="fOrgObs()"    (ngModelChange)="fOrgObs.set($event)"    placeholder="Filtrar..."></th>
+              <th></th>
               <th></th>
             </tr>
           </thead>
@@ -107,11 +107,11 @@ const m = (val: any, q: string) => !q || norm(val).includes(q.toLowerCase());
             </tr>
             <tr class="filter-row">
               <th><input class="column-filter" [ngModel]="fInfId()"    (ngModelChange)="fInfId.set($event)"    placeholder="Filtrar..."></th>
-              <th><input class="column-filter" [ngModel]="fInfTipo()"  (ngModelChange)="fInfTipo.set($event)"  placeholder="Filtrar..."></th>
-              <th><input class="column-filter" [ngModel]="fInfEst()"   (ngModelChange)="fInfEst.set($event)"   placeholder="Filtrar..."></th>
-              <th><input class="column-filter" [ngModel]="fInfPart()"  (ngModelChange)="fInfPart.set($event)"  placeholder="Filtrar..."></th>
+              <th></th>
+              <th></th>
+              <th></th>
               <th><input class="column-filter" [ngModel]="fInfComp()"  (ngModelChange)="fInfComp.set($event)"  placeholder="Filtrar..."></th>
-              <th><input class="column-filter" [ngModel]="fInfAbr()"   (ngModelChange)="fInfAbr.set($event)"   placeholder="Filtrar..."></th>
+              <th></th>
               <th>
                 <select class="column-filter" [ngModel]="fInfDep()" (ngModelChange)="fInfDep.set($event)">
                   <option value="">Todos</option>
@@ -159,12 +159,12 @@ const m = (val: any, q: string) => !q || norm(val).includes(q.toLowerCase());
             </tr>
             <tr class="filter-row">
               <th><input class="column-filter" [ngModel]="fIntId()"   (ngModelChange)="fIntId.set($event)"   placeholder="Filtrar..."></th>
-              <th><input class="column-filter" [ngModel]="fIntCred()" (ngModelChange)="fIntCred.set($event)" placeholder="Filtrar..."></th>
+              <th></th>
               <th><input class="column-filter" [ngModel]="fIntApe()"  (ngModelChange)="fIntApe.set($event)"  placeholder="Filtrar..."></th>
               <th><input class="column-filter" [ngModel]="fIntNom()"  (ngModelChange)="fIntNom.set($event)"  placeholder="Filtrar..."></th>
-              <th><input class="column-filter" [ngModel]="fIntCel()"  (ngModelChange)="fIntCel.set($event)"  placeholder="Filtrar..."></th>
-              <th><input class="column-filter" [ngModel]="fIntMail()" (ngModelChange)="fIntMail.set($event)" placeholder="Filtrar..."></th>
-              <th><input class="column-filter" [ngModel]="fIntPos()"  (ngModelChange)="fIntPos.set($event)"  placeholder="Filtrar..."></th>
+              <th></th>
+              <th></th>
+              <th></th>
               <th><input class="column-filter" [ngModel]="fIntOrg()"  (ngModelChange)="fIntOrg.set($event)"  placeholder="Filtrar..."></th>
               <th>
                 <select class="column-filter" [ngModel]="fIntDep()" (ngModelChange)="fIntDep.set($event)">
@@ -204,8 +204,8 @@ const m = (val: any, q: string) => !q || norm(val).includes(q.toLowerCase());
             <tr class="filter-row">
               <th><input class="column-filter" [ngModel]="fRefNom()" (ngModelChange)="fRefNom.set($event)" placeholder="Filtrar..."></th>
               <th><input class="column-filter" [ngModel]="fRefCar()" (ngModelChange)="fRefCar.set($event)" placeholder="Filtrar..."></th>
-              <th><input class="column-filter" [ngModel]="fRefOrg()" (ngModelChange)="fRefOrg.set($event)" placeholder="Filtrar..."></th>
-              <th><input class="column-filter" [ngModel]="fRefPer()" (ngModelChange)="fRefPer.set($event)" placeholder="Filtrar..."></th>
+              <th></th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
@@ -241,59 +241,47 @@ export class OrganismosComponent {
   referencias = signal<RefPart[]>([]);
 
   // ── filtros: Todos
-  fOrgId = signal(''); fOrgNom = signal(''); fOrgDesc = signal('');
-  fOrgDir = signal(''); fOrgCiu = signal(''); fOrgDep = signal('');
-  fOrgPais = signal(''); fOrgArt = signal(''); fOrgOrd = signal('');
-  fOrgObs = signal('');
+  fOrgId = signal(''); fOrgNom = signal(''); fOrgDep = signal('');
+  fOrgArt = signal(''); fOrgOrd = signal('');
 
   orgDeptos = computed(() => Array.from(new Set(this.organismos().map(o => o.departamento).filter(Boolean))).sort());
 
   organismosFiltrados = computed(() => this.organismos().filter(o =>
     m(o.id, this.fOrgId()) && m(o.nombre, this.fOrgNom()) &&
-    m(o.descripcion, this.fOrgDesc()) && m(o.direccion, this.fOrgDir()) &&
-    m(o.ciudad, this.fOrgCiu()) &&
     (!this.fOrgDep() || o.departamento === this.fOrgDep()) &&
-    m(o.pais, this.fOrgPais()) &&
     (!this.fOrgArt() || (this.fOrgArt() === 'si' ? o.art44 : !o.art44)) &&
-    m(o.ordenDpto, this.fOrgOrd()) &&
-    m(o.observaciones, this.fOrgObs())
+    m(o.ordenDpto, this.fOrgOrd())
   ));
 
   // ── filtros: Info
-  fInfId = signal(''); fInfTipo = signal(''); fInfEst = signal('');
-  fInfPart = signal(''); fInfComp = signal(''); fInfAbr = signal('');
-  fInfDep = signal('');
+  fInfId = signal(''); fInfComp = signal(''); fInfDep = signal('');
 
   infoDeptos = computed(() => Array.from(new Set(this.info().map(i => i.departamento).filter(Boolean))).sort());
 
   infoFiltrados = computed(() => this.info().filter(i =>
-    m(i.id, this.fInfId()) && m(i.idTipo, this.fInfTipo()) &&
-    m(i.idEstatal, this.fInfEst()) && m(i.idPartidario, this.fInfPart()) &&
-    m(i.nombreCompania, this.fInfComp()) && m(i.nombreAbreviado, this.fInfAbr()) &&
+    m(i.id, this.fInfId()) &&
+    m(i.nombreCompania, this.fInfComp()) &&
     (!this.fInfDep() || i.departamento === this.fInfDep())
   ));
 
   // ── filtros: Integrantes
-  fIntId = signal(''); fIntCred = signal(''); fIntApe = signal('');
-  fIntNom = signal(''); fIntCel = signal(''); fIntMail = signal('');
-  fIntPos = signal(''); fIntOrg = signal(''); fIntDep = signal('');
+  fIntId = signal(''); fIntApe = signal(''); fIntNom = signal('');
+  fIntOrg = signal(''); fIntDep = signal('');
 
   intDeptos = computed(() => Array.from(new Set(this.integrantes().map(i => i.departamento).filter(Boolean))).sort());
 
   integrantesFiltrados = computed(() => this.integrantes().filter(i =>
-    m(i.idContacto, this.fIntId()) && m(i.credCivica, this.fIntCred()) &&
+    m(i.idContacto, this.fIntId()) &&
     m(i.apellidos, this.fIntApe()) && m(i.nombres, this.fIntNom()) &&
-    m(i.celular, this.fIntCel()) && m(i.mail, this.fIntMail()) &&
-    m(i.posicion, this.fIntPos()) && m(i.organismo, this.fIntOrg()) &&
+    m(i.organismo, this.fIntOrg()) &&
     (!this.fIntDep() || i.departamento === this.fIntDep())
   ));
 
   // ── filtros: Referencias
-  fRefNom = signal(''); fRefCar = signal(''); fRefOrg = signal(''); fRefPer = signal('');
+  fRefNom = signal(''); fRefCar = signal('');
 
   referenciasFiltradas = computed(() => this.referencias().filter(r =>
-    m(r.nombre, this.fRefNom()) && m(r.cargo, this.fRefCar()) &&
-    m(r.organismo, this.fRefOrg()) && m(r.periodo, this.fRefPer())
+    m(r.nombre, this.fRefNom()) && m(r.cargo, this.fRefCar())
   ));
 
   constructor() {

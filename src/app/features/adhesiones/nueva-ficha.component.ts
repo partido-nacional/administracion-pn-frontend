@@ -6,6 +6,7 @@ import { AdhesionesService } from './adhesiones.service';
 import { PageTitleService } from '../../core/page-title.service';
 import { CatalogosService } from '../../core/catalogos.service';
 import { DEPARTAMENTOS } from '../../shared/adhesiones/ficha-adhesion.constants';
+import { hoyISO, normalizarFechaSalida } from '../../shared/adhesiones/confirmado-baja.util';
 import { FichaAdhesionFormComponent } from '../../shared/adhesiones/ficha-adhesion-form.component';
 
 @Component({
@@ -65,7 +66,7 @@ export class NuevaFichaComponent {
     this.contactoId = +this.route.snapshot.paramMap.get('contactoId')!;
     this.contactosSvc.get(this.contactoId).subscribe(c => {
       this.contactoNombre.set(`${c.apellido}, ${c.nombre}`);
-      const today = new Date().toISOString().slice(0, 10);
+      const today = hoyISO();
       const dep = c.departamento && DEPARTAMENTOS.includes(c.departamento) ? c.departamento : undefined;
       this.ficha.set({
         id: 0,
@@ -98,6 +99,8 @@ export class NuevaFichaComponent {
   guardar() {
     const f = this.ficha();
     if (!f) return;
+    // Coherencia: una Baja siempre debe llevar fecha de salida (TODO-012).
+    normalizarFechaSalida(f);
     this.adhSvc.createLocal(f).subscribe(() => {
       this.router.navigate(['/agenda', this.contactoId, 'fichas']);
     });

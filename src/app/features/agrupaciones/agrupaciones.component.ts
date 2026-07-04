@@ -326,8 +326,9 @@ type Tab = 'todas' | 'pendientes' | 'fichas' | 'periodo' | 'padron';
             }
           </tbody>
         </table>
-        <div style="padding:12px 18px; font-size:13px; color:#666; border-top:1px solid #eef1f5">
-          Mostrando {{ padronFiltrado().length }} de {{ padron().length }} entradas
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 18px; font-size:13px; color:#666; border-top:1px solid #eef1f5">
+          <button class="btn btn-secondary btn-sm" (click)="limpiarPadron()">Limpiar Filtro</button>
+          <span>Mostrando {{ padronFiltrado().length }} de {{ padron().length }} entradas</span>
         </div>
       </div></div>
     }
@@ -432,6 +433,12 @@ export class AgrupacionesComponent {
   fPadPApe = signal('');  fPadSApe = signal('');
 
   padronSeries = computed(() => Array.from(new Set(this.padron().map(p => p.serie).filter(Boolean))).sort());
+
+  limpiarPadron() {
+    this.fPadSerie.set(''); this.fPadNro.set('');
+    this.fPadPNom.set('');  this.fPadSNom.set('');
+    this.fPadPApe.set('');  this.fPadSApe.set('');
+  }
 
   padronFiltrado = computed(() => {
     const norm = (s: any) => (s ?? '').toString().toLowerCase();

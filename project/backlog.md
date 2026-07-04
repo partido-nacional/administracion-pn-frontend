@@ -109,6 +109,15 @@
 - **Complexity**: S
 - **Risk if Ignored**: La feature FE queda sin verificación end-to-end contra el backend real. *(Convención de IDs cruzados — ver `CLAUDE.md` → Workspace.)*
 
+### TODO-012: Ficha en "Baja" con fecha de salida vacía
+- **Priority**: Low
+- **Status**: done (2026-07-04)
+- **Created**: 2026-07-04
+- **Origin**: feature/005-adhesion-baja-fecha-salida (hallazgo de security/consistency review)
+- **Context**: En las fichas de adhesión, con `aporteConfirmado === false` (Baja) el usuario podía **borrar manualmente** la `fechaSalida` del `<input type="date">` inline y guardar, dejando un estado incoherente (baja sin fecha). **Resuelto**: helper `normalizarFechaSalida` (en `confirmado-baja.util.ts`) invocado en el `guardar()` de ambos componentes: si es Baja y falta la fecha, se completa con hoy antes de persistir. Con tests.
+- **Affected Files**: src/app/features/adhesiones/confirmado-baja.util.ts, fichas-contacto.component.ts, nueva-ficha.component.ts
+- **Complexity**: S
+
 ## 🔧 Technical Debt
 
 ### DEBT-001: Sin tests automatizados

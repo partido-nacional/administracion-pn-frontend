@@ -1,6 +1,6 @@
 # Feature Metadata
 feature: ficha-adhesion-form-compartido
-feature_number: 005
+feature_number: 006
 project: administracion-pn-frontend
 created_at: 2026-07-04
 execution_mode: standard  # standard | express | expert
