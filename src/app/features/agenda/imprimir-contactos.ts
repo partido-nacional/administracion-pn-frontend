@@ -21,7 +21,16 @@ export interface ContactoPrintOpts {
   orden?: Array<{ campo: string; dir: 'asc' | 'desc' }>;
 }
 
-const fmt = (v: any) => (v == null || v === '') ? '—' : String(v);
+/** Escapa HTML para evitar inyección (XSS) al interpolar datos en el string del documento. */
+const esc = (v: any) =>
+  String(v ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
+const fmt = (v: any) => (v == null || v === '') ? '—' : esc(v);
 
 function buildFiltros(filtros?: ContactoPrintOpts['filtros']): string {
   const activos = (filtros || []).filter(f => f.valor && f.valor.trim() !== '');
@@ -29,7 +38,7 @@ function buildFiltros(filtros?: ContactoPrintOpts['filtros']): string {
   return `
     <div class="meta">
       <strong>Filtros:</strong>
-      ${activos.map(f => `<span class="chip">${f.campo}: ${f.valor}</span>`).join('')}
+      ${activos.map(f => `<span class="chip">${esc(f.campo)}: ${esc(f.valor)}</span>`).join('')}
     </div>
   `;
 }
@@ -39,7 +48,7 @@ function buildOrden(orden?: ContactoPrintOpts['orden']): string {
   return `
     <div class="meta">
       <strong>Orden:</strong>
-      ${orden.map((o, i) => `<span class="chip">${i + 1}. ${o.campo} ${o.dir === 'asc' ? '▲' : '▼'}</span>`).join('')}
+      ${orden.map((o, i) => `<span class="chip">${i + 1}. ${esc(o.campo)} ${o.dir === 'asc' ? '▲' : '▼'}</span>`).join('')}
     </div>
   `;
 }
@@ -137,7 +146,7 @@ function buildHtml(rows: ContactoPrintRow[], opts: ContactoPrintOpts): string {
 function badgeAdhesion(estado?: string): string {
   if (!estado) return '—';
   const cls = estado === 'Activa' ? 'b-activa' : estado === 'Pendiente' ? 'b-pend' : 'b-baja';
-  return `<span class="badge ${cls}">${estado}</span>`;
+  return `<span class="badge ${cls}">${esc(estado)}</span>`;
 }
 
 export function imprimirContactos(rows: ContactoPrintRow[], opts: ContactoPrintOpts = {}): void {
