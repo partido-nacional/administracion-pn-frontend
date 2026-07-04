@@ -20,6 +20,6 @@ stages:
   tasks:
     status: approved
   implementation:
-    status: in-progress
-    completed_tasks: 5
+    status: complete
+    completed_tasks: 8
     total_tasks: 8

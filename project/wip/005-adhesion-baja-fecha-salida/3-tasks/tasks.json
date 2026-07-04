@@ -5,7 +5,7 @@
   },
   "stats": {
     "total": 8,
-    "done": 5,
+    "done": 8,
     "by_layer": {
       "1": 5,
       "2": 3
@@ -132,7 +132,7 @@
       "id": "TASK-006",
       "title": "Code review",
       "description": "Revisión de diseño: deduplicación efectiva, ausencia de código muerto, nombres claros, y que no queden más usos de window.prompt en el flujo de adhesiones.",
-      "status": "pending",
+      "status": "completed",
       "layer": 2,
       "depends_on": [
         "TASK-001",
@@ -154,7 +154,7 @@
       "id": "TASK-007",
       "title": "Performance review",
       "description": "Verificar que el cambio de UI (signals + input inline) no introduce renders innecesarios ni suscripciones colgadas; sin impacto en carga de la ficha.",
-      "status": "pending",
+      "status": "completed",
       "layer": 2,
       "depends_on": [
         "TASK-001",
@@ -175,7 +175,7 @@
       "id": "TASK-008",
       "title": "Security review",
       "description": "Revisar el manejo del input de fecha: validación de formato YYYY-MM-DD y que no se envíe estado inconsistente al backend (aporteConfirmado/fechaSalida coherentes).",
-      "status": "pending",
+      "status": "completed",
       "layer": 2,
       "depends_on": [
         "TASK-001",

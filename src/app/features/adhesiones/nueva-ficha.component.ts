@@ -6,7 +6,7 @@ import { ContactosService, FichaAdhesionDetalle } from '../agenda/contactos.serv
 import { AdhesionesService } from './adhesiones.service';
 import { PageTitleService } from '../../core/page-title.service';
 import { CatalogosService } from '../../core/catalogos.service';
-import { resolverConfirmado } from './confirmado-baja.util';
+import { resolverConfirmado, hoyISO } from './confirmado-baja.util';
 
 const SISTEMAS = ['Antel', 'OCA', 'VISA', 'MASTER', 'EBROU', 'ANUAL', 'Otro'];
 const DEPARTAMENTOS = [
@@ -227,7 +227,7 @@ export class NuevaFichaComponent {
     this.contactoId = +this.route.snapshot.paramMap.get('contactoId')!;
     this.contactosSvc.get(this.contactoId).subscribe(c => {
       this.contactoNombre.set(`${c.apellido}, ${c.nombre}`);
-      const today = new Date().toISOString().slice(0, 10);
+      const today = hoyISO();
       const dep = c.departamento && DEPARTAMENTOS.includes(c.departamento) ? c.departamento : undefined;
       this.ficha.set({
         id: 0,
