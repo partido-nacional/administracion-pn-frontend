@@ -9,7 +9,7 @@ project_type:
   type: production        # prototype | mvp | production
 vision_prompt_shown: false
 
-Current Stage: implementation
+Current Stage: completed
 
 stages:
   functional:
@@ -23,8 +23,10 @@ stages:
     status: approved
     approved_at: 2026-07-01
   implementation:
-    status: in-progress
+    status: completed
     completed_tasks: 5
     total_tasks: 6
-    blocked_tasks:
-      - TASK-003  # E2E: bloqueada por endpoint backend en repo espejo
+    finished_at: 2026-07-04
+    deferred_tasks:
+      - TASK-003  # E2E manual: movida a backlog TODO-011 (bloqueada por endpoint backend espejo)
+    finish_verdict: CAN_PROCEED_WITH_WARNINGS  # archivada con gap E2E documentado en TODO-011
