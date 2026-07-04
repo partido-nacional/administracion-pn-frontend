@@ -10,7 +10,7 @@ Cambio acotado a **un solo componente**: `src/app/features/auth/login.component.
 template-driven con `FormsModule`). Se mantiene:
 
 - El estado con **signals** (`loading`, `error`) — sin cambios de patrón.
-- El **spinner** (botón deshabilitado + "Ingresando…").
+- El indicador de carga textual (botón deshabilitado + "Ingresando…").
 - La llamada vía `AuthService.login()` → `POST {apiUrl}/auth/login` (sin tocar el service).
 
 Se modifica solo:
@@ -20,9 +20,12 @@ Se modifica solo:
 3. El template: cambiar `[disabled]="loading()"` por `[disabled]="loading() || f.invalid"` usando la
    referencia de template `#f="ngForm"` que ya existe (AC-9).
 4. Limpiar `error` al inicio del `submit()` (ya se hace en `:52`) — mantener (AC-8).
+5. **Spinner visual** (AC-2): dentro del botón, `@if (loading()) { <span class="spinner"></span> }` junto
+   al texto "Ingresando…". La clase `.spinner` y el `@keyframes spin` se agregan a `src/styles.css`
+   (ícono circular con borde animado; blanco sobre el `btn-primary`).
 
-**Sin** nuevos servicios, modelos ni dependencias. No se toca `AuthService`, `auth.interceptor`,
-`app.config` ni rutas.
+**Sin** nuevos servicios, modelos ni dependencias. Se toca `login.component.ts` y `src/styles.css`
+(clase `.spinner`). No se toca `AuthService`, `auth.interceptor`, `app.config` ni rutas.
 
 ## API Contract
 

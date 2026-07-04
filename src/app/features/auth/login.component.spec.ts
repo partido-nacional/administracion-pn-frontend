@@ -87,4 +87,15 @@ describe('LoginComponent', () => {
     const btn: HTMLButtonElement = f.nativeElement.querySelector('button');
     expect(btn.disabled).toBeTrue();
   }));
+
+  // AC-2: spinner visual visible solo mientras loading está activo
+  it('muestra el spinner mientras loading está activo', () => {
+    expect(fixture.nativeElement.querySelector('.spinner')).toBeNull();
+    cmp.loading.set(true);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.spinner')).not.toBeNull();
+    cmp.loading.set(false);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.spinner')).toBeNull();
+  });
 });
