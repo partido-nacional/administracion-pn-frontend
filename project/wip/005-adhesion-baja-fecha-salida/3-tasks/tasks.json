@@ -1,0 +1,143 @@
+{
+  "feature": "adhesion-baja-fecha-salida",
+  "local_config": {
+    "database": null
+  },
+  "stats": {
+    "total": 8,
+    "done": 0,
+    "by_layer": { "1": 5, "2": 3 }
+  },
+  "execution_strategy": "batched",
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "Helper compartido de estado Confirmado/baja",
+      "description": "Extraer la lógica de onConfirmadoChange (transición de aporteConfirmado y manejo de fechaSalida) a una función/helper compartida en features/adhesiones, para eliminar la duplicación entre FichasContacto y NuevaFicha. Sin window.prompt: la función decide el próximo estado dado (valorActual, valorNuevo, fechaSalida).",
+      "status": "pending",
+      "layer": 1,
+      "depends_on": [],
+      "files": ["src/app/features/adhesiones/confirmado-baja.util.ts"],
+      "acceptance_criteria": [
+        "AC-1: función pura que devuelve el estado resultante {aporteConfirmado, fechaSalida} sin usar window.prompt",
+        "BR-2: fechaSalida solo se conserva cuando aporteConfirmado === false",
+        "GATE: npm run build pasa"
+      ],
+      "references": ["US-1", "BR-1", "BR-2"]
+    },
+    {
+      "id": "TASK-002",
+      "title": "Input de fecha inline + fix desync en FichasContacto",
+      "description": "En fichas-contacto.component.ts reemplazar el window.prompt por un <input type=\"date\"> inline (bloque @if aporteConfirmado===false) y garantizar que el <select> Confirmado nunca quede desincronizado: al elegir Baja sin fecha válida, revertir el control al valor real re-emitiendo el signal.",
+      "status": "pending",
+      "layer": 1,
+      "depends_on": ["TASK-001"],
+      "files": ["src/app/features/adhesiones/fichas-contacto.component.ts"],
+      "acceptance_criteria": [
+        "AC-1: al elegir 'D (Baja)' aparece input date prellenado con fechaSalida o hoy",
+        "AC-2: sin fecha válida no se confirma aporteConfirmado=false",
+        "AC-3: al cancelar/quitar la fecha el select vuelve al valor previo (sin 'Baja fantasma')",
+        "AC-4: al pasar a Activa/Pendiente se limpia fechaSalida",
+        "GATE: npm run build pasa"
+      ],
+      "references": ["US-1", "AC-1", "AC-2", "AC-3", "AC-4"]
+    },
+    {
+      "id": "TASK-003",
+      "title": "Input de fecha inline + fix desync en NuevaFicha",
+      "description": "Aplicar el mismo cambio en nueva-ficha.component.ts usando el helper de TASK-001, para que el alta de ficha tenga comportamiento idéntico al editor de fichas existentes.",
+      "status": "pending",
+      "layer": 1,
+      "depends_on": ["TASK-001"],
+      "files": ["src/app/features/adhesiones/nueva-ficha.component.ts"],
+      "acceptance_criteria": [
+        "AC-5: comportamiento idéntico a FichasContacto (input inline, revert, limpieza)",
+        "GATE: npm run build pasa"
+      ],
+      "references": ["US-1", "AC-5"]
+    },
+    {
+      "id": "TASK-004",
+      "title": "Unit tests del flujo de baja/fecha de salida",
+      "description": "Tests Karma/Jasmine que cubran: (a) elegir Baja sin fecha no aplica aporteConfirmado=false y revierte el control; (b) con fecha válida setea aporteConfirmado=false + fechaSalida; (c) pasar a Activa/Pendiente limpia fechaSalida. Cubrir el helper y al menos un componente.",
+      "status": "pending",
+      "layer": 1,
+      "depends_on": ["TASK-001", "TASK-002", "TASK-003"],
+      "files": [
+        "src/app/features/adhesiones/confirmado-baja.util.spec.ts",
+        "src/app/features/adhesiones/fichas-contacto.component.spec.ts"
+      ],
+      "acceptance_criteria": [
+        "AC-2/AC-3/AC-4 cubiertos por tests",
+        "GATE: npm test (ng test --watch=false --browsers=ChromeHeadless) pasa"
+      ],
+      "references": ["AC-2", "AC-3", "AC-4"]
+    },
+    {
+      "id": "TASK-005",
+      "title": "Sync de spec de adhesiones",
+      "description": "Actualizar project/specs/features/adhesiones.md: reflejar que onConfirmadoChange ya no usa window.prompt (input inline) y que el select se mantiene sincronizado; marcar resuelto el ítem de deuda del prompt nativo.",
+      "status": "pending",
+      "layer": 1,
+      "depends_on": ["TASK-002", "TASK-003"],
+      "files": ["project/specs/features/adhesiones.md"],
+      "acceptance_criteria": [
+        "Spec describe el nuevo flujo inline y el manejo de desync",
+        "GATE: npm run build pasa (docs-only, sin romper build)"
+      ],
+      "references": ["US-1"]
+    },
+    {
+      "id": "TASK-006",
+      "title": "Code review",
+      "description": "Revisión de diseño: deduplicación efectiva, ausencia de código muerto, nombres claros, y que no queden más usos de window.prompt en el flujo de adhesiones.",
+      "status": "pending",
+      "layer": 2,
+      "depends_on": ["TASK-001", "TASK-002", "TASK-003", "TASK-004", "TASK-005"],
+      "files": [],
+      "acceptance_criteria": [
+        "Sin window.prompt en features/adhesiones",
+        "Lógica compartida sin duplicar"
+      ],
+      "references": ["US-1"]
+    },
+    {
+      "id": "TASK-007",
+      "title": "Performance review",
+      "description": "Verificar que el cambio de UI (signals + input inline) no introduce renders innecesarios ni suscripciones colgadas; sin impacto en carga de la ficha.",
+      "status": "pending",
+      "layer": 2,
+      "depends_on": ["TASK-001", "TASK-002", "TASK-003", "TASK-004", "TASK-005"],
+      "files": [],
+      "acceptance_criteria": [
+        "Sin renders/subscripciones redundantes introducidos"
+      ],
+      "references": ["US-1"]
+    },
+    {
+      "id": "TASK-008",
+      "title": "Security review",
+      "description": "Revisar el manejo del input de fecha: validación de formato YYYY-MM-DD y que no se envíe estado inconsistente al backend (aporteConfirmado/fechaSalida coherentes).",
+      "status": "pending",
+      "layer": 2,
+      "depends_on": ["TASK-001", "TASK-002", "TASK-003", "TASK-004", "TASK-005"],
+      "files": [],
+      "acceptance_criteria": [
+        "Validación de fecha robusta; no se persiste estado incoherente"
+      ],
+      "references": ["BR-2", "BR-3"]
+    }
+  ],
+  "dependency_graph": {
+    "by_layer": {
+      "1": {
+        "level_0": ["TASK-001"],
+        "level_1": ["TASK-002", "TASK-003"],
+        "level_2": ["TASK-004", "TASK-005"]
+      },
+      "2": {
+        "level_0": ["TASK-006", "TASK-007", "TASK-008"]
+      }
+    }
+  }
+}

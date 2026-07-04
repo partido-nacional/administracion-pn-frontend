@@ -9,17 +9,17 @@ project_type:
   type: production        # prototype | mvp | production
 vision_prompt_shown: false
 
-Current Stage: functional
+Current Stage: tasks
 
 stages:
   functional:
-    status: in-progress
+    status: approved
     created_at: 2026-07-04
   technical:
-    status: pending
+    status: approved
   tasks:
-    status: pending
+    status: in-progress
   implementation:
     status: pending
     completed_tasks: 0
-    total_tasks: 0
+    total_tasks: 8
