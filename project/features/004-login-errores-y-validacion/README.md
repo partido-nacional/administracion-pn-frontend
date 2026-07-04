@@ -5,8 +5,8 @@
 
 ## Qué se construyó
 
-Mejora del componente de login (`src/app/features/auth/login.component.ts`) en dos frentes,
-**manteniendo signals y spinner** (no eran el problema):
+Mejora del componente de login (`src/app/features/auth/login.component.ts`) en tres frentes,
+**manteniendo signals**:
 
 1. **Mensajes de error diferenciados por tipo de fallo.** Antes, cualquier error no-401 caía a un
    fallback plano *"Error de autenticación"*. Ahora se decide por `err.status`:
@@ -22,6 +22,9 @@ Mejora del componente de login (`src/app/features/auth/login.component.ts`) en d
    `loading() || f.invalid` (antes solo por `loading()`), evitando envíos con usuario/clave vacíos.
    Además se resetea `loading` en el camino feliz.
 
+3. **Spinner visual.** El indicador de carga era solo textual ("Ingresando…"); se agregó un spinner
+   visual (ícono girando, clase `.spinner` en `src/styles.css`) que aparece mientras `loading()`.
+
 ## Componente tocado
 
 - `src/app/features/auth/login.component.ts`
@@ -29,7 +32,9 @@ Mejora del componente de login (`src/app/features/auth/login.component.ts`) en d
   - `error` callback tipado como `HttpErrorResponse`; decide por `err.status`, no por el body
     (el 401 y los 5xx del backend tienen formatos distintos).
   - `next` (éxito): `loading.set(false)` antes de navegar a `/inicio`.
-  - Template: `[disabled]="loading() || f.invalid"`.
+  - Template: `[disabled]="loading() || f.invalid"` + spinner `@if (loading()) { <span class="spinner">…}`.
+- `src/styles.css`
+  - Clase `.spinner` + `@keyframes spin` (ícono circular animado, blanco sobre `btn-primary`).
 
 ## Decisión de diseño clave
 
@@ -40,10 +45,11 @@ formato del backend (BR-2). Contrato verificado contra `administracion-pn-backen
 
 ## Tests
 
-- `src/app/features/auth/login.component.spec.ts` (nuevo) — 8 casos con `AuthService` mockeado:
+- `src/app/features/auth/login.component.spec.ts` (nuevo) — 9 casos con `AuthService` mockeado:
   éxito → `/inicio` + loading false; error 401/0/500/otro → mensaje correcto + loading false;
-  limpieza de error al reintentar; botón habilitado (form válido) / deshabilitado (campos vacíos).
-- **23/23 tests verdes** (suite completa), **100% de cobertura** de `login.component.ts`.
+  limpieza de error al reintentar; botón habilitado (form válido) / deshabilitado (campos vacíos);
+  spinner visible solo mientras `loading()`.
+- **24/24 tests verdes** (suite completa), **100% de cobertura** de `login.component.ts`.
 - Runner: Karma/Jasmine + ChromeHeadless (montado en feature 002).
 
 ## Fuera de alcance

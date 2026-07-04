@@ -56,11 +56,11 @@
 
 ### TODO-006: Merge de duplicados no transaccional
 - **Priority**: Medium
-- **Status**: pending
+- **Status**: done (2026-07-04)
 - **Created**: 2026-06-14
 - **Origin**: feature/agenda
-- **Context**: `DuplicadosContactos` hace `DELETE` seguido de `PUT` en llamadas separadas; si el `PUT` falla, queda estado inconsistente.
-- **Affected Files**: src/app/features/agenda/duplicados-contactos.component.ts (~281-294)
+- **Context**: `DuplicadosContactos` hacía `DELETE` seguido de `PUT` en llamadas separadas; si el `PUT` fallaba, quedaba estado inconsistente. **Resuelto**: (1) se agregó un modal de **confirmación con resumen** antes de ejecutar el merge; (2) el merge pasó a un endpoint **transaccional** en el backend (`POST /api/contactos/{keepId}/merge`, espejo backend CON-09) que reasigna los registros relacionados del duplicado, borra el duplicado y actualiza el conservado en una sola transacción.
+- **Affected Files**: src/app/features/agenda/duplicados-contactos.component.ts; contactos.service.ts; administracion-pn-backend → ContactosController.Merge
 - **Complexity**: M
 
 ### TODO-007: Dashboard — eventos sin edición y `fechaFin` nunca capturada
