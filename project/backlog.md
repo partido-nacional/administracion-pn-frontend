@@ -59,8 +59,8 @@
 - **Status**: pending
 - **Created**: 2026-06-14
 - **Origin**: feature/agenda
-- **Context**: `DuplicadosContactos` hace `DELETE` seguido de `PUT` en llamadas separadas; si el `PUT` falla, queda estado inconsistente.
-- **Affected Files**: src/app/features/agenda/duplicados-contactos.component.ts (~281-294)
+- **Context**: `DuplicadosContactos` hace `DELETE` seguido de `PUT` en llamadas separadas; si el `PUT` falla, queda estado inconsistente. **Update 2026-07-04**: se agregó un modal de **confirmación con resumen** antes de ejecutar el merge (evita el borrado sin aviso). **Falta aún** la atomicidad: mover el merge a un endpoint transaccional en el backend (`POST /api/contactos/merge`) que borre el duplicado y actualice el conservado en una sola transacción.
+- **Affected Files**: src/app/features/agenda/duplicados-contactos.component.ts; (pendiente) administracion-pn-backend → endpoint de merge transaccional
 - **Complexity**: M
 
 ### TODO-007: Dashboard — eventos sin edición y `fechaFin` nunca capturada
