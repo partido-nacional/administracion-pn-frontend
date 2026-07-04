@@ -3,6 +3,9 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
+import { PaginatorComponent } from '../../shared/components/paginator/paginator.component';
+import { GridQuery, PagedResult, SortOrder, DEFAULT_PAGE_SIZE } from '../../core/models/paged';
+import { buildPagedParams } from '../../core/services/paged';
 
 export interface AutoridadFicha {
   id: number;
@@ -46,7 +49,7 @@ export interface FichaAgrupacion {
 @Component({
   selector: 'app-fichas-agrupacion',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PaginatorComponent],
   template: `
     <div class="topbar-inline">
       <button class="btn btn-primary" (click)="sincronizar()" [disabled]="syncing()">
@@ -66,10 +69,10 @@ export interface FichaAgrupacion {
               <tr>
                 <th style="width:40px"></th>
                 <th>Id</th>
-                <th>Nombre Agrupación</th>
-                <th>Tipo</th>
-                <th>Departamento</th>
-                <th>Fecha solicitud</th>
+                <th class="sortable" (click)="sortBy('nombre')">Nombre Agrupación {{ arrow('nombre') }}</th>
+                <th class="sortable" (click)="sortBy('tipo')">Tipo {{ arrow('tipo') }}</th>
+                <th class="sortable" (click)="sortBy('departamento')">Departamento {{ arrow('departamento') }}</th>
+                <th class="sortable" (click)="sortBy('fecha')">Fecha solicitud {{ arrow('fecha') }}</th>
                 <th>Errores</th>
                 <th></th>
               </tr>
@@ -193,6 +196,9 @@ export interface FichaAgrupacion {
               }
             </tbody>
           </table>
+          <app-paginator
+            [total]="total()" [page]="page()" [pageSize]="pageSize()"
+            (pageChange)="onPage($event)" (pageSizeChange)="onPageSize($event)" />
         </div>
       </div>
     }
@@ -558,6 +564,7 @@ export interface FichaAgrupacion {
       display:flex; align-items:center;
     }
     .sec-h:first-child { margin-top:0; }
+    th.sortable { cursor:pointer; user-select:none; }
     .aut-edit-table { width:100%; border-collapse:collapse; font-size:13px; }
     .aut-edit-table th, .aut-edit-table td { border-bottom:1px solid #eef1f5; padding:6px 6px; text-align:left; }
     .aut-edit-table th { font-size:11px; color:#666; text-transform:uppercase; letter-spacing:.4px; background:#fafbfd; }
@@ -576,15 +583,32 @@ export class FichasAgrupacionComponent {
   syncing = signal(false);
   expandido = signal<number | null>(null);
 
+  total = signal(0);
+  page = signal(1);
+  pageSize = signal(DEFAULT_PAGE_SIZE);
+  sort = signal<string | undefined>(undefined);
+  order = signal<SortOrder>('asc');
+
   constructor() { this.cargar(); }
 
   cargar() {
     this.loading.set(true);
-    this.http.get<FichaAgrupacion[]>(this.base).subscribe({
-      next: (x) => { this.fichas.set(x); this.loading.set(false); },
+    const q: GridQuery = { page: this.page(), pageSize: this.pageSize(), sort: this.sort(), order: this.order() };
+    this.http.get<PagedResult<FichaAgrupacion>>(this.base, { params: buildPagedParams(q) }).subscribe({
+      next: (r) => { this.fichas.set(r.items); this.total.set(r.total); this.loading.set(false); },
       error: () => { this.fichas.set([]); this.loading.set(false); }
     });
   }
+
+  onPage(p: number) { this.page.set(p); this.cargar(); }
+  onPageSize(size: number) { this.pageSize.set(size); this.page.set(1); this.cargar(); }
+  sortBy(field: string) {
+    if (this.sort() === field) this.order.set(this.order() === 'asc' ? 'desc' : 'asc');
+    else { this.sort.set(field); this.order.set('asc'); }
+    this.page.set(1);
+    this.cargar();
+  }
+  arrow(field: string) { return this.sort() !== field ? '' : (this.order() === 'asc' ? '▲' : '▼'); }
 
   toggle(id: number) {
     this.expandido.set(this.expandido() === id ? null : id);
