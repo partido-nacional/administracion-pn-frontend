@@ -122,6 +122,14 @@ export class ContactosService {
   integrantesOrganismo(id: number) { return this.http.get<IntegranteOrganismo[]>(`${this.base}/${id}/integrantes-organismo`); }
   eliminarIntegranteOrganismo(id: number) { return this.http.delete<void>(`${environment.apiUrl}/integrantes-organismo/${id}`); }
   duplicados() { return this.http.get<DuplicadoPar[]>(`${this.base}/duplicados`); }
+  /**
+   * Fusiona dos contactos duplicados de forma transaccional en el backend:
+   * reasigna los registros relacionados del eliminado al conservado, borra el
+   * duplicado y actualiza el conservado con los valores fusionados.
+   */
+  merge(keepId: number, removeId: number, contacto: Contacto) {
+    return this.http.post<void>(`${this.base}/${keepId}/merge`, { removeId, contacto });
+  }
 }
 
 export interface DuplicadoPar {
