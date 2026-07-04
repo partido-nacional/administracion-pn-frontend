@@ -2,12 +2,14 @@
 
 **Status**: Draft
 **Created**: 2026-07-04
+**Actualizada**: 2026-07-04 — se agrega spinner visual (ver AC-2 / Objetivos).
 
 ## Problem Statement
 
 El login (`src/app/features/auth/login.component.ts`) ya funciona con **signals** (`loading`, `error`)
-y **spinner** (botón deshabilitado + "Ingresando…"), y muestra el motivo del `401` del backend. Esos
-comportamientos se **mantienen**. Lo que falta mejorar:
+e **indicador de carga textual** (botón deshabilitado + "Ingresando…"), y muestra el motivo del `401`
+del backend. Esos comportamientos se **mantienen**, pero el indicador de carga **era solo textual**: se
+agrega además un **spinner visual** (ícono girando) mientras corre el login. Lo que falta mejorar:
 
 1. **Manejo de error poco informativo ante fallos no-401.** Hoy el `error` handler hace
    `e?.error?.message ?? 'Error de autenticación'` (`login.component.ts:55`). Ante **sin conexión / red /
@@ -18,8 +20,10 @@ comportamientos se **mantienen**. Lo que falta mejorar:
    (`:31`), no por `f.invalid`: se puede enviar con usuario/clave vacíos. Además, en el camino feliz no
    se resetea `loading` (`:54-55`) — se arregla de paso.
 
-Se mantiene el enfoque con **signals** (compatible con el backend; el contrato de datos ya es correcto)
-y con **spinner**.
+3. **El indicador de carga era solo textual.** Se agrega un **spinner visual** (ícono girando) que
+   aparece junto a "Ingresando…" mientras `loading()` está activo.
+
+Se mantiene el enfoque con **signals** (compatible con el backend; el contrato de datos ya es correcto).
 
 ## Objectives
 
@@ -29,7 +33,7 @@ y con **spinner**.
       401 del controller y los 5xx del middleware).
 - [ ] El botón "Ingresar" se deshabilita cuando el formulario es inválido (usuario o clave vacíos).
 - [ ] Resetear `loading` correctamente en todos los caminos (éxito y error).
-- [ ] Mantener signals y spinner tal como están hoy.
+- [ ] Mantener signals; agregar un **spinner visual** (ícono girando) al estado de carga del botón.
 
 ## Out of Scope
 
@@ -52,8 +56,9 @@ y con **spinner**.
 #### Acceptance Criteria
 - AC-1: Con credenciales válidas, el login llama `POST /api/auth/login` vía `AuthService.login()` y, al
   éxito, navega a `/inicio`.
-- AC-2: Mientras la request está en curso, el botón muestra el estado de carga (spinner/"Ingresando…")
-  y queda deshabilitado (comportamiento actual, sin regresión).
+- AC-2: Mientras la request está en curso, el botón muestra un **spinner visual** (ícono girando,
+  clase `.spinner`) junto al texto "Ingresando…" y queda deshabilitado. El spinner solo se ve mientras
+  `loading()` está activo.
 - AC-3: El estado `loading` vuelve a `false` al terminar, tanto en éxito como en error.
 
 ### US-2: Entender por qué falla el login

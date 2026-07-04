@@ -32,18 +32,12 @@ const DEPTOS = ['Artigas','Canelones','Cerro Largo','Colonia','Durazno','Flores'
               <th style="min-width:120px">Ciudad Organizacion</th>
             </tr>
             <tr class="filter-row">
-              <th>
-                <select class="column-filter" [(ngModel)]="fCortesia" (ngModelChange)="onFilter()">
-                  <option value="">Todos</option>
-                  <option>Sr.</option><option>Sra.</option><option>Dr.</option><option>Dra.</option>
-                  <option>Ing.</option><option>Lic.</option><option>Cr.</option>
-                </select>
-              </th>
+              <th></th>
               <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fApellidos" (ngModelChange)="onFilter()"></th>
               <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fNombre" (ngModelChange)="onFilter()"></th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fTel" (ngModelChange)="onFilter()"></th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fCel" (ngModelChange)="onFilter()"></th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fMail" (ngModelChange)="onFilter()"></th>
+              <th></th>
+              <th></th>
+              <th></th>
               <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fPos" (ngModelChange)="onFilter()"></th>
               <th>
                 <select class="column-filter" [(ngModel)]="fDepto" (ngModelChange)="onFilter()">
@@ -103,8 +97,7 @@ export class DepartamentalesComponent implements OnInit {
   loading = signal(false);
   exporting = signal(false);
 
-  fCortesia = ''; fApellidos = ''; fNombre = ''; fTel = ''; fCel = '';
-  fMail = ''; fPos = ''; fDepto = ''; fDir = ''; fCiudad = '';
+  fApellidos = ''; fNombre = ''; fPos = ''; fDepto = ''; fDir = ''; fCiudad = '';
 
   private filter$ = new Subject<void>();
 
@@ -119,8 +112,7 @@ export class DepartamentalesComponent implements OnInit {
     return {
       page: this.page(), pageSize: this.pageSize(), sort: this.sort(), order: this.order(), all,
       filters: {
-        cortesia: this.fCortesia, apellidos: this.fApellidos, nombre: this.fNombre,
-        tel: this.fTel, cel: this.fCel, mail: this.fMail, pos: this.fPos,
+        apellidos: this.fApellidos, nombre: this.fNombre, pos: this.fPos,
         depto: this.fDepto, dir: this.fDir, ciudad: this.fCiudad,
       },
     };

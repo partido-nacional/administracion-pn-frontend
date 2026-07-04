@@ -27,23 +27,16 @@ import { exportarCSV } from '../../core/exportar-csv';
               <th style="min-width:100px">Departamento</th>
             </tr>
             <tr class="filter-row">
-              <th>
-                <select class="column-filter" [(ngModel)]="fCortesia" (ngModelChange)="onFilter()">
-                  <option value="">Todos</option>
-                  <option>Sr.</option><option>Sra.</option><option>Dr.</option><option>Dra.</option>
-                  <option>Ing.</option><option>Lic.</option><option>Cr.</option>
-                </select>
-              </th>
+              <th></th>
               <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fApellidos" (ngModelChange)="onFilter()"></th>
               <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fNombre" (ngModelChange)="onFilter()"></th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fTel" (ngModelChange)="onFilter()"></th>
+              <th></th>
               <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fPos" (ngModelChange)="onFilter()"></th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fOrg" (ngModelChange)="onFilter()"></th>
+              <th></th>
               <th>
                 <select class="column-filter" [(ngModel)]="fDepto" (ngModelChange)="onFilter()">
                   <option value="">Todos</option>
-                  <option>Canelones</option><option>Colonia</option><option>Maldonado</option>
-                  <option>Paysandu</option><option>Salto</option><option>Soriano</option>
+                  @for (d of departamentos; track d) { <option [value]="d">{{ d }}</option> }
                 </select>
               </th>
             </tr>
@@ -92,8 +85,13 @@ export class IntendenciasNacComponent implements OnInit {
   loading = signal(false);
   exporting = signal(false);
 
-  fCortesia = ''; fApellidos = ''; fNombre = ''; fTel = '';
-  fPos = ''; fOrg = ''; fDepto = '';
+  fApellidos = ''; fNombre = ''; fPos = ''; fDepto = '';
+
+  readonly departamentos = [
+    'Artigas', 'Canelones', 'Cerro Largo', 'Colonia', 'Durazno', 'Flores', 'Florida',
+    'Lavalleja', 'Maldonado', 'Montevideo', 'Paysandú', 'Río Negro', 'Rivera', 'Rocha',
+    'Salto', 'San José', 'Soriano', 'Tacuarembó', 'Treinta y Tres',
+  ];
 
   private filter$ = new Subject<void>();
 
@@ -108,8 +106,8 @@ export class IntendenciasNacComponent implements OnInit {
     return {
       page: this.page(), pageSize: this.pageSize(), sort: this.sort(), order: this.order(), all,
       filters: {
-        cortesia: this.fCortesia, apellidos: this.fApellidos, nombre: this.fNombre,
-        tel: this.fTel, pos: this.fPos, org: this.fOrg, depto: this.fDepto,
+        apellidos: this.fApellidos, nombre: this.fNombre,
+        pos: this.fPos, depto: this.fDepto,
       },
     };
   }

@@ -1,6 +1,6 @@
 # Feature Metadata
 feature: habilitar-botones-edicion
-feature_number: 005
+feature_number: 009  # renumerado de 005 al mergear develop (colisión con 005-adhesion-baja-fecha-salida)
 project: administracion-pn-frontend
 created_at: 2026-07-04
 execution_mode: standard  # standard | express | expert

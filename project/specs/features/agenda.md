@@ -122,9 +122,13 @@ Archivo: `src/app/features/agenda/duplicados-contactos.component.ts`. Standalone
 **Tabla resumen + detalle expandible.** Lista de pares (Id A, Contacto A, Id B, Coincidencia = `matches.join(', ')`) (`:64-82`). `toggle()` expande la fila (`:208-211`). Al expandir muestra:
 - Selector "Conservar" A/B (radio `keep`) (`:88-93`).
 - Tabla de merge por cada campo de `CAMPOS` (29 campos, `:13-43`): filas con `diff` resaltadas (ambos lados tienen valor y difieren, `:239-243`); para campos en conflicto se elige lado vía radio (`seleccion[key]`); filas sin conflicto quedan "locked". Columna "Resultado" calculada por `resultado()` (`:251-258`: usa el valor no vacío, o el lado elegido).
-- Botones "Restablecer sugerido" (`resetear()`, `:260-266`) y "Aplicar merge" (`aplicar()`).
+- Botones "Restablecer sugerido" (`resetear()`) y "Aplicar merge" (`aplicar()`).
 
-**Aplicar merge.** `aplicar(est)` (`:268-301`): construye `merged` partiendo del contacto `keep` y sobrescribe cada campo con `resultado()`; fuerza `merged.id = keep.id`. Luego **`svc.delete(remove.id)`** y, en éxito, **`svc.update(merged)`** (`:281-283`). Mensajes de éxito/error por par (`setMensaje`, `:303-306`) y recarga (`cargar()`). `display()` formatea fechas ISO a `YYYY-MM-DD` y vacíos a `—` (`:245-249`).
+**Confirmación (resumen previo).** `aplicar(est)` ya **no impacta directo**: construye `merged` (partiendo de `keep`, sobrescribiendo cada campo con `resultado()`), calcula la lista de `cambios` (campos donde el valor del conservado cambia: `label`/`from`/`to`) y abre un **modal de confirmación** (`confirmacion` signal) que muestra qué contacto se conserva, cuál se elimina, la advertencia de que el borrado es permanente y las relaciones se reasignan, y la tabla de cambios. Solo al pulsar "Confirmar y fusionar" (`confirmar()`) se ejecuta la operación; "Cancelar" (`cancelar()`) cierra el modal sin impactar.
+
+**Aplicar merge.** `confirmar()` llama **`svc.merge(keep.id, remove.id, merged)`** → `POST /contactos/{keepId}/merge` (una sola operación transaccional en el backend, ver CON-09). Reemplaza el antiguo `DELETE` + `PUT` secuenciales (no transaccionales). Mensajes de éxito/error por par (`setMensaje`) y recarga (`cargar()`). `display()` formatea fechas ISO a `YYYY-MM-DD` y vacíos a `—`.
+
+**Carga con error visible.** `cargar()` distingue error de vacío: ante fallo del endpoint setea `error=true` y la vista muestra "No se pudieron cargar los contactos duplicados" con botón "Reintentar", en lugar de camuflar el error como "No se detectaron duplicados".
 
 ---
 
@@ -138,8 +142,9 @@ Todas vía `ContactosService` (`src/app/features/agenda/contactos.service.ts`) s
 | Listar (listado real) | `GET /contactos` | `agenda-listado.component.ts:519` | `reload()` — llamada directa con `HttpClient`, sin params |
 | Obtener uno | `GET /contactos/{id}` | `contactos.service.ts:105` | listado `toggle()` (`:351`), editor (`:301`) |
 | Crear | `POST /contactos` (body `Partial<Contacto>`) | `contactos.service.ts:106` | editor alta (`:321`) |
-| Actualizar | `PUT /contactos/{id}` (body `Contacto`) | `contactos.service.ts:107` | editor edición (`:320`), merge (`:283`) |
-| Eliminar | `DELETE /contactos/{id}` | `contactos.service.ts:108` | merge (`:281`) |
+| Actualizar | `PUT /contactos/{id}` (body `Contacto`) | `contactos.service.ts` | editor edición |
+| Eliminar | `DELETE /contactos/{id}` | `contactos.service.ts` | editor borrado |
+| Fusionar duplicados | `POST /contactos/{keepId}/merge` (body `{ removeId, contacto }`) | `contactos.service.ts` | `DuplicadosContactosComponent.confirmar()` |
 | Fichas de adhesión del contacto | `GET /contactos/{id}/fichas-adhesion` → `FichaAdhesion[]` | `contactos.service.ts:109` | (definida; no invocada dentro de feature agenda) |
 | Integrantes de organismo del contacto | `GET /contactos/{id}/integrantes-organismo` → `IntegranteOrganismo[]` | `contactos.service.ts:110` | (definida; no invocada dentro de feature agenda) |
 | Eliminar integrante de organismo | `DELETE /integrantes-organismo/{id}` | `contactos.service.ts:111` | (definida; ruta **fuera** de `/contactos`) |
@@ -178,7 +183,7 @@ Definidos en `contactos.service.ts` salvo indicación.
 - **Impresión / PDF:** `imprimir()` (`:445-470`) arma filas + metadatos (filtros activos y orden) y llama `imprimirContactos()` de `imprimir-contactos.ts`, que abre ventana nueva con HTML A4 landscape, badges de adhesión, y dispara `window.print()` para "Guardar como PDF"; alerta si el navegador bloquea popups (`imprimir-contactos.ts:143-154`). Botón "🖨 Imprimir" (`:28`).
 - **Navegación a fichas/organismos:** botones contextuales por fila según flags `tieneFicha` / `tieneIntegranteOrganismo` (`:119-128`); rutas hacia features adhesiones y organismos.
 - **Editor:** validación con modal de errores agregados; transformación en vivo de credencial (autocompleta departamento) y campos numéricos.
-- **Merge de duplicados:** selección campo-a-campo con resaltado de conflictos, vista previa "Resultado", aplica como `DELETE` + `PUT` secuenciales y recarga.
+- **Merge de duplicados:** selección campo-a-campo con resaltado de conflictos, vista previa "Resultado", **modal de confirmación** con resumen (conservado/eliminado + tabla de cambios) y aplicación vía `POST /contactos/{keepId}/merge` (transaccional en el backend) + recarga.
 
 ---
 
@@ -201,5 +206,5 @@ Definidos en `contactos.service.ts` salvo indicación.
 - **Select de departamento en filtro** limitado a 4 valores hardcodeados (`deptos`, `:338`) vs. 19 en el editor — inconsistencia.
 - **`departamentoCredencial` no editable:** select disabled; sólo se setea por `onCredencialInput` (`:66-70`, `:269-283`).
 - **`adherente` de sólo lectura:** checkbox disabled; lo calcula el backend según fichas confirmadas (`:170-181`).
-- **Merge no transaccional:** `aplicar()` hace `DELETE` y luego `PUT` por separado; si el `PUT` falla tras un `DELETE` exitoso, el duplicado queda eliminado sin que se actualice el conservado (`duplicados-contactos.component.ts:281-294`).
+- ~~**Merge no transaccional:** `aplicar()` hace `DELETE` y luego `PUT` por separado; si el `PUT` falla tras un `DELETE` exitoso, el duplicado queda eliminado sin que se actualice el conservado.~~ ✅ **Resuelto**: ahora usa el endpoint transaccional `POST /contactos/{keepId}/merge` (backend CON-09), que además reasigna los registros relacionados del duplicado al conservado. Antes el `DELETE` directo podía además fallar por FK o dejar huérfanos.
 - **`fichasAdhesion` / `integrantesOrganismo` / `eliminarIntegranteOrganismo`** definidos en el servicio pero no invocados por componentes de la feature agenda.

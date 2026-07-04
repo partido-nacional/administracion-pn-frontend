@@ -3,7 +3,7 @@
 > Items captured during development. Use `/project.backlog` to manage.
 
 **Last Updated**: 2026-07-04
-**Total Items**: 25 (11 TODO, 14 DEBT, 0 IDEA) · resueltos: DEBT-012, DEBT-014
+**Total Items**: 26 (12 TODO, 14 DEBT, 0 IDEA) · resueltos: DEBT-012, DEBT-014
 
 > Origen común: ingeniería inversa a máximo detalle (reverse-eng) del frontend Angular, 2026-06-14. Cada ítem fue verificado contra el código por un agente lector. Confirmar `archivo:línea` antes de arreglar.
 
@@ -56,11 +56,11 @@
 
 ### TODO-006: Merge de duplicados no transaccional
 - **Priority**: Medium
-- **Status**: pending
+- **Status**: done (2026-07-04)
 - **Created**: 2026-06-14
 - **Origin**: feature/agenda
-- **Context**: `DuplicadosContactos` hace `DELETE` seguido de `PUT` en llamadas separadas; si el `PUT` falla, queda estado inconsistente.
-- **Affected Files**: src/app/features/agenda/duplicados-contactos.component.ts (~281-294)
+- **Context**: `DuplicadosContactos` hacía `DELETE` seguido de `PUT` en llamadas separadas; si el `PUT` fallaba, quedaba estado inconsistente. **Resuelto**: (1) se agregó un modal de **confirmación con resumen** antes de ejecutar el merge; (2) el merge pasó a un endpoint **transaccional** en el backend (`POST /api/contactos/{keepId}/merge`, espejo backend CON-09) que reasigna los registros relacionados del duplicado, borra el duplicado y actualiza el conservado en una sola transacción.
+- **Affected Files**: src/app/features/agenda/duplicados-contactos.component.ts; contactos.service.ts; administracion-pn-backend → ContactosController.Merge
 - **Complexity**: M
 
 ### TODO-007: Dashboard — eventos sin edición y `fechaFin` nunca capturada
@@ -108,6 +108,15 @@
 - **Affected Files**: src/app/features/adhesiones/adhesiones-listado.component.ts, adhesiones.service.ts; (espejo) administracion-pn-backend → `POST /adhesiones/web/sincronizar`
 - **Complexity**: S
 - **Risk if Ignored**: La feature FE queda sin verificación end-to-end contra el backend real. *(Convención de IDs cruzados — ver `CLAUDE.md` → Workspace.)*
+
+### TODO-012: Ficha en "Baja" con fecha de salida vacía
+- **Priority**: Low
+- **Status**: done (2026-07-04)
+- **Created**: 2026-07-04
+- **Origin**: feature/005-adhesion-baja-fecha-salida (hallazgo de security/consistency review)
+- **Context**: En las fichas de adhesión, con `aporteConfirmado === false` (Baja) el usuario podía **borrar manualmente** la `fechaSalida` del `<input type="date">` inline y guardar, dejando un estado incoherente (baja sin fecha). **Resuelto**: helper `normalizarFechaSalida` (en `confirmado-baja.util.ts`) invocado en el `guardar()` de ambos componentes: si es Baja y falta la fecha, se completa con hoy antes de persistir. Con tests.
+- **Affected Files**: src/app/features/adhesiones/confirmado-baja.util.ts, fichas-contacto.component.ts, nueva-ficha.component.ts
+- **Complexity**: S
 
 ## 🔧 Technical Debt
 
@@ -180,6 +189,7 @@
 - **Affected Files**: src/app/features/adhesiones/*.component.ts, src/app/features/agrupaciones/*.component.ts
 - **Complexity**: M
 - **Risk if Ignored**: Datos inconsistentes entre pantallas. *(Espejo del backend: feature `catalogos`.)*
+- **Progreso (2026-07-04, feature 006-ficha-adhesion-form-compartido)**: se eliminó la **divergencia** de `SISTEMAS`/`DEPARTAMENTOS`/`APORTES_SEC_AGR` entre las dos fichas de adhesión — ahora hay una única copia en `src/app/shared/adhesiones/ficha-adhesion.constants.ts`. **Falta** (sigue pending): (1) cablear esas listas hardcodeadas al backend (`/api/catalogos/*`); (2) unificar la lista divergente de Sector/Sist.Contrib. del **alta rápida** de `adhesiones-listado.component.ts`. (`sectores` ya se consume dinámico vía `CatalogosService.sectores()`.)
 
 ### DEBT-008: Datos y labels hardcodeados en la UI
 - **Priority**: Low
@@ -226,7 +236,7 @@
 - **Status**: resolved (2026-07-04) — duplicado de DEBT-001
 - **Created**: 2026-06-14 · **Resolved**: 2026-07-04
 - **Origin**: chore/boilerplate-scaffold (transversal)
-- **Resolution**: El runner **ya está montado y en CI** (verificado en feature 005): existe `tsconfig.spec.json` + target `test` en `angular.json` con `karma.conf.js`, script `npm test`, job CI "Unit Tests" (`ng test --watch=false --browsers=ChromeHeadlessNoSandbox`) y specs corriendo (64 tests en verde). Este ítem describía el mismo trabajo que **DEBT-001** (feature 002 lo montó). La parte viva ("ampliar cobertura al resto del proyecto") queda trackeada por **DEBT-001**.
+- **Resolution**: El runner **ya está montado y en CI** (verificado en feature 009): existe `tsconfig.spec.json` + target `test` en `angular.json` con `karma.conf.js`, script `npm test`, job CI "Unit Tests" (`ng test --watch=false --browsers=ChromeHeadlessNoSandbox`) y specs corriendo (64 tests en verde). Este ítem describía el mismo trabajo que **DEBT-001** (feature 002 lo montó). La parte viva ("ampliar cobertura al resto del proyecto") queda trackeada por **DEBT-001**.
 - **Affected Files**: package.json, angular.json, tsconfig.spec.json, .github/workflows/ci.yml
 - **Complexity**: L
 

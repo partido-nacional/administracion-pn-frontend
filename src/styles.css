@@ -922,6 +922,21 @@ select.column-filter {
 }
 .btn-icon-sidebar:hover { color: white; background: rgba(255,255,255,0.1); }
 
+/* ---- Spinner (estado de carga en botones) ---- */
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255,255,255,0.4);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    vertical-align: middle;
+    margin-right: 8px;
+}
+
 .btn-logout {
     background: rgba(255,255,255,0.06);
     border: 1px solid rgba(255,255,255,0.1);

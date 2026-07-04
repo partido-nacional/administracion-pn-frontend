@@ -33,17 +33,11 @@ import { exportarCSV } from '../../core/exportar-csv';
               <th style="min-width:200px">Observaciones</th>
             </tr>
             <tr class="filter-row">
-              <th>
-                <select class="column-filter" [(ngModel)]="fCortesia" (ngModelChange)="onFilter()">
-                  <option value="">Todos</option>
-                  <option>Sr.</option><option>Sra.</option><option>Dr.</option><option>Dra.</option>
-                  <option>Ing.</option><option>Lic.</option><option>Cr.</option>
-                </select>
-              </th>
+              <th></th>
               <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fApellidos" (ngModelChange)="onFilter()"></th>
               <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fNombre" (ngModelChange)="onFilter()"></th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fDireccion" (ngModelChange)="onFilter()"></th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fDomicilio" (ngModelChange)="onFilter()"></th>
+              <th></th>
+              <th></th>
               <th>
                 <select class="column-filter" [(ngModel)]="fDepartamento" (ngModelChange)="onFilter()">
                   <option value="">Todos</option>
@@ -51,8 +45,8 @@ import { exportarCSV } from '../../core/exportar-csv';
                   <option>Salto</option><option>Colonia</option><option>Paysandu</option>
                 </select>
               </th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fTel" (ngModelChange)="onFilter()"></th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fMail" (ngModelChange)="onFilter()"></th>
+              <th></th>
+              <th></th>
               <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fPos" (ngModelChange)="onFilter()"></th>
               <th>
                 <select class="column-filter" [(ngModel)]="fOrg" (ngModelChange)="onFilter()">
@@ -61,9 +55,9 @@ import { exportarCSV } from '../../core/exportar-csv';
                   <option>Camara de Senadores</option>
                 </select>
               </th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fCred" (ngModelChange)="onFilter()"></th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fCedula" (ngModelChange)="onFilter()"></th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fObs" (ngModelChange)="onFilter()"></th>
+              <th></th>
+              <th></th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
@@ -116,9 +110,7 @@ export class ParlamentariasComponent implements OnInit {
   loading = signal(false);
   exporting = signal(false);
 
-  fCortesia = ''; fApellidos = ''; fNombre = ''; fDireccion = ''; fDomicilio = '';
-  fDepartamento = ''; fTel = ''; fMail = ''; fPos = ''; fOrg = '';
-  fCred = ''; fCedula = ''; fObs = '';
+  fApellidos = ''; fNombre = ''; fDepartamento = ''; fPos = ''; fOrg = '';
 
   private filter$ = new Subject<void>();
 
@@ -133,10 +125,8 @@ export class ParlamentariasComponent implements OnInit {
     return {
       page: this.page(), pageSize: this.pageSize(), sort: this.sort(), order: this.order(), all,
       filters: {
-        cortesia: this.fCortesia, apellidos: this.fApellidos, nombre: this.fNombre,
-        direccion: this.fDireccion, domicilio: this.fDomicilio, departamento: this.fDepartamento,
-        tel: this.fTel, mail: this.fMail, pos: this.fPos, org: this.fOrg,
-        cred: this.fCred, cedula: this.fCedula, obs: this.fObs,
+        apellidos: this.fApellidos, nombre: this.fNombre,
+        departamento: this.fDepartamento, pos: this.fPos, org: this.fOrg,
       },
     };
   }

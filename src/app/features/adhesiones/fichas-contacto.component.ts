@@ -1,16 +1,17 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ContactosService, FichaAdhesion, FichaAdhesionDetalle } from '../agenda/contactos.service';
 import { AdhesionesService } from './adhesiones.service';
 import { PageTitleService } from '../../core/page-title.service';
 import { CatalogosService } from '../../core/catalogos.service';
+import { normalizarFechaSalida } from '../../shared/adhesiones/confirmado-baja.util';
+import { FichaAdhesionFormComponent } from '../../shared/adhesiones/ficha-adhesion-form.component';
 
 @Component({
   selector: 'app-fichas-contacto',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, RouterLink, FichaAdhesionFormComponent],
   template: `
     <div class="topbar-inline">
       <a routerLink="/agenda" class="btn btn-secondary">← Volver a contactos</a>
@@ -63,121 +64,14 @@ import { CatalogosService } from '../../core/catalogos.service';
                             </div>
                           }
                         </div>
-                        <div class="form-grid" (click)="$event.stopPropagation()">
-                          <div class="form-group">
-                            <label class="form-label">Id Adhesión</label>
-                            <input class="form-input" [value]="detalle()!.id" disabled>
-                          </div>
-                          <div class="form-group">
-                            <label class="form-label">Fecha de Sistema</label>
-                            <input class="form-input" type="date" [(ngModel)]="detalle()!.fechaAdhesion" name="fechaAdh" [disabled]="!editMode()">
-                          </div>
-                          <div class="form-group">
-                            <label class="form-label">Importe</label>
-                            <input class="form-input" type="number" [(ngModel)]="detalle()!.aporte" name="importe" [disabled]="!editMode()">
-                          </div>
-                          <div class="form-group">
-                            <label class="form-label">Sistema de Contribución</label>
-                            <select class="form-select" [ngModel]="detalle()!.sistContrib" (ngModelChange)="onSistContribChange($event)" name="sistContrib" [disabled]="!editMode()">
-                              @for (s of sistemas; track s) { <option [ngValue]="s">{{ s }}</option> }
-                            </select>
-                          </div>
-                          <div class="form-group full-width">
-                            <label class="form-label">Observaciones</label>
-                            <input class="form-input" [(ngModel)]="detalle()!.observaciones" name="observaciones" [disabled]="!editMode()">
-                          </div>
-                          @if (showCedula(detalle()!.sistContrib)) {
-                            <div class="form-group">
-                              <label class="form-label">Cédula responsable</label>
-                              <input class="form-input" [(ngModel)]="detalle()!.cedulaResponsable" name="cedResp" [disabled]="!editMode()">
-                            </div>
-                          }
-                          @if (showTelefonoAntel(detalle()!.sistContrib)) {
-                            <div class="form-group">
-                              <label class="form-label">Teléfono Antel</label>
-                              <input class="form-input" [(ngModel)]="detalle()!.telefonoAntel" name="telAntel" [disabled]="!editMode()">
-                            </div>
-                          }
-                          @if (showFechasPago(detalle()!.sistContrib)) {
-                            <div class="form-group">
-                              <label class="form-label">Fecha Vencimiento</label>
-                              <input class="form-input" type="date" [(ngModel)]="detalle()!.fechaVencimiento" name="fechaVenc" [disabled]="!editMode()">
-                            </div>
-                            <div class="form-group">
-                              <label class="form-label">Fecha Ult. Pago</label>
-                              <input class="form-input" type="date" [(ngModel)]="detalle()!.fechaUltimoPago" name="fechaUltPago" [disabled]="!editMode()">
-                            </div>
-                          }
-                          <div class="form-group">
-                            <label class="form-label">Aporte Todo al Partido</label>
-                            <select class="form-select" [ngModel]="detalle()!.aporteTodoAlPartido" (ngModelChange)="onAporteTodoChange($event)" name="aporteTodo" [disabled]="!editMode()">
-                              <option [ngValue]="true">SI</option>
-                              <option [ngValue]="false">NO</option>
-                            </select>
-                          </div>
-                          @if (!detalle()!.aporteTodoAlPartido) {
-                            <div class="form-group">
-                              <label class="form-label">Aporte a un Sector</label>
-                              <select class="form-select" [(ngModel)]="detalle()!.sector" name="sector" [disabled]="!editMode()">
-                                <option [ngValue]="undefined">-</option>
-                                @for (s of sectores(); track s) { <option [ngValue]="s">{{ s }}</option> }
-                              </select>
-                            </div>
-                            <div class="form-group">
-                              <label class="form-label">Aporte a Secretaría/Agrupación</label>
-                              <select class="form-select" [(ngModel)]="detalle()!.aporteSecretariaAgrupacion" name="aporteSec" [disabled]="!editMode()">
-                                <option [ngValue]="undefined">-</option>
-                                @for (a of aportesSecAgr; track a) { <option [ngValue]="a">{{ a }}</option> }
-                              </select>
-                            </div>
-                            <div class="form-group">
-                              <label class="form-label">Aporte Agrupación</label>
-                              <input class="form-input" [(ngModel)]="detalle()!.aporteAgrupacion" name="aporteAgr" [disabled]="!editMode()">
-                            </div>
-                            <div class="form-group">
-                              <label class="form-label">Departamento Agrupación</label>
-                              <select class="form-select" [(ngModel)]="detalle()!.departamentoAgrupacion" name="depAgr" [disabled]="!editMode()">
-                                <option [ngValue]="undefined">-</option>
-                                @for (d of departamentos; track d) { <option [ngValue]="d">{{ d }}</option> }
-                              </select>
-                            </div>
-                            <div class="form-group">
-                              <label class="form-label">Código de Agrupación</label>
-                              <input class="form-input" [(ngModel)]="detalle()!.codigoAgrupacion" name="codAgr" [disabled]="!editMode()">
-                            </div>
-                          }
-                          <div class="form-group">
-                            <label class="form-label">Confirmado</label>
-                            <select class="form-select" [ngModel]="detalle()!.aporteConfirmado" (ngModelChange)="onConfirmadoChange($event)" name="confirmado" [disabled]="!editMode()">
-                              <option [ngValue]="null">-</option>
-                              <option [ngValue]="false">D</option>
-                              <option [ngValue]="true">S</option>
-                            </select>
-                          </div>
-                          @if (detalle()!.aporteConfirmado === false) {
-                            <div class="form-group">
-                              <label class="form-label">Fecha de salida</label>
-                              <input class="form-input" type="date" [(ngModel)]="detalle()!.fechaSalida" name="fechaSalidaCond" [disabled]="!editMode()">
-                            </div>
-                          }
-                          <div class="form-group">
-                            <label class="form-label">Carnet Entregado</label>
-                            <input class="form-input" type="date" [(ngModel)]="detalle()!.carnetEntregado" name="carnetEntregado" [disabled]="!editMode()">
-                          </div>
-                          <div class="form-group">
-                            <label class="form-label">Art. 46</label>
-                            <label style="display:flex; align-items:center; gap:8px; padding-top:8px">
-                              <input type="checkbox" [(ngModel)]="detalle()!.art46" name="art46" [disabled]="!editMode()">
-                              <span>Sí</span>
-                            </label>
-                          </div>
-                          <div class="form-group">
-                            <label class="form-label">Departamental</label>
-                            <label style="display:flex; align-items:center; gap:8px; padding-top:8px">
-                              <input type="checkbox" [(ngModel)]="detalle()!.departamental" name="departamental" [disabled]="!editMode()">
-                              <span>Sí</span>
-                            </label>
-                          </div>
+                        <div (click)="$event.stopPropagation()">
+                          <app-ficha-adhesion-form
+                            [ficha]="detalle()!"
+                            (fichaChange)="detalle.set($event)"
+                            [disabled]="!editMode()"
+                            [showId]="true"
+                            [sectores]="sectores()">
+                          </app-ficha-adhesion-form>
                         </div>
                       </div>
                     </td>
@@ -216,63 +110,7 @@ export class FichasContactoComponent {
   editMode = signal(false);
   private original: FichaAdhesionDetalle | null = null;
 
-  sistemas = ['Antel', 'OCA', 'VISA', 'MASTER', 'EBROU', 'ANUAL', 'Otro'];
-  departamentos = [
-    'Artigas', 'Canelones', 'Cerro Largo', 'Colonia', 'Durazno', 'Flores', 'Florida',
-    'Lavalleja', 'Maldonado', 'Montevideo', 'Paysandú', 'Río Negro', 'Rivera', 'Rocha',
-    'Salto', 'San José', 'Soriano', 'Tacuarembó', 'Treinta y Tres', 'Nacional'
-  ];
-  aportesSecAgr = [
-    'Agrupacion', 'SAS', 'CNJ', 'Centro Josefa Oribe', 'CEPN',
-    'Comision Departamental', 'C. Cultura', 'Movimiento Afro-Nacionalista (MAN)'
-  ];
   sectores = signal<string[]>([]);
-
-  showTelefonoAntel(s?: string) { return s === 'Antel'; }
-  showCedula(s?: string) { return s === 'OCA' || s === 'VISA' || s === 'MASTER' || s === 'EBROU'; }
-  showFechasPago(s?: string) { return s === 'ANUAL'; }
-
-  onSistContribChange(s: string) {
-    const f = this.detalle();
-    if (!f) return;
-    f.sistContrib = s;
-    if (!this.showTelefonoAntel(s)) f.telefonoAntel = undefined;
-    if (!this.showCedula(s)) f.cedulaResponsable = undefined;
-    if (!this.showFechasPago(s)) { f.fechaVencimiento = undefined; f.fechaUltimoPago = undefined; }
-    this.detalle.set({ ...f });
-  }
-
-  onAporteTodoChange(v: boolean) {
-    const f = this.detalle();
-    if (!f) return;
-    f.aporteTodoAlPartido = v;
-    if (v) {
-      f.sector = undefined;
-      f.aporteSecretariaAgrupacion = undefined;
-      f.aporteAgrupacion = undefined;
-      f.departamentoAgrupacion = undefined;
-      f.codigoAgrupacion = undefined;
-    }
-    this.detalle.set({ ...f });
-  }
-
-  onConfirmadoChange(v: boolean | null) {
-    const f = this.detalle();
-    if (!f) return;
-    if (v === false) {
-      const today = new Date().toISOString().slice(0, 10);
-      const fecha = window.prompt('Ingrese la fecha de salida (YYYY-MM-DD):', f.fechaSalida || today);
-      if (!fecha || !/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
-        return;
-      }
-      f.aporteConfirmado = false;
-      f.fechaSalida = fecha;
-    } else {
-      f.aporteConfirmado = v;
-      f.fechaSalida = undefined;
-    }
-    this.detalle.set({ ...f });
-  }
 
   constructor() {
     this.titleSvc.set('Fichas de Adhesión');
@@ -315,6 +153,9 @@ export class FichasContactoComponent {
   guardar() {
     const f = this.detalle();
     if (!f) return;
+    // Coherencia: una Baja siempre debe llevar fecha de salida (TODO-012).
+    normalizarFechaSalida(f);
+    this.detalle.set({ ...f });
     this.adhSvc.updateLocal(f).subscribe(() => {
       this.original = JSON.parse(JSON.stringify(f));
       this.editMode.set(false);

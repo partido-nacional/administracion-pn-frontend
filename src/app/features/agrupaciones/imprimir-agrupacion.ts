@@ -60,17 +60,14 @@ export interface PrintAgrupacionData {
   }>;
 }
 
-// '' = celda vacia para mantener alineacion 2-cols y que las dos Juventud
-// queden lado a lado en la ultima fila.
-const FIRMAS_PENDIENTE = [
-  'Gloria Rodriguez',
-  'Luis Alberto Heber',
-  'Javier Garcia',
-  'Enrique Antia',
-  'Armando Castaingdo',
-  '',
+const FIRMAS = [
+  'Gloria Rodríguez',
+  'Javier García',
+  'Armando Castaingdebat',
+  'Luis A. Heber',
+  'Enrique Antía',
   'Juventud',
-  'Juventud (2)'
+  'Juventud'
 ];
 
 /** Escapa HTML para evitar inyección (XSS) al interpolar datos en el string del documento. */
@@ -128,13 +125,12 @@ function buildFirmas(): string {
   return `
     <h2 class="sec">Firmas</h2>
     <div class="firmas">
-      ${FIRMAS_PENDIENTE.map(n => n
-        ? `<div class="firma">
-             <div class="firma-linea"></div>
-             <div class="firma-nombre">${n}</div>
-           </div>`
-        : `<div class="firma firma-empty"></div>`
-      ).join('')}
+      ${FIRMAS.map(n => `
+        <div class="firma">
+          <span class="firma-nombre">${esc(n)}:</span>
+          <span class="firma-linea"></span>
+        </div>
+      `).join('')}
     </div>
   `;
 }
@@ -183,15 +179,12 @@ function buildHtml(d: PrintAgrupacionData, opts: { firmas: boolean; titulo: stri
     .data-table th { background: #f3f6fb; font-weight: 600; }
     .muted { color: #888; font-size: 11px; }
     .firmas {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 30px 60px;
-      margin-top: 24px;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 34px 48px;
+      margin-top: 28px;
     }
-    .firma { display: flex; flex-direction: column; align-items: center; }
-    .firma-linea {
-      width: 100%; border-top: 1px solid #222; height: 0; margin-top: 35px;
-    }
-    .firma-nombre { font-size: 12px; margin-top: 4px; color: #333; font-weight: 600; text-align: center; }
-    .firma-empty { visibility: hidden; }
+    .firma { display: flex; align-items: flex-end; gap: 8px; break-inside: avoid; }
+    .firma-nombre { font-size: 12px; color: #333; font-weight: 600; white-space: nowrap; }
+    .firma-linea { flex: 1; border-bottom: 1px solid #222; height: 16px; }
     footer { margin-top: 24px; font-size: 10px; color: #888; text-align: right; }
     @media print {
       header { break-inside: avoid; }
@@ -255,16 +248,6 @@ function buildHtml(d: PrintAgrupacionData, opts: { firmas: boolean; titulo: stri
       ${row('Fecha Circ. C.E.', d.fechaCircCE)}
     </table>
   </div>
-
-  <h2 class="sec">Sublemas (período ${esc(d.periodo)})</h2>
-  <table class="kv">
-    ${row('Sublema 1', d.sublema1)}
-    ${row('Sublema 2', d.sublema2)}
-    ${row('Sublema 3', d.sublema3)}
-    ${row('Sublema 4', d.sublema4)}
-    ${row('Sublema 5', d.sublema5)}
-    ${row('Sublema Renunciado', d.sublemaRenunciado)}
-  </table>
 
   <h2 class="sec">Antecedentes y Resolución</h2>
   <table class="kv">

@@ -1,151 +1,35 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ContactosService, FichaAdhesionDetalle } from '../agenda/contactos.service';
 import { AdhesionesService } from './adhesiones.service';
 import { PageTitleService } from '../../core/page-title.service';
 import { CatalogosService } from '../../core/catalogos.service';
-
-const SISTEMAS = ['Antel', 'OCA', 'VISA', 'MASTER', 'EBROU', 'ANUAL', 'Otro'];
-const DEPARTAMENTOS = [
-  'Artigas', 'Canelones', 'Cerro Largo', 'Colonia', 'Durazno', 'Flores', 'Florida',
-  'Lavalleja', 'Maldonado', 'Montevideo', 'Paysandú', 'Río Negro', 'Rivera', 'Rocha',
-  'Salto', 'San José', 'Soriano', 'Tacuarembó', 'Treinta y Tres', 'Nacional'
-];
-const APORTES_SEC_AGR = [
-  'Agrupacion', 'SAS', 'CNJ', 'Centro Josefa Oribe', 'CEPN',
-  'Comision Departamental', 'C. Cultura', 'Movimiento Afro-Nacionalista (MAN)'
-];
+import { DEPARTAMENTOS } from '../../shared/adhesiones/ficha-adhesion.constants';
+import { hoyISO, normalizarFechaSalida } from '../../shared/adhesiones/confirmado-baja.util';
+import { FichaAdhesionFormComponent } from '../../shared/adhesiones/ficha-adhesion-form.component';
 
 @Component({
   selector: 'app-nueva-ficha',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, RouterLink, FichaAdhesionFormComponent],
   template: `
     <div class="topbar-inline">
       <a [routerLink]="['/agenda', contactoId, 'fichas']" class="btn btn-secondary">← Cancelar</a>
     </div>
 
-    @if (ficha()) {
+    @if (ficha(); as f) {
       <div class="card">
         <div class="card-body">
           <h2 style="margin:0 0 4px 0">Nueva Ficha de Adhesión</h2>
           <p style="margin:0 0 16px 0; color:#666">Contacto: <strong>{{ contactoNombre() }}</strong> (#{{ contactoId }})</p>
 
           <div class="form-section"><div class="form-section-title">Datos de adhesión</div></div>
-          <div class="form-grid">
-            <div class="form-group">
-              <label class="form-label">Fecha de Sistema</label>
-              <input class="form-input" type="date" [(ngModel)]="ficha()!.fechaAdhesion" name="fechaAdh">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Importe</label>
-              <input class="form-input" type="number" [(ngModel)]="ficha()!.aporte" name="importe">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Sistema de Contribución</label>
-              <select class="form-select" [ngModel]="ficha()!.sistContrib" (ngModelChange)="onSistContribChange($event)" name="sistContrib">
-                @for (s of sistemas; track s) { <option [ngValue]="s">{{ s }}</option> }
-              </select>
-            </div>
-            <div class="form-group full-width">
-              <label class="form-label">Observaciones</label>
-              <input class="form-input" [(ngModel)]="ficha()!.observaciones" name="observaciones">
-            </div>
-            @if (showCedula(ficha()!.sistContrib)) {
-              <div class="form-group">
-                <label class="form-label">Cédula responsable</label>
-                <input class="form-input" [(ngModel)]="ficha()!.cedulaResponsable" name="cedResp">
-              </div>
-            }
-            @if (showTelefonoAntel(ficha()!.sistContrib)) {
-              <div class="form-group">
-                <label class="form-label">Teléfono Antel</label>
-                <input class="form-input" [(ngModel)]="ficha()!.telefonoAntel" name="telAntel">
-              </div>
-            }
-            @if (showFechasPago(ficha()!.sistContrib)) {
-              <div class="form-group">
-                <label class="form-label">Fecha Vencimiento</label>
-                <input class="form-input" type="date" [(ngModel)]="ficha()!.fechaVencimiento" name="fechaVenc">
-              </div>
-              <div class="form-group">
-                <label class="form-label">Fecha Ult. Pago</label>
-                <input class="form-input" type="date" [(ngModel)]="ficha()!.fechaUltimoPago" name="fechaUltPago">
-              </div>
-            }
-            <div class="form-group">
-              <label class="form-label">Aporte Todo al Partido</label>
-              <select class="form-select" [ngModel]="ficha()!.aporteTodoAlPartido" (ngModelChange)="onAporteTodoChange($event)" name="aporteTodo">
-                <option [ngValue]="true">SI</option>
-                <option [ngValue]="false">NO</option>
-              </select>
-            </div>
-            @if (!ficha()!.aporteTodoAlPartido) {
-              <div class="form-group">
-                <label class="form-label">Aporte a un Sector</label>
-                <select class="form-select" [(ngModel)]="ficha()!.sector" name="sector">
-                  <option [ngValue]="undefined">-</option>
-                  @for (s of sectores(); track s) { <option [ngValue]="s">{{ s }}</option> }
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Aporte a Secretaría/Agrupación</label>
-                <select class="form-select" [(ngModel)]="ficha()!.aporteSecretariaAgrupacion" name="aporteSec">
-                  <option [ngValue]="undefined">-</option>
-                  @for (a of aportesSecAgr; track a) { <option [ngValue]="a">{{ a }}</option> }
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Aporte Agrupación</label>
-                <input class="form-input" [(ngModel)]="ficha()!.aporteAgrupacion" name="aporteAgr">
-              </div>
-              <div class="form-group">
-                <label class="form-label">Departamento Agrupación</label>
-                <select class="form-select" [(ngModel)]="ficha()!.departamentoAgrupacion" name="depAgr">
-                  <option [ngValue]="undefined">-</option>
-                  @for (d of departamentos; track d) { <option [ngValue]="d">{{ d }}</option> }
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Código de Agrupación</label>
-                <input class="form-input" [(ngModel)]="ficha()!.codigoAgrupacion" name="codAgr">
-              </div>
-            }
-            <div class="form-group">
-              <label class="form-label">Confirmado</label>
-              <select class="form-select" [ngModel]="ficha()!.aporteConfirmado" (ngModelChange)="onConfirmadoChange($event)" name="confirmado">
-                <option [ngValue]="null">-</option>
-                <option [ngValue]="false">D</option>
-                <option [ngValue]="true">S</option>
-              </select>
-            </div>
-            @if (ficha()!.aporteConfirmado === false) {
-              <div class="form-group">
-                <label class="form-label">Fecha de salida</label>
-                <input class="form-input" type="date" [(ngModel)]="ficha()!.fechaSalida" name="fechaSalidaCreate">
-              </div>
-            }
-            <div class="form-group">
-              <label class="form-label">Carnet Entregado</label>
-              <input class="form-input" type="date" [(ngModel)]="ficha()!.carnetEntregado" name="carnetEntregado">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Art. 46</label>
-              <label style="display:flex; align-items:center; gap:8px; padding-top:8px">
-                <input type="checkbox" [(ngModel)]="ficha()!.art46" name="art46">
-                <span>Sí</span>
-              </label>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Departamental</label>
-              <label style="display:flex; align-items:center; gap:8px; padding-top:8px">
-                <input type="checkbox" [(ngModel)]="ficha()!.departamental" name="departamental">
-                <span>Sí</span>
-              </label>
-            </div>
-          </div>
+          <app-ficha-adhesion-form
+            [ficha]="f"
+            (fichaChange)="ficha.set($event)"
+            [sectores]="sectores()">
+          </app-ficha-adhesion-form>
 
           <div class="form-actions">
             <button class="btn btn-primary" (click)="guardar()">Crear ficha</button>
@@ -172,57 +56,7 @@ export class NuevaFichaComponent {
   contactoId!: number;
   contactoNombre = signal<string>('');
   ficha = signal<FichaAdhesionDetalle | null>(null);
-
-  sistemas = SISTEMAS;
-  departamentos = DEPARTAMENTOS;
-  aportesSecAgr = APORTES_SEC_AGR;
   sectores = signal<string[]>([]);
-
-  showTelefonoAntel(s?: string) { return s === 'Antel'; }
-  showCedula(s?: string) { return s === 'OCA' || s === 'VISA' || s === 'MASTER' || s === 'EBROU'; }
-  showFechasPago(s?: string) { return s === 'ANUAL'; }
-
-  onSistContribChange(s: string) {
-    const f = this.ficha();
-    if (!f) return;
-    f.sistContrib = s;
-    if (!this.showTelefonoAntel(s)) f.telefonoAntel = undefined;
-    if (!this.showCedula(s)) f.cedulaResponsable = undefined;
-    if (!this.showFechasPago(s)) { f.fechaVencimiento = undefined; f.fechaUltimoPago = undefined; }
-    this.ficha.set({ ...f });
-  }
-
-  onAporteTodoChange(v: boolean) {
-    const f = this.ficha();
-    if (!f) return;
-    f.aporteTodoAlPartido = v;
-    if (v) {
-      f.sector = undefined;
-      f.aporteSecretariaAgrupacion = undefined;
-      f.aporteAgrupacion = undefined;
-      f.departamentoAgrupacion = undefined;
-      f.codigoAgrupacion = undefined;
-    }
-    this.ficha.set({ ...f });
-  }
-
-  onConfirmadoChange(v: boolean | null) {
-    const f = this.ficha();
-    if (!f) return;
-    if (v === false) {
-      const today = new Date().toISOString().slice(0, 10);
-      const fecha = window.prompt('Ingrese la fecha de salida (YYYY-MM-DD):', f.fechaSalida || today);
-      if (!fecha || !/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
-        return;
-      }
-      f.aporteConfirmado = false;
-      f.fechaSalida = fecha;
-    } else {
-      f.aporteConfirmado = v;
-      f.fechaSalida = undefined;
-    }
-    this.ficha.set({ ...f });
-  }
 
   constructor() {
     this.titleSvc.set('Nueva Ficha de Adhesión');
@@ -232,7 +66,7 @@ export class NuevaFichaComponent {
     this.contactoId = +this.route.snapshot.paramMap.get('contactoId')!;
     this.contactosSvc.get(this.contactoId).subscribe(c => {
       this.contactoNombre.set(`${c.apellido}, ${c.nombre}`);
-      const today = new Date().toISOString().slice(0, 10);
+      const today = hoyISO();
       const dep = c.departamento && DEPARTAMENTOS.includes(c.departamento) ? c.departamento : undefined;
       this.ficha.set({
         id: 0,
@@ -265,6 +99,8 @@ export class NuevaFichaComponent {
   guardar() {
     const f = this.ficha();
     if (!f) return;
+    // Coherencia: una Baja siempre debe llevar fecha de salida (TODO-012).
+    normalizarFechaSalida(f);
     this.adhSvc.createLocal(f).subscribe(() => {
       this.router.navigate(['/agenda', this.contactoId, 'fichas']);
     });

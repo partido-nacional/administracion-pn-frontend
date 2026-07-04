@@ -30,6 +30,7 @@ import { AuthService } from '../../core/auth.service';
           <div style="background:#fee2e2;color:#991b1b;padding:10px 12px;border-radius:4px;font-size:13px;margin-bottom:12px;">{{ error() }}</div>
         }
         <button class="btn btn-primary" style="width:100%;justify-content:center;" [disabled]="loading() || f.invalid">
+          @if (loading()) { <span class="spinner" aria-hidden="true"></span> }
           {{ loading() ? 'Ingresando…' : 'Ingresar' }}
         </button>
       </form>
