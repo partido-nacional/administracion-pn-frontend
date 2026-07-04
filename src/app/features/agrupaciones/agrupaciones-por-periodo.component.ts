@@ -98,7 +98,7 @@ interface AgrupacionPeriodoRow {
           </tr>
           <tr class="filter-row">
             <th></th>
-            <th><input class="column-filter" [ngModel]="fId()"     (ngModelChange)="fId.set($event); onFilter()"     placeholder="Filtrar..."></th>
+            <th></th>
             <th>
               <select class="column-filter" [ngModel]="fPeriodo()" (ngModelChange)="fPeriodo.set($event); onFilter()">
                 <option value="">Todos</option>
@@ -112,9 +112,9 @@ interface AgrupacionPeriodoRow {
                 <option value="no">Aprobada</option>
               </select>
             </th>
-            <th><input class="column-filter" [ngModel]="fAgrId()"  (ngModelChange)="fAgrId.set($event); onFilter()"  placeholder="Filtrar..."></th>
+            <th></th>
             <th><input class="column-filter" [ngModel]="fCod()"    (ngModelChange)="fCod.set($event); onFilter()"    placeholder="Filtrar..."></th>
-            <th><input class="column-filter" [ngModel]="fCodDep()" (ngModelChange)="fCodDep.set($event); onFilter()" placeholder="Filtrar..."></th>
+            <th></th>
             <th>
               <select class="column-filter" [ngModel]="fTipo()" (ngModelChange)="fTipo.set($event); onFilter()">
                 <option value="">Todos</option>
@@ -131,15 +131,9 @@ interface AgrupacionPeriodoRow {
                 @for (d of deptos(); track d) { <option [ngValue]="d">{{ d }}</option> }
               </select>
             </th>
-            <th><input class="column-filter" [ngModel]="fSector()" (ngModelChange)="fSector.set($event); onFilter()" placeholder="Filtrar..."></th>
+            <th></th>
             <th><input class="column-filter" [ngModel]="fSublema()" (ngModelChange)="fSublema.set($event); onFilter()" placeholder="Filtrar..."></th>
-            <th>
-              <select class="column-filter" [ngModel]="fAP()" (ngModelChange)="fAP.set($event); onFilter()">
-                <option value="">Todos</option>
-                <option value="si">Sí</option>
-                <option value="no">No</option>
-              </select>
-            </th>
+            <th></th>
             <th></th>
           </tr>
         </thead>
@@ -464,10 +458,10 @@ export class AgrupacionesPorPeriodoComponent {
   onPageSize(size: number) { this.pageSize.set(size); this.page.set(1); this.load(); }
   onFilter() { this.filter$.next(); }
 
-  fId = signal(''); fPeriodo = signal(''); fPend = signal('');
-  fAgrId = signal(''); fCod = signal(''); fCodDep = signal('');
+  fPeriodo = signal(''); fPend = signal('');
+  fCod = signal('');
   fTipo = signal(''); fNombre = signal(''); fDepto = signal('');
-  fSector = signal(''); fSublema = signal(''); fAP = signal('');
+  fSublema = signal('');
 
   periodos = signal<string[]>([]);
   deptos = signal<string[]>([]);
@@ -575,10 +569,10 @@ export class AgrupacionesPorPeriodoComponent {
     return {
       page: this.page(), pageSize: this.pageSize(), sort: this.sort(), order: this.order(),
       filters: {
-        id: this.fId(), periodo: this.fPeriodo(), pend: this.fPend(),
-        agrId: this.fAgrId(), cod: this.fCod(), codDep: this.fCodDep(),
+        periodo: this.fPeriodo(), pend: this.fPend(),
+        cod: this.fCod(),
         tipo: this.fTipo(), nombre: this.fNombre(), depto: this.fDepto(),
-        sector: this.fSector(), sublema: this.fSublema(), ap: this.fAP(),
+        sublema: this.fSublema(),
       },
     };
   }
