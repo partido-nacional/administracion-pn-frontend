@@ -130,7 +130,7 @@ interface ParEstado {
 
                         <div class="dup-actions">
                           <button class="btn btn-secondary" (click)="resetear(est); $event.stopPropagation()">Restablecer sugerido</button>
-                          <button class="btn btn-primary" (click)="aplicar(est); $event.stopPropagation()" [disabled]="aplicando()">Aplicar merge</button>
+                          <button class="btn btn-primary" (click)="pedirConfirmacion(est); $event.stopPropagation()" [disabled]="aplicando()">Aplicar merge</button>
                         </div>
                         @if (mensaje()[idx]) {
                           <div class="msg" [class.err]="mensajeErr()[idx]">{{ mensaje()[idx] }}</div>
@@ -145,8 +145,80 @@ interface ParEstado {
         </div>
       </div>
     }
+
+    @if (confirmacion(); as est) {
+      <div class="modal-backdrop" (click)="cancelarConfirmacion()">
+        <div class="conf-modal" (click)="$event.stopPropagation()">
+          <div class="conf-header">Confirmar merge de contactos</div>
+          <div class="conf-body">
+            <p class="conf-warn">⚠️ Esta acción <strong>elimina un contacto de forma permanente</strong> y actualiza el otro con los datos combinados. No se puede deshacer.</p>
+            <div class="conf-grid">
+              <div class="conf-card keep">
+                <div class="conf-tag">Se conserva y actualiza</div>
+                <div class="conf-id">#{{ keepDe(est).id }}</div>
+                <div class="conf-name">{{ keepDe(est).apellido }}, {{ keepDe(est).nombre }}</div>
+              </div>
+              <div class="conf-card remove">
+                <div class="conf-tag">Se elimina (permanente)</div>
+                <div class="conf-id">#{{ removeDe(est).id }}</div>
+                <div class="conf-name">{{ removeDe(est).apellido }}, {{ removeDe(est).nombre }}</div>
+              </div>
+            </div>
+            <div class="conf-result">
+              <div class="conf-result-title">Contacto resultante (#{{ keepDe(est).id }})</div>
+              <table class="conf-result-table">
+                @for (campo of camposResumen; track campo.key) {
+                  <tr><th>{{ campo.label }}</th><td>{{ display(resultado(est, campo.key)) || '—' }}</td></tr>
+                }
+              </table>
+            </div>
+          </div>
+          <div class="conf-footer">
+            <button class="btn btn-secondary" (click)="cancelarConfirmacion()" [disabled]="aplicando()">Cancelar</button>
+            <button class="btn btn-danger" (click)="confirmarMerge()" [disabled]="aplicando()">
+              {{ aplicando() ? 'Aplicando…' : 'Sí, aplicar merge' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
   `,
   styles: [`
+    .modal-backdrop {
+      position:fixed; inset:0; background:rgba(15,23,42,.55);
+      display:flex; align-items:center; justify-content:center; z-index:1000; padding:20px;
+    }
+    .conf-modal {
+      background:#fff; border-radius:10px; width:min(560px, 100%);
+      max-height:92vh; display:flex; flex-direction:column;
+      box-shadow:0 20px 50px rgba(0,0,0,.3); overflow:hidden;
+    }
+    .conf-header { background:#1e3a8a; color:#fff; padding:14px 20px; font-size:16px; font-weight:600; }
+    .conf-body { padding:18px 20px; overflow-y:auto; }
+    .conf-warn {
+      background:#fdecea; border:1px solid #f5c6c2; color:#a8261b;
+      border-radius:6px; padding:10px 12px; font-size:13px; margin:0 0 14px;
+    }
+    .conf-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px; }
+    .conf-card { border:1px solid #e6eaf0; border-radius:6px; padding:12px 14px; }
+    .conf-card.keep { background:#e8f5ea; border-color:#b6e0c2; }
+    .conf-card.remove { background:#fdecea; border-color:#f5c6c2; }
+    .conf-tag { font-size:11px; text-transform:uppercase; letter-spacing:.4px; font-weight:600; color:#555; }
+    .conf-card.keep .conf-tag { color:#1f6f3b; }
+    .conf-card.remove .conf-tag { color:#a8261b; }
+    .conf-id { font-family:monospace; font-size:13px; color:#666; margin-top:4px; }
+    .conf-name { font-size:15px; font-weight:600; color:#222; }
+    .conf-result-title { font-size:11px; text-transform:uppercase; letter-spacing:.4px; color:#666; font-weight:600; margin-bottom:6px; }
+    .conf-result-table { width:100%; border-collapse:collapse; font-size:13px; }
+    .conf-result-table th { text-align:left; color:#777; font-weight:500; padding:4px 8px 4px 0; width:130px; }
+    .conf-result-table td { padding:4px 0; color:#222; word-break:break-word; }
+    .conf-footer {
+      padding:12px 20px; border-top:1px solid #eef1f5; background:#fafbfd;
+      display:flex; gap:10px; justify-content:flex-end;
+    }
+    .btn-danger { background:#c62828; color:#fff; border:none; }
+    .btn-danger:hover:not(:disabled) { background:#b71c1c; }
+    .btn:disabled, .btn[disabled] { opacity:.5; cursor:not-allowed; pointer-events:none; }
     .resumen-table { width:100%; border-collapse:collapse; font-size:14px; }
     .resumen-table th, .resumen-table td { border-bottom:1px solid #eef1f5; padding:10px 14px; text-align:left; }
     .resumen-table th { font-size:11px; color:#666; text-transform:uppercase; letter-spacing:.4px; background:#fafbfd; }
@@ -186,6 +258,24 @@ export class DuplicadosContactosComponent {
   estados = signal<ParEstado[]>([]);
   mensaje = signal<Record<number, string>>({});
   mensajeErr = signal<Record<number, boolean>>({});
+
+  // Par pendiente de confirmación antes de ejecutar el merge (destructivo/irreversible).
+  confirmacion = signal<ParEstado | null>(null);
+  // Campos identitarios que se muestran en el resumen de confirmación.
+  camposResumen = CAMPOS.filter(c =>
+    ['nombre', 'apellido', 'documento', 'credencialCivica', 'email', 'celular'].includes(c.key as string));
+
+  keepDe(est: ParEstado): Contacto { return est.keep === 'A' ? est.par.a : est.par.b; }
+  removeDe(est: ParEstado): Contacto { return est.keep === 'A' ? est.par.b : est.par.a; }
+
+  pedirConfirmacion(est: ParEstado) { this.confirmacion.set(est); }
+  cancelarConfirmacion() { if (!this.aplicando()) this.confirmacion.set(null); }
+  confirmarMerge() {
+    const est = this.confirmacion();
+    if (!est) return;
+    this.confirmacion.set(null);
+    this.aplicar(est);
+  }
 
   constructor() {
     this.cargar();
