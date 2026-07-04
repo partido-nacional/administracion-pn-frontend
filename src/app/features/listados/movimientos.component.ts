@@ -27,14 +27,7 @@ import { exportarCSV } from '../../core/exportar-csv';
             <tr class="filter-row">
               <th><input type="text" class="column-filter" placeholder="dd/mm/aaaa" [(ngModel)]="fFecha" (ngModelChange)="onFilter()"></th>
               <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fUsuario" (ngModelChange)="onFilter()"></th>
-              <th>
-                <select class="column-filter" [(ngModel)]="fAccion" (ngModelChange)="onFilter()">
-                  <option value="">Todas</option>
-                  <option>Alta</option>
-                  <option>Modificacion</option>
-                  <option>Eliminacion</option>
-                </select>
-              </th>
+              <th></th>
               <th>
                 <select class="column-filter" [(ngModel)]="fModulo" (ngModelChange)="onFilter()">
                   <option value="">Todos</option>
@@ -46,7 +39,7 @@ import { exportarCSV } from '../../core/exportar-csv';
                   <option>Productos</option>
                 </select>
               </th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fDetalle" (ngModelChange)="onFilter()"></th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
@@ -95,9 +88,7 @@ export class MovimientosComponent implements OnInit {
 
   fFecha = '';
   fUsuario = '';
-  fAccion = '';
   fModulo = '';
-  fDetalle = '';
 
   private filter$ = new Subject<void>();
 
@@ -120,9 +111,7 @@ export class MovimientosComponent implements OnInit {
       all,
       filters: {
         usuario: this.fUsuario,
-        accion: this.fAccion,
         modulo: this.fModulo,
-        detalle: this.fDetalle,
         fecha: this.toIsoDate(this.fFecha),
       },
     };
