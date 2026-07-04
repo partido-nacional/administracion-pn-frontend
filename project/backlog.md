@@ -92,7 +92,7 @@
 
 ### TODO-010: Login — `loading` no se resetea y validación no bloquea submit
 - **Priority**: Low
-- **Status**: pending
+- **Status**: RESOLVED → `project/features/004-login-errores-y-validacion` (2026-07-04)
 - **Created**: 2026-06-14
 - **Origin**: feature/auth
 - **Context**: En el camino feliz no se llama `loading.set(false)` (`:54`); el botón solo se deshabilita por `loading()`, no por `form.invalid` (`:31`).
