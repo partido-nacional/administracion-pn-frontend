@@ -30,12 +30,12 @@ import { exportarCSV } from '../../core/exportar-csv';
               <th style="min-width:70px; text-align:center">Adherente</th>
             </tr>
             <tr class="filter-row">
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fId" (ngModelChange)="onFilter()"></th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fCred" (ngModelChange)="onFilter()"></th>
+              <th></th>
+              <th></th>
               <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fApellidos" (ngModelChange)="onFilter()"></th>
               <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fNombres" (ngModelChange)="onFilter()"></th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fCel" (ngModelChange)="onFilter()"></th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fMail" (ngModelChange)="onFilter()"></th>
+              <th></th>
+              <th></th>
               <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fPos" (ngModelChange)="onFilter()"></th>
               <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fOrg" (ngModelChange)="onFilter()"></th>
               <th>
@@ -101,8 +101,7 @@ export class ConvencionalesListadoComponent implements OnInit {
   loading = signal(false);
   exporting = signal(false);
 
-  fId = ''; fCred = ''; fApellidos = ''; fNombres = ''; fCel = '';
-  fMail = ''; fPos = ''; fOrg = ''; fCondicion = ''; fAdherente = '';
+  fApellidos = ''; fNombres = ''; fPos = ''; fOrg = ''; fCondicion = ''; fAdherente = '';
 
   private filter$ = new Subject<void>();
 
@@ -118,8 +117,8 @@ export class ConvencionalesListadoComponent implements OnInit {
     return {
       page: this.page(), pageSize: this.pageSize(), sort: this.sort(), order: this.order(), all,
       filters: {
-        id: this.fId, cred: this.fCred, apellidos: this.fApellidos, nombres: this.fNombres,
-        cel: this.fCel, mail: this.fMail, pos: this.fPos, org: this.fOrg,
+        apellidos: this.fApellidos, nombres: this.fNombres,
+        pos: this.fPos, org: this.fOrg,
         condicion: this.fCondicion, adherente,
       },
     };
