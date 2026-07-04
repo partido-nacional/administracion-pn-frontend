@@ -1,0 +1,295 @@
+{
+  "feature": "habilitar-botones-edicion",
+  "local_config": {
+    "database": null
+  },
+  "stats": {
+    "total": 10,
+    "done": 10,
+    "by_layer": {
+      "1": 7,
+      "2": 3
+    }
+  },
+  "execution_strategy": "batched",
+  "gates": {
+    "build": "npm run build",
+    "test": "npm test -- --no-watch --browsers=ChromeHeadless"
+  },
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "Modelos alineados a los DTO reales del backend",
+      "description": "Crear core/models/convencionales.ts y core/models/organismos.ts con las interfaces Dto (respuesta) e Input (POST/PUT) para las 4 entidades en alcance, ademas de tipos auxiliares (Ambito 'Estatal'|'Partidario', TipoOrganismoDto). Reemplazan el shape del mock viejo documentado en la spec tecnica (tabla de desalineacion).",
+      "status": "completed",
+      "layer": 1,
+      "depends_on": [],
+      "files": [
+        "src/app/core/models/convencionales.ts",
+        "src/app/core/models/organismos.ts"
+      ],
+      "acceptance_criteria": [
+        "AC-1: ConvencionalDto/ConvencionalInput, ListaDto/ListaInput con los campos exactos de INTEGRACION-FRONTEND.md 7.9",
+        "AC-2: OrganismoDto/OrganismoInput/OrganismoTodosDto (con ambito), InfoOrganizacionDto/Input, TipoOrganismoDto segun 7.10",
+        "AC-3: Los Input excluyen id; las FK (contactoId, tipoOrganismoId) tipadas number",
+        "GATE: npm run build passes"
+      ],
+      "references": [
+        "US-1",
+        "US-2",
+        "US-3",
+        "US-4"
+      ]
+    },
+    {
+      "id": "TASK-002",
+      "title": "convencionales.service.ts (dominio)",
+      "description": "Service singleton en core/services/ que encapsula las llamadas de Convencionales: GET nacionales, GET listas odn/odd, POST/PUT de Convencional y de Lista. Tipado con los modelos de TASK-001. Los componentes dejan de usar HttpClient directo para estas entidades.",
+      "status": "completed",
+      "layer": 1,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "files": [
+        "src/app/core/services/convencionales.service.ts"
+      ],
+      "acceptance_criteria": [
+        "AC-1: getNacionales(), getListas(tipo), createConvencional(input), updateConvencional(id,input), createLista(input), updateLista(id,input)",
+        "AC-2: Usa environment.apiUrl; devuelve Observables tipados",
+        "AC-3: No transforma errores (los deja pasar para que el componente/interceptor los maneje)",
+        "GATE: npm run build passes"
+      ],
+      "references": [
+        "US-1",
+        "US-2"
+      ]
+    },
+    {
+      "id": "TASK-003",
+      "title": "organismos.service.ts (dominio)",
+      "description": "Service singleton en core/services/ para Organismos: GET todos, GET info, GET tipos, POST/PUT de Organismo (estatal/partidario segun ambito) y de InfoOrganizacion. Tipado con los modelos de TASK-001.",
+      "status": "completed",
+      "layer": 1,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "files": [
+        "src/app/core/services/organismos.service.ts"
+      ],
+      "acceptance_criteria": [
+        "AC-1: getTodos(), getInfo(), getTipos(), createOrganismo(ambito,input), updateOrganismo(ambito,id,input), createInfo(input), updateInfo(id,input)",
+        "AC-2: El metodo de Organismo resuelve la ruta estatales|partidarios segun el ambito",
+        "AC-3: Usa environment.apiUrl; Observables tipados",
+        "GATE: npm run build passes"
+      ],
+      "references": [
+        "US-3",
+        "US-4"
+      ]
+    },
+    {
+      "id": "TASK-004",
+      "title": "UI Convencionales: habilitar edicion + alta (Convencional y Lista)",
+      "description": "Cablear los 2 lapices colgados (convencionales.component.ts:63 tab Nacionales, :117 tabs ODN/ODD) y agregar boton '+ Nuevo/Nueva'. Abrir modal/form de alta y edicion para Convencional y para Lista, reutilizando el patron visual de agrupaciones.component.ts. Realinear grilla e interfaces con los DTO reales. Consumir convencionales.service.ts.",
+      "status": "completed",
+      "layer": 1,
+      "depends_on": [
+        "TASK-002"
+      ],
+      "files": [
+        "src/app/features/convencionales/convencionales.component.ts"
+      ],
+      "acceptance_criteria": [
+        "AC-1: El lapiz de Nacionales abre el form precargado; '+ Nuevo' abre form vacio; guardar hace PUT/POST convencionales",
+        "AC-2: El lapiz de ODN/ODD abre el form de Lista; el Tipo se preselecciona segun la tab; guardar hace PUT/POST listas",
+        "AC-3: Tras guardar OK cierra modal y refresca el tab; maneja loading y doble-submit",
+        "AC-4: Error 400 FK_INVALID/404 se muestra en el form sin cerrar (lee errorCode o message)",
+        "AC-5: La grilla muestra los campos reales del DTO (no quedan columnas del mock viejo)",
+        "AC-6: No queda ningun boton title='Editar (no implementado)' en la vista",
+        "GATE: npm run build passes"
+      ],
+      "references": [
+        "US-1",
+        "US-2"
+      ]
+    },
+    {
+      "id": "TASK-005",
+      "title": "UI Organismos: habilitar edicion + alta (Organismo e Info)",
+      "description": "Cablear los 2 lapices colgados (organismos.component.ts:83 tab Todos, :135 tab Info) y agregar '+ Nuevo/Nueva'. Modal/form de alta y edicion para Organismo (con select de tipos poblado por getTipos() y manejo del ambito estatal/partidario) y para InfoOrganizacion. Realinear grillas con los DTO reales. Consumir organismos.service.ts.",
+      "status": "completed",
+      "layer": 1,
+      "depends_on": [
+        "TASK-003"
+      ],
+      "files": [
+        "src/app/features/organismos/organismos.component.ts"
+      ],
+      "acceptance_criteria": [
+        "AC-1: El lapiz de Todos abre el form del organismo; '+ Nuevo' abre vacio; usa el ambito para pegarle a estatales|partidarios",
+        "AC-2: tipoOrganismoId es un select obligatorio poblado con getTipos()",
+        "AC-3: El lapiz de Info abre el form de InfoOrganizacion; guardar hace PUT/POST info",
+        "AC-4: Tras guardar OK cierra modal y refresca; maneja loading, doble-submit y errores 400/404 en el form",
+        "AC-5: Las grillas Todos e Info muestran los campos reales del DTO (incl. ambito) en vez del mock viejo",
+        "AC-6: No queda ningun boton title='Editar (no implementado)' en la vista",
+        "GATE: npm run build passes"
+      ],
+      "references": [
+        "US-3",
+        "US-4"
+      ]
+    },
+    {
+      "id": "TASK-006",
+      "title": "Unit tests de los services",
+      "description": "Specs de convencionales.service y organismos.service con HttpTestingController: verifican URL/metodo/body de cada GET/POST/PUT y la propagacion de errores (400 FK_INVALID, 404). Cubrir la resolucion de ruta estatales|partidarios por ambito.",
+      "status": "completed",
+      "layer": 1,
+      "depends_on": [
+        "TASK-002",
+        "TASK-003"
+      ],
+      "files": [
+        "src/app/core/services/convencionales.service.spec.ts",
+        "src/app/core/services/organismos.service.spec.ts"
+      ],
+      "acceptance_criteria": [
+        "AC-1: Cada metodo del service testea URL, verbo y body esperados",
+        "AC-2: Se testea que un 400/404 del backend llega al subscriber como error",
+        "AC-3: updateOrganismo/createOrganismo eligen la ruta correcta segun ambito",
+        "GATE: npm test -- --no-watch --browsers=ChromeHeadless passes (>=80% en los archivos tocados)"
+      ],
+      "references": [
+        "US-1",
+        "US-2",
+        "US-3",
+        "US-4"
+      ]
+    },
+    {
+      "id": "TASK-007",
+      "title": "Tests de componente / integracion",
+      "description": "Specs de convencionales.component y organismos.component (con el service mockeado): abrir el modal desde el lapiz y desde '+ Nuevo', submit dispara update/create, refleja exito (cierra+refresca) y error (mensaje, no cierra). Verificar que ya no existan botones 'no implementado'.",
+      "status": "completed",
+      "layer": 1,
+      "depends_on": [
+        "TASK-004",
+        "TASK-005"
+      ],
+      "files": [
+        "src/app/features/convencionales/convencionales.component.spec.ts",
+        "src/app/features/organismos/organismos.component.spec.ts"
+      ],
+      "acceptance_criteria": [
+        "AC-1: Click en el lapiz abre el modal con datos; click en '+ Nuevo' abre modal vacio",
+        "AC-2: Submit exitoso llama al service correcto y refresca; el modal cierra",
+        "AC-3: Error del service muestra el mensaje y mantiene el modal abierto",
+        "AC-4: El template ya no contiene title='Editar (no implementado)'",
+        "GATE: npm test -- --no-watch --browsers=ChromeHeadless passes (>=80% en los archivos tocados)"
+      ],
+      "references": [
+        "US-1",
+        "US-2",
+        "US-3",
+        "US-4"
+      ]
+    },
+    {
+      "id": "TASK-008",
+      "title": "Code review",
+      "description": "Revision de diseno: consistencia con el patron de agrupaciones, ausencia de codigo muerto/duplicado, naming, manejo de estado con signals, y que la desalineacion de modelos haya quedado resuelta.",
+      "status": "completed",
+      "layer": 2,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002",
+        "TASK-003",
+        "TASK-004",
+        "TASK-005",
+        "TASK-006",
+        "TASK-007"
+      ],
+      "files": [],
+      "acceptance_criteria": [
+        "AC-1: Sin codigo duplicado entre los dos componentes/servicios que convenga extraer",
+        "AC-2: UX del modal consistente con las vistas existentes",
+        "AC-3: Componentes consumen el service (sin HttpClient directo para estas entidades)"
+      ],
+      "references": []
+    },
+    {
+      "id": "TASK-009",
+      "title": "Performance review",
+      "description": "Verificar que tras guardar no se recargue de mas (refetch acotado al tab o update de fila), que no haya suscripciones sin cleanup y que los selects (tipos) no se pidan en loop.",
+      "status": "completed",
+      "layer": 2,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002",
+        "TASK-003",
+        "TASK-004",
+        "TASK-005",
+        "TASK-006",
+        "TASK-007"
+      ],
+      "files": [],
+      "acceptance_criteria": [
+        "AC-1: El refresco post-guardado es acotado (no recarga toda la app)",
+        "AC-2: getTipos() se cachea/pide una vez, no por render",
+        "AC-3: Sin fugas de suscripciones"
+      ],
+      "references": []
+    },
+    {
+      "id": "TASK-010",
+      "title": "Security review",
+      "description": "Confirmar que todas las llamadas van con JWT (interceptor), manejo correcto del 401 global, que no se logueen datos sensibles, y que el input del form no habilite inyeccion en el render (Angular escapa por defecto; revisar cualquier innerHTML).",
+      "status": "completed",
+      "layer": 2,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002",
+        "TASK-003",
+        "TASK-004",
+        "TASK-005",
+        "TASK-006",
+        "TASK-007"
+      ],
+      "files": [],
+      "acceptance_criteria": [
+        "AC-1: Las operaciones usan el interceptor de auth (Authorization: Bearer)",
+        "AC-2: 401 se maneja de forma global (reautenticar)",
+        "AC-3: Sin innerHTML/bypassSecurityTrust inseguro en los forms"
+      ],
+      "references": []
+    }
+  ],
+  "dependency_graph": {
+    "by_layer": {
+      "1": {
+        "level_0": [
+          "TASK-001"
+        ],
+        "level_1": [
+          "TASK-002",
+          "TASK-003"
+        ],
+        "level_2": [
+          "TASK-004",
+          "TASK-005",
+          "TASK-006"
+        ],
+        "level_3": [
+          "TASK-007"
+        ]
+      },
+      "2": {
+        "level_0": [
+          "TASK-008",
+          "TASK-009",
+          "TASK-010"
+        ]
+      }
+    }
+  }
+}

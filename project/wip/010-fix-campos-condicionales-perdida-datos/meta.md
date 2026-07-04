@@ -1,6 +1,6 @@
 # Feature Metadata
 feature: fix-campos-condicionales-perdida-datos
-feature_number: 009
+feature_number: 010   # renumerado de 009 → 010: el 009 lo tomó otra feature (habilitar-botones-edicion, #54) mergeada en paralelo
 project: administracion-pn-frontend
 created_at: 2026-07-04
 execution_mode: standard  # standard | express | expert
