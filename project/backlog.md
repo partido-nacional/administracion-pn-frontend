@@ -3,7 +3,7 @@
 > Items captured during development. Use `/project.backlog` to manage.
 
 **Last Updated**: 2026-07-04
-**Total Items**: 24 (11 TODO, 13 DEBT, 0 IDEA)
+**Total Items**: 26 (12 TODO, 14 DEBT, 0 IDEA) · resueltos: DEBT-012, DEBT-014
 
 > Origen común: ingeniería inversa a máximo detalle (reverse-eng) del frontend Angular, 2026-06-14. Cada ítem fue verificado contra el código por un agente lector. Confirmar `archivo:línea` antes de arreglar.
 
@@ -233,13 +233,12 @@
 
 ### DEBT-012: Montar el runner de tests + primeros tests
 - **Priority**: High
-- **Status**: pending
-- **Created**: 2026-06-14
+- **Status**: resolved (2026-07-04) — duplicado de DEBT-001
+- **Created**: 2026-06-14 · **Resolved**: 2026-07-04
 - **Origin**: chore/boilerplate-scaffold (transversal)
-- **Context**: No hay runner de tests configurado (sin Karma/Jasmine ni vitest, sin `tsconfig.spec.json`). Montar el runner (Karma/Jasmine estándar de Angular 17, o vitest), agregar `tsconfig.spec.json` + target `test` en `angular.json`, escribir primeros tests (auth.service, interceptors, un componente), y agregar el step `ng test` al CI (`.github/workflows/ci.yml`).
-- **Affected Files**: package.json, angular.json, tsconfig.spec.json (nuevo), .github/workflows/ci.yml
+- **Resolution**: El runner **ya está montado y en CI** (verificado en feature 009): existe `tsconfig.spec.json` + target `test` en `angular.json` con `karma.conf.js`, script `npm test`, job CI "Unit Tests" (`ng test --watch=false --browsers=ChromeHeadlessNoSandbox`) y specs corriendo (64 tests en verde). Este ítem describía el mismo trabajo que **DEBT-001** (feature 002 lo montó). La parte viva ("ampliar cobertura al resto del proyecto") queda trackeada por **DEBT-001**.
+- **Affected Files**: package.json, angular.json, tsconfig.spec.json, .github/workflows/ci.yml
 - **Complexity**: L
-- **Risk if Ignored**: Sin red de seguridad automatizada (ligado a DEBT-001).
 
 ### DEBT-013: Limpiar "pendientes" del contrato de /debitos/dashboard (espejo backend)
 - **Priority**: Low
@@ -250,3 +249,14 @@
 - **Affected Files**: administracion-pn-backend → endpoint `/debitos/dashboard`; (front) src/app/features/debitos/debitos.component.ts
 - **Complexity**: S
 - **Risk if Ignored**: El contrato sigue exponiendo un estado inexistente; los totales/porcentajes server-side quedan inflados para cualquier otro consumidor del endpoint.
+
+### DEBT-014: Extraer el modal de alta/edición a un componente/estilo compartido (shared/)
+- **Priority**: Low
+- **Status**: resolved (2026-07-04)
+- **Created**: 2026-07-04 · **Resolved**: 2026-07-04
+- **Origin**: feature/habilitar-botones-edicion (code review Layer 2)
+- **Context**: El patrón de modal (backdrop + `.nv-modal/.nv-header/.nv-body/.nv-footer/.nv-grid/.fg/.nv-err` + `modoModal/busy/error` + footer con "Guardando…") estaba **duplicado** en `agrupaciones.component.ts`, `convencionales.component.ts` y `organismos.component.ts` (CSS repetido ~60 líneas por componente).
+- **Resolution**: Se creó `shared/components/modal-form/modal-form.component.ts` (`<app-modal-form>`: backdrop + header + body proyectado + footer con `busy/error/saveLabel` + input `wide`). El CSS del modal + form (`.modal-backdrop`, `.nv-*`, `.fg`, `.nv-grid`/`.nv-grid.g3`, `.sec-h`, `.nv-sub`, `.nv-err`) se movió a `src/styles.css` (junto al sistema `.form-*` y las reglas `html.dark .fg`/`.modal-backdrop` ya existentes). Los 3 componentes migraron a `<app-modal-form>` y borraron su CSS local. Build + 64 tests en verde.
+- **Affected Files**: src/app/shared/components/modal-form/modal-form.component.ts (nuevo), src/styles.css, src/app/features/{agrupaciones,convencionales,organismos}/*.component.ts
+- **Complexity**: M
+- **Follow-up (opcional)**: otros 5 modales usan su propio `.modal-backdrop` con clases distintas (`agenda-listado`, `agenda-nuevo`, `agrupaciones-pendientes`, `fichas-agrupacion`, `dashboard`); podrían adoptar `<app-modal-form>` en el futuro (fuera de alcance de este ítem).
