@@ -172,18 +172,24 @@ interface Confirmacion {
             <h3>Confirmar fusión de contactos</h3>
           </div>
           <div class="modal-body">
-            <div class="cf-row">
-              <span class="cf-keep">✓ Se conserva #{{ cf.keep.id }} — {{ resumenA(cf.keep) }}</span>
-            </div>
-            <div class="cf-row">
-              <span class="cf-remove">✕ Se elimina #{{ cf.remove.id }} — {{ resumenA(cf.remove) }}</span>
-            </div>
-
             <p class="cf-note">
-              El contacto #{{ cf.remove.id }} se elimina de forma permanente. Sus adhesiones,
-              fichas, membresías de organismo y demás registros asociados se reasignan al
+              ⚠️ El contacto #{{ cf.remove.id }} se elimina de forma <strong>permanente</strong>. Sus
+              adhesiones, fichas, membresías de organismo y demás registros asociados se reasignan al
               contacto #{{ cf.keep.id }}. Esta acción no se puede deshacer.
             </p>
+
+            <div class="cf-grid">
+              <div class="cf-card keep">
+                <div class="cf-tag">✓ Se conserva y actualiza</div>
+                <div class="cf-id">#{{ cf.keep.id }}</div>
+                <div class="cf-name">{{ resumenA(cf.keep) }}</div>
+              </div>
+              <div class="cf-card remove">
+                <div class="cf-tag">✕ Se elimina (permanente)</div>
+                <div class="cf-id">#{{ cf.remove.id }}</div>
+                <div class="cf-name">{{ resumenA(cf.remove) }}</div>
+              </div>
+            </div>
 
             @if (cf.cambios.length > 0) {
               <div class="cf-changes-title">Cambios en el contacto #{{ cf.keep.id }} ({{ cf.cambios.length }}):</div>
@@ -205,8 +211,8 @@ interface Confirmacion {
           </div>
           <div class="modal-actions">
             <button class="btn btn-secondary" (click)="cancelar()" [disabled]="aplicando()">Cancelar</button>
-            <button class="btn btn-primary" (click)="confirmar()" [disabled]="aplicando()">
-              {{ aplicando() ? 'Aplicando…' : 'Confirmar y fusionar' }}
+            <button class="btn btn-danger" (click)="confirmar()" [disabled]="aplicando()">
+              {{ aplicando() ? 'Aplicando…' : 'Sí, fusionar contactos' }}
             </button>
           </div>
         </div>
@@ -248,10 +254,18 @@ interface Confirmacion {
     .modal-head { padding:16px 22px; border-bottom:1px solid #eef1f5; }
     .modal-head h3 { margin:0; font-size:16px; color:#1a2b45; }
     .modal-body { padding:18px 22px; overflow:auto; }
-    .cf-row { font-size:14px; margin-bottom:6px; }
-    .cf-keep { color:#1f6f3b; font-weight:600; }
-    .cf-remove { color:#a8261b; font-weight:600; }
-    .cf-note { font-size:12.5px; color:#666; background:#fff8e1; border:1px solid #ffe7a3; border-radius:4px; padding:9px 12px; margin:12px 0; }
+    .cf-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:14px 0; }
+    .cf-card { border:1px solid #e6eaf0; border-radius:6px; padding:12px 14px; }
+    .cf-card.keep { background:#e8f5ea; border-color:#b6e0c2; }
+    .cf-card.remove { background:#fdecea; border-color:#f5c6c2; }
+    .cf-tag { font-size:11px; text-transform:uppercase; letter-spacing:.4px; font-weight:600; }
+    .cf-card.keep .cf-tag { color:#1f6f3b; }
+    .cf-card.remove .cf-tag { color:#a8261b; }
+    .cf-id { font-family:monospace; font-size:13px; color:#666; margin-top:4px; }
+    .cf-name { font-size:15px; font-weight:600; color:#222; }
+    .cf-note { font-size:12.5px; color:#8a6d1a; background:#fff8e1; border:1px solid #ffe7a3; border-radius:4px; padding:9px 12px; margin:0 0 4px; }
+    .btn-danger { background:#c62828; color:#fff; border:none; }
+    .btn-danger:hover:not(:disabled):not([disabled]) { background:#b71c1c; }
     .cf-changes-title { font-size:12px; text-transform:uppercase; letter-spacing:.4px; color:#666; margin:6px 0 8px; }
     .cf-changes { width:100%; border-collapse:collapse; font-size:13px; }
     .cf-changes th, .cf-changes td { border-bottom:1px solid #eef1f5; padding:7px 10px; text-align:left; vertical-align:top; }
