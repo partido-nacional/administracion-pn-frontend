@@ -27,8 +27,8 @@ import { exportarCSV } from '../../core/exportar-csv';
             <tr class="filter-row">
               <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fApellidos" (ngModelChange)="onFilter()"></th>
               <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fNombres" (ngModelChange)="onFilter()"></th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fCel" (ngModelChange)="onFilter()"></th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fMail" (ngModelChange)="onFilter()"></th>
+              <th></th>
+              <th></th>
               <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fPos" (ngModelChange)="onFilter()"></th>
             </tr>
           </thead>
@@ -74,7 +74,7 @@ export class DirectorioComponent implements OnInit {
   loading = signal(false);
   exporting = signal(false);
 
-  fApellidos = ''; fNombres = ''; fCel = ''; fMail = ''; fPos = '';
+  fApellidos = ''; fNombres = ''; fPos = '';
 
   private filter$ = new Subject<void>();
 
@@ -90,7 +90,7 @@ export class DirectorioComponent implements OnInit {
       page: this.page(), pageSize: this.pageSize(), sort: this.sort(), order: this.order(), all,
       filters: {
         apellidos: this.fApellidos, nombres: this.fNombres,
-        cel: this.fCel, mail: this.fMail, pos: this.fPos,
+        pos: this.fPos,
       },
     };
   }
