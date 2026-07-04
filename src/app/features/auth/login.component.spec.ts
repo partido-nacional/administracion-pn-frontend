@@ -3,8 +3,7 @@ import { Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 import { LoginComponent } from './login.component';
-import { AuthService } from '../../core/auth.service';
-import { LoginResponse } from '../../core/auth.service';
+import { AuthService, LoginResponse } from '../../core/auth.service';
 
 describe('LoginComponent', () => {
   let fixture: ComponentFixture<LoginComponent>;

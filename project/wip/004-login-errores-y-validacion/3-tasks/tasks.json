@@ -6,7 +6,7 @@
   },
   "stats": {
     "total": 5,
-    "done": 2,
+    "done": 5,
     "by_layer": {
       "1": 2,
       "2": 3
@@ -74,7 +74,7 @@
       "id": "TASK-003",
       "title": "Code review",
       "description": "Revisar el cambio FE: función mensajeError pura y testeable, tipado HttpErrorResponse, sin código muerto, naming y estilo consistentes con el codebase, sin regresión del binding ngModel/ngForm ni del spinner.",
-      "status": "pending",
+      "status": "completed",
       "layer": 2,
       "depends_on": [
         "TASK-001",
@@ -94,7 +94,7 @@
       "id": "TASK-004",
       "title": "Performance review",
       "description": "Verificar que no se introducen suscripciones colgadas ni submits concurrentes: el botón deshabilitado por loading evita doble envío; el subscribe se completa (o se maneja) sin fugas.",
-      "status": "pending",
+      "status": "completed",
       "layer": 2,
       "depends_on": [
         "TASK-001",
@@ -114,7 +114,7 @@
       "id": "TASK-005",
       "title": "Security review",
       "description": "Confirmar que no se expone el message crudo del backend en 5xx (textos propios en español), que el mapeo por status no filtra información sensible más allá del 401, y que no se agregan secretos ni credenciales en el componente (CLAUDE.md → Secrets).",
-      "status": "pending",
+      "status": "completed",
       "layer": 2,
       "depends_on": [
         "TASK-001",
