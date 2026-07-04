@@ -6,7 +6,7 @@ import { ContactosService, FichaAdhesionDetalle } from '../agenda/contactos.serv
 import { AdhesionesService } from './adhesiones.service';
 import { PageTitleService } from '../../core/page-title.service';
 import { CatalogosService } from '../../core/catalogos.service';
-import { resolverConfirmado, hoyISO } from './confirmado-baja.util';
+import { resolverConfirmado, hoyISO, normalizarFechaSalida } from './confirmado-baja.util';
 
 const SISTEMAS = ['Antel', 'OCA', 'VISA', 'MASTER', 'EBROU', 'ANUAL', 'Otro'];
 const DEPARTAMENTOS = [
@@ -260,6 +260,8 @@ export class NuevaFichaComponent {
   guardar() {
     const f = this.ficha();
     if (!f) return;
+    // Coherencia: una Baja siempre debe llevar fecha de salida (TODO-012).
+    normalizarFechaSalida(f);
     this.adhSvc.createLocal(f).subscribe(() => {
       this.router.navigate(['/agenda', this.contactoId, 'fichas']);
     });

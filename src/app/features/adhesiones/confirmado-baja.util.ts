@@ -37,3 +37,18 @@ export function resolverConfirmado(
   }
   return { aporteConfirmado: valor, fechaSalida: undefined };
 }
+
+/**
+ * Garantiza la coherencia de la ficha antes de guardar: una ficha en Baja
+ * (`aporteConfirmado === false`) siempre debe tener `fechaSalida`. Si el usuario
+ * la borró del `<input type="date">` inline, se completa con hoy (mismo default
+ * que prellena la UI). Muta y devuelve la misma ficha para poder encadenar.
+ */
+export function normalizarFechaSalida<
+  T extends { aporteConfirmado: boolean | null; fechaSalida?: string }
+>(ficha: T, hoy: string = hoyISO()): T {
+  if (ficha.aporteConfirmado === false && !ficha.fechaSalida) {
+    ficha.fechaSalida = hoy;
+  }
+  return ficha;
+}

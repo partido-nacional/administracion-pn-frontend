@@ -6,7 +6,7 @@ import { ContactosService, FichaAdhesion, FichaAdhesionDetalle } from '../agenda
 import { AdhesionesService } from './adhesiones.service';
 import { PageTitleService } from '../../core/page-title.service';
 import { CatalogosService } from '../../core/catalogos.service';
-import { resolverConfirmado } from './confirmado-baja.util';
+import { resolverConfirmado, normalizarFechaSalida } from './confirmado-baja.util';
 
 @Component({
   selector: 'app-fichas-contacto',
@@ -310,6 +310,9 @@ export class FichasContactoComponent {
   guardar() {
     const f = this.detalle();
     if (!f) return;
+    // Coherencia: una Baja siempre debe llevar fecha de salida (TODO-012).
+    normalizarFechaSalida(f);
+    this.detalle.set({ ...f });
     this.adhSvc.updateLocal(f).subscribe(() => {
       this.original = JSON.parse(JSON.stringify(f));
       this.editMode.set(false);
