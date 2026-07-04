@@ -2,9 +2,13 @@ import { Component, HostListener, computed, inject, signal } from '@angular/core
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { Subject, debounceTime } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { PageTitleService } from '../../core/page-title.service';
 import { AuthService } from '../../core/auth.service';
+import { PaginatorComponent } from '../../shared/components/paginator/paginator.component';
+import { GridQuery, PagedResult, SortOrder, DEFAULT_PAGE_SIZE } from '../../core/models/paged';
+import { buildPagedParams } from '../../core/services/paged';
 
 interface ProductoListado {
   id: number; nombre: string; descripcion?: string; precio: number;
@@ -20,7 +24,7 @@ type Tab = 'gestion' | 'listar' | 'ventas' | 'donaciones' | 'form';
 @Component({
   selector: 'app-productos',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PaginatorComponent],
   template: `
     <div class="tabs">
       <a class="tab" [class.active]="tab()==='gestion'"     (click)="tab.set('gestion')">Gestion Productos</a>
@@ -52,27 +56,31 @@ type Tab = 'gestion' | 'listar' | 'ventas' | 'donaciones' | 'form';
           <table class="table">
             <thead>
               <tr>
-                <th>Fecha</th><th>Producto</th><th>Tipo</th><th>Cantidad</th><th>Motivo</th><th>Observaciones</th>
+                <th class="sortable" (click)="sortMov('fecha')">Fecha {{ arrowMov('fecha') }}</th>
+                <th class="sortable" (click)="sortMov('producto')">Producto {{ arrowMov('producto') }}</th>
+                <th class="sortable" (click)="sortMov('tipo')">Tipo {{ arrowMov('tipo') }}</th>
+                <th class="sortable" (click)="sortMov('cantidad')">Cantidad {{ arrowMov('cantidad') }}</th>
+                <th>Motivo</th><th>Observaciones</th>
               </tr>
               <tr class="filter-row">
-                <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fmFecha()"    (ngModelChange)="fmFecha.set($event)"></th>
-                <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fmProducto()" (ngModelChange)="fmProducto.set($event)"></th>
+                <th><input type="text" class="column-filter" placeholder="dd/mm/aaaa" [ngModel]="fmFecha()"    (ngModelChange)="fmFecha.set($event); onFilterMov()"></th>
+                <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fmProducto()" (ngModelChange)="fmProducto.set($event); onFilterMov()"></th>
                 <th>
-                  <select class="column-filter" [ngModel]="fmTipo()" (ngModelChange)="fmTipo.set($event)">
+                  <select class="column-filter" [ngModel]="fmTipo()" (ngModelChange)="fmTipo.set($event); onFilterMov()">
                     <option value="">Todos</option><option>Alta</option><option>Baja</option>
                   </select>
                 </th>
-                <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fmCantidad()" (ngModelChange)="fmCantidad.set($event)"></th>
+                <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fmCantidad()" (ngModelChange)="fmCantidad.set($event); onFilterMov()"></th>
                 <th>
-                  <select class="column-filter" [ngModel]="fmMotivo()" (ngModelChange)="fmMotivo.set($event)">
+                  <select class="column-filter" [ngModel]="fmMotivo()" (ngModelChange)="fmMotivo.set($event); onFilterMov()">
                     <option value="">Todos</option><option>Ingreso</option><option>Venta</option><option>Donacion</option><option>Ajuste</option>
                   </select>
                 </th>
-                <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fmObs()" (ngModelChange)="fmObs.set($event)"></th>
+                <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fmObs()" (ngModelChange)="fmObs.set($event); onFilterMov()"></th>
               </tr>
             </thead>
             <tbody>
-              @for (m of movimientosFiltrados(); track $index) {
+              @for (m of movimientos(); track $index) {
                 <tr>
                   <td>{{ m.fecha }}</td>
                   <td><strong>{{ m.producto }}</strong></td>
@@ -86,14 +94,9 @@ type Tab = 'gestion' | 'listar' | 'ventas' | 'donaciones' | 'form';
               }
             </tbody>
           </table>
-          <div class="pagination" style="padding:16px 24px">
-            <span class="pagination-info">Mostrando 1–{{ movimientosFiltrados().length }} de {{ movimientos().length }} movimientos</span>
-            <div class="pagination-buttons">
-              <button class="page-btn">&lt;</button>
-              <button class="page-btn active">1</button>
-              <button class="page-btn">&gt;</button>
-            </div>
-          </div>
+          <app-paginator
+            [total]="movTotal()" [page]="movPage()" [pageSize]="movPageSize()"
+            (pageChange)="onMovPage($event)" (pageSizeChange)="onMovPageSize($event)" />
         </div>
       </div>
     }
@@ -107,16 +110,21 @@ type Tab = 'gestion' | 'listar' | 'ventas' | 'donaciones' | 'form';
           <table class="table">
             <thead>
               <tr>
-                <th>Id</th><th>Producto</th><th>Descripcion</th><th>Precio Unitario</th><th>Stock</th><th>Estado</th><th></th>
+                <th class="sortable" (click)="sortProd('id')">Id {{ arrowProd('id') }}</th>
+                <th class="sortable" (click)="sortProd('nombre')">Producto {{ arrowProd('nombre') }}</th>
+                <th>Descripcion</th>
+                <th class="sortable" (click)="sortProd('precio')">Precio Unitario {{ arrowProd('precio') }}</th>
+                <th class="sortable" (click)="sortProd('stock')">Stock {{ arrowProd('stock') }}</th>
+                <th>Estado</th><th></th>
               </tr>
               <tr class="filter-row">
-                <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fpId()"     (ngModelChange)="fpId.set($event)"></th>
-                <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fpNombre()" (ngModelChange)="fpNombre.set($event)"></th>
-                <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fpDesc()"   (ngModelChange)="fpDesc.set($event)"></th>
-                <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fpPrecio()" (ngModelChange)="fpPrecio.set($event)"></th>
-                <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fpStock()"  (ngModelChange)="fpStock.set($event)"></th>
+                <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fpId()"     (ngModelChange)="fpId.set($event); onFilterProd()"></th>
+                <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fpNombre()" (ngModelChange)="fpNombre.set($event); onFilterProd()"></th>
+                <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fpDesc()"   (ngModelChange)="fpDesc.set($event); onFilterProd()"></th>
+                <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fpPrecio()" (ngModelChange)="fpPrecio.set($event); onFilterProd()"></th>
+                <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fpStock()"  (ngModelChange)="fpStock.set($event); onFilterProd()"></th>
                 <th>
-                  <select class="column-filter" [ngModel]="fpEstado()" (ngModelChange)="fpEstado.set($event)">
+                  <select class="column-filter" [ngModel]="fpEstado()" (ngModelChange)="fpEstado.set($event); onFilterProd()">
                     <option value="">Todos</option><option>Disponible</option><option>Sin stock</option><option>Stock bajo</option>
                   </select>
                 </th>
@@ -124,7 +132,7 @@ type Tab = 'gestion' | 'listar' | 'ventas' | 'donaciones' | 'form';
               </tr>
             </thead>
             <tbody>
-              @for (p of productosFiltrados(); track p.id) {
+              @for (p of productos(); track p.id) {
                 <tr>
                   <td><strong>{{ p.id }}</strong></td>
                   <td>{{ p.nombre }}</td>
@@ -154,14 +162,9 @@ type Tab = 'gestion' | 'listar' | 'ventas' | 'donaciones' | 'form';
               }
             </tbody>
           </table>
-          <div class="pagination" style="padding:16px 24px">
-            <span class="pagination-info">Mostrando 1–{{ productosFiltrados().length }} de {{ productos().length }} productos</span>
-            <div class="pagination-buttons">
-              <button class="page-btn">&lt;</button>
-              <button class="page-btn active">1</button>
-              <button class="page-btn">&gt;</button>
-            </div>
-          </div>
+          <app-paginator
+            [total]="prodTotal()" [page]="prodPage()" [pageSize]="prodPageSize()"
+            (pageChange)="onProdPage($event)" (pageSizeChange)="onProdPageSize($event)" />
         </div>
       </div>
     }
@@ -430,6 +433,7 @@ type Tab = 'gestion' | 'listar' | 'ventas' | 'donaciones' | 'form';
     }
   `,
   styles: [`
+    th.sortable { cursor:pointer; user-select:none; }
     .topbar-inline { display:flex; justify-content:flex-end; margin-bottom:16px; }
     .vm-backdrop {
       position:fixed; inset:0; background:rgba(15,23,42,.55);
@@ -719,28 +723,59 @@ export class ProductosComponent {
 
   formP: Partial<ProductoListado> = { activo: true, precio: 0 };
 
-  movimientosFiltrados = computed(() => {
-    const t = (s: string, f: string) => !f || (s ?? '').toLowerCase().includes(f.toLowerCase());
-    const e = (s: string, f: string) => !f || s === f;
-    const fF = this.fmFecha(), fP = this.fmProducto(), fT = this.fmTipo(),
-          fC = this.fmCantidad(), fMo = this.fmMotivo(), fO = this.fmObs();
-    return this.movimientos().filter(m =>
-      t(m.fecha, fF) && t(m.producto, fP) && e(m.tipo, fT)
-      && t(String(m.cantidad), fC) && e(m.motivo, fMo) && t(m.observaciones, fO)
-    );
-  });
+  // Paginación productos
+  prodTotal = signal(0); prodPage = signal(1); prodPageSize = signal(DEFAULT_PAGE_SIZE);
+  prodSort = signal<string | undefined>(undefined); prodOrder = signal<SortOrder>('asc');
+  private prodFilter$ = new Subject<void>();
 
-  productosFiltrados = computed(() => {
-    const t = (s: string, f: string) => !f || (s ?? '').toLowerCase().includes(f.toLowerCase());
-    const e = (s: string, f: string) => !f || s === f;
-    const fId = this.fpId(), fNom = this.fpNombre(), fDesc = this.fpDesc(),
-          fPre = this.fpPrecio(), fSto = this.fpStock(), fEst = this.fpEstado();
-    return this.productos().filter(p =>
-      t(String(p.id), fId) && t(p.nombre, fNom)
-      && t(p.descripcion ?? '', fDesc) && t(String(p.precio), fPre)
-      && t(String(p.stock), fSto) && e(p.estado, fEst)
-    );
-  });
+  // Paginación movimientos
+  movTotal = signal(0); movPage = signal(1); movPageSize = signal(DEFAULT_PAGE_SIZE);
+  movSort = signal<string | undefined>(undefined); movOrder = signal<SortOrder>('asc');
+  private movFilter$ = new Subject<void>();
+
+  private prodQuery(): GridQuery {
+    return { page: this.prodPage(), pageSize: this.prodPageSize(), sort: this.prodSort(), order: this.prodOrder(),
+      filters: { id: this.fpId(), nombre: this.fpNombre(), desc: this.fpDesc(), precio: this.fpPrecio(), stock: this.fpStock(), estado: this.fpEstado() } };
+  }
+  private movQuery(): GridQuery {
+    return { page: this.movPage(), pageSize: this.movPageSize(), sort: this.movSort(), order: this.movOrder(),
+      filters: { fecha: this.toIsoDate(this.fmFecha()), producto: this.fmProducto(), tipo: this.fmTipo(), cantidad: this.fmCantidad(), motivo: this.fmMotivo(), obs: this.fmObs() } };
+  }
+
+  loadProductos() {
+    this.http.get<PagedResult<ProductoListado>>(`${environment.apiUrl}/productos`, { params: buildPagedParams(this.prodQuery()) })
+      .subscribe({ next: r => { this.productos.set(r.items); this.prodTotal.set(r.total); }, error: () => {} });
+  }
+  loadMovimientos() {
+    this.http.get<PagedResult<Movimiento>>(`${environment.apiUrl}/productos/movimientos`, { params: buildPagedParams(this.movQuery()) })
+      .subscribe({ next: r => { this.movimientos.set(r.items); this.movTotal.set(r.total); }, error: () => {} });
+  }
+
+  onFilterProd() { this.prodFilter$.next(); }
+  onProdPage(p: number) { this.prodPage.set(p); this.loadProductos(); }
+  onProdPageSize(s: number) { this.prodPageSize.set(s); this.prodPage.set(1); this.loadProductos(); }
+  sortProd(field: string) {
+    if (this.prodSort() === field) this.prodOrder.set(this.prodOrder() === 'asc' ? 'desc' : 'asc');
+    else { this.prodSort.set(field); this.prodOrder.set('asc'); }
+    this.prodPage.set(1); this.loadProductos();
+  }
+  arrowProd(field: string) { return this.prodSort() !== field ? '' : (this.prodOrder() === 'asc' ? '▲' : '▼'); }
+
+  onFilterMov() { this.movFilter$.next(); }
+  onMovPage(p: number) { this.movPage.set(p); this.loadMovimientos(); }
+  onMovPageSize(s: number) { this.movPageSize.set(s); this.movPage.set(1); this.loadMovimientos(); }
+  sortMov(field: string) {
+    if (this.movSort() === field) this.movOrder.set(this.movOrder() === 'asc' ? 'desc' : 'asc');
+    else { this.movSort.set(field); this.movOrder.set('asc'); }
+    this.movPage.set(1); this.loadMovimientos();
+  }
+  arrowMov(field: string) { return this.movSort() !== field ? '' : (this.movOrder() === 'asc' ? '▲' : '▼'); }
+
+  /** dd/mm/aaaa -> yyyy-mm-dd (undefined si incompleto) */
+  private toIsoDate(s: string): string | undefined {
+    const m = (s || '').trim().match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    return m ? `${m[3]}-${m[2]}-${m[1]}` : undefined;
+  }
 
   ventasFiltradas = computed(() => {
     const f = this.fvComprador();
@@ -754,13 +789,15 @@ export class ProductosComponent {
 
   constructor() {
     this.titleSvc.set('Productos');
+    this.prodFilter$.pipe(debounceTime(300)).subscribe(() => { this.prodPage.set(1); this.loadProductos(); });
+    this.movFilter$.pipe(debounceTime(300)).subscribe(() => { this.movPage.set(1); this.loadMovimientos(); });
     this.reload();
   }
 
   reload() {
-    this.http.get<ProductoListado[]>(`${environment.apiUrl}/productos`).subscribe(x => this.productos.set(x));
+    this.loadProductos();
+    this.loadMovimientos();
     this.http.get<Stats>(`${environment.apiUrl}/productos/stats`).subscribe(x => this.stats.set(x));
-    this.http.get<Movimiento[]>(`${environment.apiUrl}/productos/movimientos`).subscribe(x => this.movimientos.set(x));
     this.http.get<Venta[]>(`${environment.apiUrl}/ventas`).subscribe(x => this.ventas.set(x));
     this.http.get<Donacion[]>(`${environment.apiUrl}/donaciones`).subscribe(x => this.donaciones.set(x));
   }
