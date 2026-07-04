@@ -1,4 +1,4 @@
-import { resolverConfirmado, hoyISO } from './confirmado-baja.util';
+import { resolverConfirmado, hoyISO, normalizarFechaSalida } from './confirmado-baja.util';
 
 describe('resolverConfirmado', () => {
   const HOY = '2026-07-04';
@@ -37,5 +37,41 @@ describe('resolverConfirmado', () => {
 
   it('hoyISO devuelve formato YYYY-MM-DD', () => {
     expect(hoyISO()).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+});
+
+describe('normalizarFechaSalida', () => {
+  const HOY = '2026-07-04';
+  type Ficha = { aporteConfirmado: boolean | null; fechaSalida?: string };
+
+  // TODO-012: baja sin fecha → completa con hoy
+  it('baja (false) sin fechaSalida la completa con hoy', () => {
+    const f: Ficha = { aporteConfirmado: false, fechaSalida: undefined };
+    normalizarFechaSalida(f, HOY);
+    expect(f.fechaSalida).toBe(HOY);
+  });
+
+  it('baja (false) sin fechaSalida (string vacío) la completa con hoy', () => {
+    const f: Ficha = { aporteConfirmado: false, fechaSalida: '' };
+    normalizarFechaSalida(f, HOY);
+    expect(f.fechaSalida).toBe(HOY);
+  });
+
+  it('baja (false) con fechaSalida no la toca', () => {
+    const f: Ficha = { aporteConfirmado: false, fechaSalida: '2020-01-01' };
+    normalizarFechaSalida(f, HOY);
+    expect(f.fechaSalida).toBe('2020-01-01');
+  });
+
+  it('activa (true) sin fechaSalida no completa nada', () => {
+    const f: Ficha = { aporteConfirmado: true, fechaSalida: undefined };
+    normalizarFechaSalida(f, HOY);
+    expect(f.fechaSalida).toBeUndefined();
+  });
+
+  it('pendiente (null) sin fechaSalida no completa nada', () => {
+    const f: Ficha = { aporteConfirmado: null, fechaSalida: undefined };
+    normalizarFechaSalida(f, HOY);
+    expect(f.fechaSalida).toBeUndefined();
   });
 });
