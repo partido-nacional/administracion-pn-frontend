@@ -1,9 +1,13 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { Subject, debounceTime } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { imprimirAgrupacion } from './imprimir-agrupacion';
+import { PaginatorComponent } from '../../shared/components/paginator/paginator.component';
+import { GridQuery, PagedResult, SortOrder, DEFAULT_PAGE_SIZE } from '../../core/models/paged';
+import { buildPagedParams } from '../../core/services/paged';
 
 interface IntegranteRow {
   id: number;
@@ -68,51 +72,51 @@ interface AgrupacionPeriodoRow {
 @Component({
   selector: 'app-agrupaciones-por-periodo',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PaginatorComponent],
   template: `
     <div class="sort-hint">
-      💡 Click en una columna para ordenar. <strong>Shift+Click</strong> para agregarla como orden secundario.
+      💡 Click en una columna para ordenar (server-side).
     </div>
     <div class="card"><div class="card-body" style="padding:0; overflow-x:auto">
       <table class="table">
         <thead>
           <tr>
             <th style="width:34px"></th>
-            <th class="sortable" (click)="onSort('periodoId', $event)">Id <span class="ind">{{ indicador('periodoId') }}</span></th>
-            <th class="sortable" (click)="onSort('periodo', $event)">Período <span class="ind">{{ indicador('periodo') }}</span></th>
-            <th class="sortable" (click)="onSort('pendiente', $event)">Estado <span class="ind">{{ indicador('pendiente') }}</span></th>
-            <th class="sortable" (click)="onSort('agrupacionId', $event)">Id Agr. <span class="ind">{{ indicador('agrupacionId') }}</span></th>
-            <th class="sortable" (click)="onSort('codAgrup', $event)">Cod. Agrup. <span class="ind">{{ indicador('codAgrup') }}</span></th>
-            <th class="sortable" (click)="onSort('codDepto', $event)">Cod. Depto. <span class="ind">{{ indicador('codDepto') }}</span></th>
-            <th class="sortable" (click)="onSort('tipo', $event)">Tipo <span class="ind">{{ indicador('tipo') }}</span></th>
-            <th class="sortable" (click)="onSort('nombre', $event)">Nombre <span class="ind">{{ indicador('nombre') }}</span></th>
-            <th class="sortable" (click)="onSort('depto', $event)">Depto. <span class="ind">{{ indicador('depto') }}</span></th>
-            <th class="sortable" (click)="onSort('sector', $event)">Sector <span class="ind">{{ indicador('sector') }}</span></th>
+            <th class="sortable" (click)="onSort('id')">Id <span class="ind">{{ indicador('id') }}</span></th>
+            <th class="sortable" (click)="onSort('periodo')">Período <span class="ind">{{ indicador('periodo') }}</span></th>
+            <th class="sortable" (click)="onSort('pendiente')">Estado <span class="ind">{{ indicador('pendiente') }}</span></th>
+            <th class="sortable" (click)="onSort('agrid')">Id Agr. <span class="ind">{{ indicador('agrid') }}</span></th>
+            <th class="sortable" (click)="onSort('codagrup')">Cod. Agrup. <span class="ind">{{ indicador('codagrup') }}</span></th>
+            <th class="sortable" (click)="onSort('coddepto')">Cod. Depto. <span class="ind">{{ indicador('coddepto') }}</span></th>
+            <th class="sortable" (click)="onSort('tipo')">Tipo <span class="ind">{{ indicador('tipo') }}</span></th>
+            <th class="sortable" (click)="onSort('nombre')">Nombre <span class="ind">{{ indicador('nombre') }}</span></th>
+            <th class="sortable" (click)="onSort('depto')">Depto. <span class="ind">{{ indicador('depto') }}</span></th>
+            <th class="sortable" (click)="onSort('sector')">Sector <span class="ind">{{ indicador('sector') }}</span></th>
             <th>Sublemas</th>
-            <th class="sortable" (click)="onSort('asuntosPoliticos', $event)" title="Asuntos Políticos">AP <span class="ind">{{ indicador('asuntosPoliticos') }}</span></th>
+            <th class="sortable" (click)="onSort('ap')" title="Asuntos Políticos">AP <span class="ind">{{ indicador('ap') }}</span></th>
             <th></th>
           </tr>
           <tr class="filter-row">
             <th></th>
-            <th><input class="column-filter" [ngModel]="fId()"     (ngModelChange)="fId.set($event)"     placeholder="Filtrar..."></th>
+            <th><input class="column-filter" [ngModel]="fId()"     (ngModelChange)="fId.set($event); onFilter()"     placeholder="Filtrar..."></th>
             <th>
-              <select class="column-filter" [ngModel]="fPeriodo()" (ngModelChange)="fPeriodo.set($event)">
+              <select class="column-filter" [ngModel]="fPeriodo()" (ngModelChange)="fPeriodo.set($event); onFilter()">
                 <option value="">Todos</option>
                 @for (p of periodos(); track p) { <option [ngValue]="p">{{ p }}</option> }
               </select>
             </th>
             <th>
-              <select class="column-filter" [ngModel]="fPend()" (ngModelChange)="fPend.set($event)">
+              <select class="column-filter" [ngModel]="fPend()" (ngModelChange)="fPend.set($event); onFilter()">
                 <option value="">Todos</option>
                 <option value="si">Pendiente</option>
                 <option value="no">Aprobada</option>
               </select>
             </th>
-            <th><input class="column-filter" [ngModel]="fAgrId()"  (ngModelChange)="fAgrId.set($event)"  placeholder="Filtrar..."></th>
-            <th><input class="column-filter" [ngModel]="fCod()"    (ngModelChange)="fCod.set($event)"    placeholder="Filtrar..."></th>
-            <th><input class="column-filter" [ngModel]="fCodDep()" (ngModelChange)="fCodDep.set($event)" placeholder="Filtrar..."></th>
+            <th><input class="column-filter" [ngModel]="fAgrId()"  (ngModelChange)="fAgrId.set($event); onFilter()"  placeholder="Filtrar..."></th>
+            <th><input class="column-filter" [ngModel]="fCod()"    (ngModelChange)="fCod.set($event); onFilter()"    placeholder="Filtrar..."></th>
+            <th><input class="column-filter" [ngModel]="fCodDep()" (ngModelChange)="fCodDep.set($event); onFilter()" placeholder="Filtrar..."></th>
             <th>
-              <select class="column-filter" [ngModel]="fTipo()" (ngModelChange)="fTipo.set($event)">
+              <select class="column-filter" [ngModel]="fTipo()" (ngModelChange)="fTipo.set($event); onFilter()">
                 <option value="">Todos</option>
                 <option value="D">D</option>
                 <option value="N">N</option>
@@ -120,17 +124,17 @@ interface AgrupacionPeriodoRow {
                 <option value="NACIONAL">NACIONAL</option>
               </select>
             </th>
-            <th><input class="column-filter" [ngModel]="fNombre()" (ngModelChange)="fNombre.set($event)" placeholder="Filtrar..."></th>
+            <th><input class="column-filter" [ngModel]="fNombre()" (ngModelChange)="fNombre.set($event); onFilter()" placeholder="Filtrar..."></th>
             <th>
-              <select class="column-filter" [ngModel]="fDepto()" (ngModelChange)="fDepto.set($event)">
+              <select class="column-filter" [ngModel]="fDepto()" (ngModelChange)="fDepto.set($event); onFilter()">
                 <option value="">Todos</option>
                 @for (d of deptos(); track d) { <option [ngValue]="d">{{ d }}</option> }
               </select>
             </th>
-            <th><input class="column-filter" [ngModel]="fSector()" (ngModelChange)="fSector.set($event)" placeholder="Filtrar..."></th>
-            <th><input class="column-filter" [ngModel]="fSublema()" (ngModelChange)="fSublema.set($event)" placeholder="Filtrar..."></th>
+            <th><input class="column-filter" [ngModel]="fSector()" (ngModelChange)="fSector.set($event); onFilter()" placeholder="Filtrar..."></th>
+            <th><input class="column-filter" [ngModel]="fSublema()" (ngModelChange)="fSublema.set($event); onFilter()" placeholder="Filtrar..."></th>
             <th>
-              <select class="column-filter" [ngModel]="fAP()" (ngModelChange)="fAP.set($event)">
+              <select class="column-filter" [ngModel]="fAP()" (ngModelChange)="fAP.set($event); onFilter()">
                 <option value="">Todos</option>
                 <option value="si">Sí</option>
                 <option value="no">No</option>
@@ -140,7 +144,7 @@ interface AgrupacionPeriodoRow {
           </tr>
         </thead>
         <tbody>
-          @for (r of filtrados(); track r.periodoId) {
+          @for (r of items(); track r.periodoId) {
             <tr class="clickable" [class.selected]="expandido() === r.periodoId" (click)="toggle(r.periodoId)">
               <td class="caret">{{ expandido() === r.periodoId ? '▾' : '▸' }}</td>
               <td>{{ r.periodoId }}</td>
@@ -303,9 +307,9 @@ interface AgrupacionPeriodoRow {
           }
         </tbody>
       </table>
-      <div class="footer">
-        Mostrando {{ filtrados().length }} de {{ items().length }} agrupaciones-período
-      </div>
+      <app-paginator
+        [total]="total()" [page]="page()" [pageSize]="pageSize()"
+        (pageChange)="onPage($event)" (pageSizeChange)="onPageSize($event)" />
     </div></div>
 
     @if (modalEditar()) {
@@ -434,50 +438,39 @@ export class AgrupacionesPorPeriodoComponent {
   items = signal<AgrupacionPeriodoRow[]>([]);
   expandido = signal<number | null>(null);
 
-  // [{col, dir}] — orden por defecto: periodo desc, luego nombre asc
-  sortBy = signal<{col: keyof AgrupacionPeriodoRow; dir: 'asc' | 'desc'}[]>([
-    { col: 'periodo', dir: 'desc' },
-    { col: 'nombre', dir: 'asc' }
-  ]);
+  total = signal(0);
+  page = signal(1);
+  pageSize = signal(DEFAULT_PAGE_SIZE);
+  sort = signal<string | undefined>(undefined);
+  order = signal<SortOrder>('asc');
+  private filter$ = new Subject<void>();
 
   toggle(id: number) {
     this.expandido.set(this.expandido() === id ? null : id);
   }
 
-  onSort(col: keyof AgrupacionPeriodoRow, ev: MouseEvent) {
-    const current = [...this.sortBy()];
-    const idx = current.findIndex(s => s.col === col);
-    if (ev.shiftKey) {
-      if (idx >= 0) {
-        current[idx] = { col, dir: current[idx].dir === 'asc' ? 'desc' : 'asc' };
-      } else {
-        current.push({ col, dir: 'asc' });
-      }
-      this.sortBy.set(current);
-    } else {
-      if (idx === 0 && current.length === 1) {
-        this.sortBy.set([{ col, dir: current[0].dir === 'asc' ? 'desc' : 'asc' }]);
-      } else {
-        this.sortBy.set([{ col, dir: 'asc' }]);
-      }
-    }
+  onSort(field: string) {
+    if (this.sort() === field) this.order.set(this.order() === 'asc' ? 'desc' : 'asc');
+    else { this.sort.set(field); this.order.set('asc'); }
+    this.page.set(1);
+    this.load();
   }
 
-  indicador(col: keyof AgrupacionPeriodoRow): string {
-    const sorts = this.sortBy();
-    const idx = sorts.findIndex(s => s.col === col);
-    if (idx < 0) return '';
-    const arrow = sorts[idx].dir === 'asc' ? '▲' : '▼';
-    return sorts.length > 1 ? `${arrow}${idx + 1}` : arrow;
+  indicador(field: string): string {
+    return this.sort() !== field ? '' : (this.order() === 'asc' ? '▲' : '▼');
   }
+
+  onPage(p: number) { this.page.set(p); this.load(); }
+  onPageSize(size: number) { this.pageSize.set(size); this.page.set(1); this.load(); }
+  onFilter() { this.filter$.next(); }
 
   fId = signal(''); fPeriodo = signal(''); fPend = signal('');
   fAgrId = signal(''); fCod = signal(''); fCodDep = signal('');
   fTipo = signal(''); fNombre = signal(''); fDepto = signal('');
   fSector = signal(''); fSublema = signal(''); fAP = signal('');
 
-  periodos = computed(() => Array.from(new Set(this.items().map(a => a.periodo).filter(Boolean))).sort());
-  deptos   = computed(() => Array.from(new Set(this.items().map(a => a.depto).filter((d): d is string => !!d))).sort());
+  periodos = signal<string[]>([]);
+  deptos = signal<string[]>([]);
 
   // ── Editar período (sublemas) ──────────────────────────────
   modalEditar = signal<AgrupacionPeriodoRow | null>(null);
@@ -522,7 +515,7 @@ export class AgrupacionesPorPeriodoComponent {
       next: () => {
         this.edBusy.set(false);
         this.cerrarEditar();
-        this.http.get<AgrupacionPeriodoRow[]>(`${environment.apiUrl}/agrupaciones-periodos`).subscribe(x => this.items.set(x));
+        this.load();
       },
       error: (err) => {
         this.edBusy.set(false);
@@ -576,51 +569,32 @@ export class AgrupacionesPorPeriodoComponent {
     return s.length ? s.join(', ') : '—';
   }
 
-  filtrados = computed(() => {
-    const norm = (s: any) => (s ?? '').toString().toLowerCase();
-    const m = (val: any, q: string) => !q || norm(val).includes(q.toLowerCase());
-    const fId = this.fId(), fPer = this.fPeriodo(), fPend = this.fPend(),
-          fAgrId = this.fAgrId(), fCod = this.fCod(), fCodDep = this.fCodDep(),
-          fTipo = this.fTipo(), fNom = this.fNombre(), fDep = this.fDepto(),
-          fSec = this.fSector(), fSub = this.fSublema(), fAP = this.fAP();
-    const filtered = this.items().filter(r =>
-      m(r.periodoId, fId) &&
-      (!fPer || r.periodo === fPer) &&
-      (!fPend || (fPend === 'si' ? r.pendiente : !r.pendiente)) &&
-      m(r.agrupacionId, fAgrId) &&
-      m(r.codAgrup, fCod) &&
-      m(r.codDepto, fCodDep) &&
-      (!fTipo || r.tipo === fTipo) &&
-      m(r.nombre, fNom) &&
-      (!fDep || r.depto === fDep) &&
-      m(r.sector, fSec) &&
-      m(this.joinSublemas(r), fSub) &&
-      (!fAP || (fAP === 'si' ? r.asuntosPoliticos : !r.asuntosPoliticos))
-    );
+  private base = `${environment.apiUrl}/agrupaciones-periodos`;
 
-    const sorts = this.sortBy();
-    if (sorts.length === 0) return filtered;
+  private query(): GridQuery {
+    return {
+      page: this.page(), pageSize: this.pageSize(), sort: this.sort(), order: this.order(),
+      filters: {
+        id: this.fId(), periodo: this.fPeriodo(), pend: this.fPend(),
+        agrId: this.fAgrId(), cod: this.fCod(), codDep: this.fCodDep(),
+        tipo: this.fTipo(), nombre: this.fNombre(), depto: this.fDepto(),
+        sector: this.fSector(), sublema: this.fSublema(), ap: this.fAP(),
+      },
+    };
+  }
 
-    return [...filtered].sort((a, b) => {
-      for (const { col, dir } of sorts) {
-        const av = (a as any)[col], bv = (b as any)[col];
-        const c = this.cmp(av, bv);
-        if (c !== 0) return dir === 'asc' ? c : -c;
-      }
-      return 0;
-    });
-  });
-
-  private cmp(a: any, b: any): number {
-    if (a == null && b == null) return 0;
-    if (a == null) return 1;
-    if (b == null) return -1;
-    if (typeof a === 'number' && typeof b === 'number') return a - b;
-    if (typeof a === 'boolean' && typeof b === 'boolean') return (a ? 1 : 0) - (b ? 1 : 0);
-    return String(a).localeCompare(String(b), 'es', { sensitivity: 'base', numeric: true });
+  load() {
+    this.http.get<PagedResult<AgrupacionPeriodoRow>>(this.base, { params: buildPagedParams(this.query()) })
+      .subscribe({
+        next: r => { this.items.set(r.items); this.total.set(r.total); },
+        error: () => { this.items.set([]); this.total.set(0); },
+      });
   }
 
   constructor() {
-    this.http.get<AgrupacionPeriodoRow[]>(`${environment.apiUrl}/agrupaciones-periodos`).subscribe(x => this.items.set(x));
+    this.filter$.pipe(debounceTime(300)).subscribe(() => { this.page.set(1); this.load(); });
+    this.http.get<{ periodos: string[]; deptos: string[] }>(`${this.base}/opciones`)
+      .subscribe(o => { this.periodos.set(o.periodos ?? []); this.deptos.set(o.deptos ?? []); });
+    this.load();
   }
 }

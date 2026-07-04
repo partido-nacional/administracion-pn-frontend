@@ -4,6 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { imprimirAgrupacion } from './imprimir-agrupacion';
+import { PaginatorComponent } from '../../shared/components/paginator/paginator.component';
+import { GridQuery, PagedResult, SortOrder, DEFAULT_PAGE_SIZE } from '../../core/models/paged';
+import { buildPagedParams } from '../../core/services/paged';
 
 interface AgrupacionPendiente {
   id: number;
@@ -30,7 +33,7 @@ const DEPARTAMENTOS = [
 @Component({
   selector: 'app-agrupaciones-pendientes',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PaginatorComponent],
   template: `
     @if (loading()) {
       <div class="card"><div class="card-body"><div class="empty-state"><div class="empty-state-text">Cargando agrupaciones pendientes…</div></div></div></div>
@@ -42,8 +45,12 @@ const DEPARTAMENTOS = [
           <thead>
             <tr>
               <th style="width:34px"></th>
-              <th>Id</th><th>Cod. Agrup.</th><th>Cod. Depto.</th>
-              <th>Tipo</th><th>Nombre</th><th>Depto.</th>
+              <th class="sortable" (click)="sortBy('id')">Id {{ arrow('id') }}</th>
+              <th class="sortable" (click)="sortBy('codagrup')">Cod. Agrup. {{ arrow('codagrup') }}</th>
+              <th class="sortable" (click)="sortBy('coddepto')">Cod. Depto. {{ arrow('coddepto') }}</th>
+              <th class="sortable" (click)="sortBy('tipo')">Tipo {{ arrow('tipo') }}</th>
+              <th class="sortable" (click)="sortBy('nombre')">Nombre {{ arrow('nombre') }}</th>
+              <th class="sortable" (click)="sortBy('depto')">Depto. {{ arrow('depto') }}</th>
               <th>Origen</th><th></th>
             </tr>
           </thead>
@@ -144,6 +151,9 @@ const DEPARTAMENTOS = [
             }
           </tbody>
         </table>
+        <app-paginator
+          [total]="total()" [page]="page()" [pageSize]="pageSize()"
+          (pageChange)="onPage($event)" (pageSizeChange)="onPageSize($event)" />
       </div></div>
     }
 
@@ -258,6 +268,7 @@ const DEPARTAMENTOS = [
     }
   `,
   styles: [`
+    th.sortable { cursor:pointer; user-select:none; }
     tr.clickable { cursor:pointer; }
     tr.clickable:hover { background:#f5f8ff; }
     tr.selected { background:#e6efff !important; }
@@ -331,6 +342,12 @@ export class AgrupacionesPendientesComponent {
   loading = signal(true);
   expandido = signal<number | null>(null);
 
+  total = signal(0);
+  page = signal(1);
+  pageSize = signal(DEFAULT_PAGE_SIZE);
+  sort = signal<string | undefined>(undefined);
+  order = signal<SortOrder>('asc');
+
   modal = signal<'editar' | 'aprobar' | null>(null);
   editandoId = signal<number | null>(null);
   busy = signal(false);
@@ -344,11 +361,22 @@ export class AgrupacionesPendientesComponent {
 
   cargar() {
     this.loading.set(true);
-    this.http.get<AgrupacionPendiente[]>(this.base).subscribe({
-      next: (x) => { this.items.set(x); this.loading.set(false); },
+    const q: GridQuery = { page: this.page(), pageSize: this.pageSize(), sort: this.sort(), order: this.order() };
+    this.http.get<PagedResult<AgrupacionPendiente>>(this.base, { params: buildPagedParams(q) }).subscribe({
+      next: (r) => { this.items.set(r.items); this.total.set(r.total); this.loading.set(false); },
       error: () => { this.items.set([]); this.loading.set(false); }
     });
   }
+
+  onPage(p: number) { this.page.set(p); this.cargar(); }
+  onPageSize(size: number) { this.pageSize.set(size); this.page.set(1); this.cargar(); }
+  sortBy(field: string) {
+    if (this.sort() === field) this.order.set(this.order() === 'asc' ? 'desc' : 'asc');
+    else { this.sort.set(field); this.order.set('asc'); }
+    this.page.set(1);
+    this.cargar();
+  }
+  arrow(field: string) { return this.sort() !== field ? '' : (this.order() === 'asc' ? '▲' : '▼'); }
 
   toggle(id: number) {
     this.expandido.set(this.expandido() === id ? null : id);

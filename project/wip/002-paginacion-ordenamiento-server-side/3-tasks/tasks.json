@@ -9,7 +9,7 @@
   },
   "stats": {
     "total": 15,
-    "done": 6,
+    "done": 7,
     "by_layer": {
       "1": 12,
       "2": 3
@@ -273,7 +273,7 @@
       "id": "TASK-010",
       "title": "Replicar agrupaciones (BE+FE)",
       "description": "Aplicar paginado/orden a /agrupaciones, /agrupaciones-periodos, /fichas-agrupacion y /agrupaciones-pendientes. Front: agrupaciones, agrupaciones-por-periodo, fichas-agrupacion, agrupaciones-pendientes.",
-      "status": "pending",
+      "status": "done",
       "layer": 1,
       "depends_on": [
         "TASK-007"
@@ -298,7 +298,8 @@
         "US-1",
         "US-2",
         "US-3"
-      ]
+      ],
+      "note": "4 grillas agrupaciones paginadas BE+FE; CI verde; periodo full filtros + /opciones"
     },
     {
       "id": "TASK-011",

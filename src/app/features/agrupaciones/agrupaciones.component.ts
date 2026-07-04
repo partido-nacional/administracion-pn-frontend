@@ -7,6 +7,9 @@ import { PageTitleService } from '../../core/page-title.service';
 import { FichasAgrupacionComponent } from './fichas-agrupacion.component';
 import { AgrupacionesPendientesComponent } from './agrupaciones-pendientes.component';
 import { AgrupacionesPorPeriodoComponent } from './agrupaciones-por-periodo.component';
+import { PaginatorComponent } from '../../shared/components/paginator/paginator.component';
+import { GridQuery, PagedResult, SortOrder, DEFAULT_PAGE_SIZE } from '../../core/models/paged';
+import { buildPagedParams } from '../../core/services/paged';
 
 interface Agrupacion {
   id: number; codAgrup: string; codDepto: string; pendiente: boolean; tipo: string; solic: number;
@@ -28,7 +31,7 @@ type Tab = 'todas' | 'pendientes' | 'fichas' | 'periodo' | 'padron';
 @Component({
   selector: 'app-agrupaciones',
   standalone: true,
-  imports: [CommonModule, FormsModule, FichasAgrupacionComponent, AgrupacionesPendientesComponent, AgrupacionesPorPeriodoComponent],
+  imports: [CommonModule, FormsModule, FichasAgrupacionComponent, AgrupacionesPendientesComponent, AgrupacionesPorPeriodoComponent, PaginatorComponent],
   template: `
     <div class="topbar-inline">
       <button class="btn btn-primary" (click)="abrirNueva()">+ Nueva Agrupación</button>
@@ -148,26 +151,26 @@ type Tab = 'todas' | 'pendientes' | 'fichas' | 'periodo' | 'padron';
 
     @if (tab()==='todas') {
       <div class="sort-hint">
-        💡 Click en una columna para ordenar. <strong>Shift+Click</strong> para agregarla como orden secundario.
+        💡 Click en una columna para ordenar (server-side).
       </div>
       <div class="card"><div class="card-body" style="padding:0;overflow-x:auto">
         <table class="table">
           <thead>
             <tr>
               <th style="width:34px"></th>
-              <th class="sortable" (click)="onSort('id', $event)">Id <span class="ind">{{ indicador('id') }}</span></th>
-              <th class="sortable" (click)="onSort('codAgrup', $event)">Cod. Agrup. <span class="ind">{{ indicador('codAgrup') }}</span></th>
-              <th class="sortable" (click)="onSort('codDepto', $event)">Cod. Depto. <span class="ind">{{ indicador('codDepto') }}</span></th>
-              <th class="sortable" (click)="onSort('pendiente', $event)">Pendiente <span class="ind">{{ indicador('pendiente') }}</span></th>
-              <th class="sortable" (click)="onSort('tipo', $event)">Tipo <span class="ind">{{ indicador('tipo') }}</span></th>
-              <th class="sortable" (click)="onSort('solic', $event)">Solic. <span class="ind">{{ indicador('solic') }}</span></th>
-              <th class="sortable" (click)="onSort('nombre', $event)">Nombre <span class="ind">{{ indicador('nombre') }}</span></th>
-              <th class="sortable" (click)="onSort('depto', $event)">Depto. <span class="ind">{{ indicador('depto') }}</span></th>
+              <th class="sortable" (click)="onSort('id')">Id <span class="ind">{{ indicador('id') }}</span></th>
+              <th class="sortable" (click)="onSort('codagrup')">Cod. Agrup. <span class="ind">{{ indicador('codagrup') }}</span></th>
+              <th class="sortable" (click)="onSort('coddepto')">Cod. Depto. <span class="ind">{{ indicador('coddepto') }}</span></th>
+              <th class="sortable" (click)="onSort('pendiente')">Pendiente <span class="ind">{{ indicador('pendiente') }}</span></th>
+              <th class="sortable" (click)="onSort('tipo')">Tipo <span class="ind">{{ indicador('tipo') }}</span></th>
+              <th class="sortable" (click)="onSort('solic')">Solic. <span class="ind">{{ indicador('solic') }}</span></th>
+              <th class="sortable" (click)="onSort('nombre')">Nombre <span class="ind">{{ indicador('nombre') }}</span></th>
+              <th class="sortable" (click)="onSort('depto')">Depto. <span class="ind">{{ indicador('depto') }}</span></th>
               <th></th>
             </tr>
           </thead>
           <tbody>
-            @for (a of agrupacionesOrdenadas(); track a.id) {
+            @for (a of agrupaciones(); track a.id) {
               <tr class="clickable" [class.selected]="expandido() === a.id" (click)="toggleRow(a.id)">
                 <td class="caret">{{ expandido() === a.id ? '▾' : '▸' }}</td>
                 <td>{{ a.id }}</td>
@@ -262,10 +265,15 @@ type Tab = 'todas' | 'pendientes' | 'fichas' | 'periodo' | 'padron';
                 </tr>
               }
             } @empty {
-              <tr><td colspan="10"><div class="empty-state"><div class="empty-state-text">Sin agrupaciones</div></div></td></tr>
+              <tr><td colspan="10"><div class="empty-state"><div class="empty-state-text">
+                {{ loadingTodas() ? 'Cargando…' : 'Sin agrupaciones' }}
+              </div></div></td></tr>
             }
           </tbody>
         </table>
+        <app-paginator
+          [total]="total()" [page]="page()" [pageSize]="pageSize()"
+          (pageChange)="onPage($event)" (pageSizeChange)="onPageSize($event)" />
       </div></div>
     }
 
@@ -442,58 +450,26 @@ export class AgrupacionesComponent {
   });
   expandido = signal<number | null>(null);
 
-  sortBy = signal<{col: keyof Agrupacion; dir: 'asc' | 'desc'}[]>([
-    { col: 'nombre', dir: 'asc' }
-  ]);
+  total = signal(0);
+  page = signal(1);
+  pageSize = signal(DEFAULT_PAGE_SIZE);
+  sort = signal<string | undefined>(undefined);
+  order = signal<SortOrder>('asc');
+  loadingTodas = signal(false);
 
-  agrupacionesOrdenadas = computed(() => {
-    const sorts = this.sortBy();
-    if (sorts.length === 0) return this.agrupaciones();
-    return [...this.agrupaciones()].sort((a, b) => {
-      for (const { col, dir } of sorts) {
-        const av = (a as any)[col], bv = (b as any)[col];
-        const c = this.cmp(av, bv);
-        if (c !== 0) return dir === 'asc' ? c : -c;
-      }
-      return 0;
-    });
-  });
-
-  onSort(col: keyof Agrupacion, ev: MouseEvent) {
-    const current = [...this.sortBy()];
-    const idx = current.findIndex(s => s.col === col);
-    if (ev.shiftKey) {
-      if (idx >= 0) {
-        current[idx] = { col, dir: current[idx].dir === 'asc' ? 'desc' : 'asc' };
-      } else {
-        current.push({ col, dir: 'asc' });
-      }
-      this.sortBy.set(current);
-    } else {
-      if (idx === 0 && current.length === 1) {
-        this.sortBy.set([{ col, dir: current[0].dir === 'asc' ? 'desc' : 'asc' }]);
-      } else {
-        this.sortBy.set([{ col, dir: 'asc' }]);
-      }
-    }
+  onSort(field: string) {
+    if (this.sort() === field) this.order.set(this.order() === 'asc' ? 'desc' : 'asc');
+    else { this.sort.set(field); this.order.set('asc'); }
+    this.page.set(1);
+    this.loadTodas();
   }
 
-  indicador(col: keyof Agrupacion): string {
-    const sorts = this.sortBy();
-    const idx = sorts.findIndex(s => s.col === col);
-    if (idx < 0) return '';
-    const arrow = sorts[idx].dir === 'asc' ? '▲' : '▼';
-    return sorts.length > 1 ? `${arrow}${idx + 1}` : arrow;
+  indicador(field: string): string {
+    return this.sort() !== field ? '' : (this.order() === 'asc' ? '▲' : '▼');
   }
 
-  private cmp(a: any, b: any): number {
-    if (a == null && b == null) return 0;
-    if (a == null) return 1;
-    if (b == null) return -1;
-    if (typeof a === 'number' && typeof b === 'number') return a - b;
-    if (typeof a === 'boolean' && typeof b === 'boolean') return (a ? 1 : 0) - (b ? 1 : 0);
-    return String(a).localeCompare(String(b), 'es', { sensitivity: 'base', numeric: true });
-  }
+  onPage(p: number) { this.page.set(p); this.loadTodas(); }
+  onPageSize(size: number) { this.pageSize.set(size); this.page.set(1); this.loadTodas(); }
 
   toggleRow(id: number) {
     this.expandido.set(this.expandido() === id ? null : id);
@@ -649,6 +625,14 @@ export class AgrupacionesComponent {
     }
   }
 
-  loadTodas() { this.http.get<Agrupacion[]>(`${environment.apiUrl}/agrupaciones`).subscribe(x => this.agrupaciones.set(x)); }
+  loadTodas() {
+    this.loadingTodas.set(true);
+    const q: GridQuery = { page: this.page(), pageSize: this.pageSize(), sort: this.sort(), order: this.order() };
+    this.http.get<PagedResult<Agrupacion>>(`${environment.apiUrl}/agrupaciones`, { params: buildPagedParams(q) })
+      .subscribe({
+        next: r => { this.agrupaciones.set(r.items); this.total.set(r.total); this.loadingTodas.set(false); },
+        error: () => this.loadingTodas.set(false),
+      });
+  }
   loadPadron() { this.http.get<PadronItem[]>(`${environment.apiUrl}/agrupaciones/padron`).subscribe(x => this.padron.set(x)); }
 }
