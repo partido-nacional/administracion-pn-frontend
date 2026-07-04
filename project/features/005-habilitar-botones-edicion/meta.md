@@ -14,7 +14,9 @@ cross_repo: administracion-pn-backend  # RESUELTO — endpoints POST/PUT impleme
 # (Convencional nacional, Lista ODN/ODD, Organismo estatal/partidario, InfoOrganización). Solo alta+edición
 # (sin baja). Reutilizar patrón visual de agrupaciones.component.ts. Referencia backend: docs/INTEGRACION-FRONTEND.md
 
-Current Stage: implementation
+Current Stage: done
+completed_at: 2026-07-04
+commit: 0409200
 
 stages:
   functional:
