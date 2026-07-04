@@ -176,7 +176,7 @@ type Tab = 'gestion' | 'listar' | 'ventas' | 'donaciones' | 'form';
           <input type="date" class="form-input" style="width:150px; padding:6px 10px; font-size:13px">
           <label style="font-size:13px; font-weight:500; color:var(--gray-600)">hasta</label>
           <input type="date" class="form-input" style="width:150px; padding:6px 10px; font-size:13px">
-          <input type="text" class="form-input" placeholder="Filtrar por comprador..." style="width:220px; padding:6px 10px; font-size:13px" [ngModel]="fvComprador()" (ngModelChange)="fvComprador.set($event)">
+          <input type="text" class="form-input" placeholder="Filtrar por comprador..." style="width:220px; padding:6px 10px; font-size:13px" [ngModel]="fvComprador()" (ngModelChange)="fvComprador.set($event); onFilterVenta()">
           <button class="btn btn-primary" style="padding:6px 16px; font-size:13px">Filtrar</button>
         </div>
         <button class="btn btn-primary" (click)="abrirNuevaVenta()">+ Nueva Venta</button>
@@ -189,7 +189,7 @@ type Tab = 'gestion' | 'listar' | 'ventas' | 'donaciones' | 'form';
               <tr><th>ID</th><th>Fecha</th><th>Producto</th><th>Unidades</th><th>Precio Unit.</th><th>Recaudación</th><th>Nro. Recibo</th><th>Método Pago</th><th>Vendedor</th><th></th></tr>
             </thead>
             <tbody>
-              @for (v of ventasFiltradas(); track v.id) {
+              @for (v of ventas(); track v.id) {
                 <tr>
                   <td>{{ v.id }}</td>
                   <td>{{ v.fecha }}</td>
@@ -207,14 +207,9 @@ type Tab = 'gestion' | 'listar' | 'ventas' | 'donaciones' | 'form';
               }
             </tbody>
           </table>
-          <div class="pagination" style="padding:16px 24px">
-            <span class="pagination-info">Mostrando 1–{{ ventasFiltradas().length }} de {{ ventas().length }} ventas</span>
-            <div class="pagination-buttons">
-              <button class="page-btn">&lt;</button>
-              <button class="page-btn active">1</button>
-              <button class="page-btn">&gt;</button>
-            </div>
-          </div>
+          <app-paginator
+            [total]="ventasTotal()" [page]="ventasPage()" [pageSize]="ventasPageSize()"
+            (pageChange)="onVentaPage($event)" (pageSizeChange)="onVentaPageSize($event)" />
         </div>
       </div>
     }
@@ -226,7 +221,7 @@ type Tab = 'gestion' | 'listar' | 'ventas' | 'donaciones' | 'form';
           <input type="date" class="form-input" style="width:150px; padding:6px 10px; font-size:13px">
           <label style="font-size:13px; font-weight:500; color:var(--gray-600)">hasta</label>
           <input type="date" class="form-input" style="width:150px; padding:6px 10px; font-size:13px">
-          <input type="text" class="form-input" placeholder="Filtrar por destinatario..." style="width:220px; padding:6px 10px; font-size:13px" [ngModel]="fdDest()" (ngModelChange)="fdDest.set($event)">
+          <input type="text" class="form-input" placeholder="Filtrar por destinatario..." style="width:220px; padding:6px 10px; font-size:13px" [ngModel]="fdDest()" (ngModelChange)="fdDest.set($event); onFilterDonacion()">
           <button class="btn btn-primary" style="padding:6px 16px; font-size:13px">Filtrar</button>
         </div>
         <button class="btn btn-primary">+ Nueva Donacion</button>
@@ -239,7 +234,7 @@ type Tab = 'gestion' | 'listar' | 'ventas' | 'donaciones' | 'form';
               <tr><th>ID</th><th>Fecha</th><th>Producto</th><th>Cantidad</th><th>Destinatario</th><th>Observaciones</th><th></th></tr>
             </thead>
             <tbody>
-              @for (d of donacionesFiltradas(); track d.id) {
+              @for (d of donaciones(); track d.id) {
                 <tr>
                   <td>{{ d.id }}</td>
                   <td>{{ d.fecha }}</td>
@@ -254,14 +249,9 @@ type Tab = 'gestion' | 'listar' | 'ventas' | 'donaciones' | 'form';
               }
             </tbody>
           </table>
-          <div class="pagination" style="padding:16px 24px">
-            <span class="pagination-info">Mostrando 1–{{ donacionesFiltradas().length }} de {{ donaciones().length }} donaciones</span>
-            <div class="pagination-buttons">
-              <button class="page-btn">&lt;</button>
-              <button class="page-btn active">1</button>
-              <button class="page-btn">&gt;</button>
-            </div>
-          </div>
+          <app-paginator
+            [total]="donacionesTotal()" [page]="donacionesPage()" [pageSize]="donacionesPageSize()"
+            (pageChange)="onDonacionPage($event)" (pageSizeChange)="onDonacionPageSize($event)" />
         </div>
       </div>
     }
@@ -777,29 +767,48 @@ export class ProductosComponent {
     return m ? `${m[3]}-${m[2]}-${m[1]}` : undefined;
   }
 
-  ventasFiltradas = computed(() => {
-    const f = this.fvComprador();
-    return this.ventas().filter(v => !f || v.comprador.toLowerCase().includes(f.toLowerCase()));
-  });
+  // Paginación ventas
+  ventasTotal = signal(0); ventasPage = signal(1); ventasPageSize = signal(DEFAULT_PAGE_SIZE);
+  private ventasFilter$ = new Subject<void>();
 
-  donacionesFiltradas = computed(() => {
-    const f = this.fdDest();
-    return this.donaciones().filter(d => !f || d.destinatario.toLowerCase().includes(f.toLowerCase()));
-  });
+  // Paginación donaciones
+  donacionesTotal = signal(0); donacionesPage = signal(1); donacionesPageSize = signal(DEFAULT_PAGE_SIZE);
+  private donacionesFilter$ = new Subject<void>();
+
+  loadVentas() {
+    const q: GridQuery = { page: this.ventasPage(), pageSize: this.ventasPageSize(), filters: { comprador: this.fvComprador() } };
+    this.http.get<PagedResult<Venta>>(`${environment.apiUrl}/ventas`, { params: buildPagedParams(q) })
+      .subscribe({ next: r => { this.ventas.set(r.items); this.ventasTotal.set(r.total); }, error: () => {} });
+  }
+  loadDonaciones() {
+    const q: GridQuery = { page: this.donacionesPage(), pageSize: this.donacionesPageSize(), filters: { destinatario: this.fdDest() } };
+    this.http.get<PagedResult<Donacion>>(`${environment.apiUrl}/donaciones`, { params: buildPagedParams(q) })
+      .subscribe({ next: r => { this.donaciones.set(r.items); this.donacionesTotal.set(r.total); }, error: () => {} });
+  }
+
+  onFilterVenta() { this.ventasFilter$.next(); }
+  onVentaPage(p: number) { this.ventasPage.set(p); this.loadVentas(); }
+  onVentaPageSize(s: number) { this.ventasPageSize.set(s); this.ventasPage.set(1); this.loadVentas(); }
+
+  onFilterDonacion() { this.donacionesFilter$.next(); }
+  onDonacionPage(p: number) { this.donacionesPage.set(p); this.loadDonaciones(); }
+  onDonacionPageSize(s: number) { this.donacionesPageSize.set(s); this.donacionesPage.set(1); this.loadDonaciones(); }
 
   constructor() {
     this.titleSvc.set('Productos');
     this.prodFilter$.pipe(debounceTime(300)).subscribe(() => { this.prodPage.set(1); this.loadProductos(); });
     this.movFilter$.pipe(debounceTime(300)).subscribe(() => { this.movPage.set(1); this.loadMovimientos(); });
+    this.ventasFilter$.pipe(debounceTime(300)).subscribe(() => { this.ventasPage.set(1); this.loadVentas(); });
+    this.donacionesFilter$.pipe(debounceTime(300)).subscribe(() => { this.donacionesPage.set(1); this.loadDonaciones(); });
     this.reload();
   }
 
   reload() {
     this.loadProductos();
     this.loadMovimientos();
+    this.loadVentas();
+    this.loadDonaciones();
     this.http.get<Stats>(`${environment.apiUrl}/productos/stats`).subscribe(x => this.stats.set(x));
-    this.http.get<Venta[]>(`${environment.apiUrl}/ventas`).subscribe(x => this.ventas.set(x));
-    this.http.get<Donacion[]>(`${environment.apiUrl}/donaciones`).subscribe(x => this.donaciones.set(x));
   }
 
   nuevoProducto() { this.formP = { activo: true, precio: 0 }; this.tab.set('form'); }
