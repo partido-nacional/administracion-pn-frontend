@@ -23,7 +23,7 @@
 ## Calidad
 
 - **Build**: ✅ `npm run build` verde.
-- **Tests**: ✅ 23/23 (suite completa), Karma/Jasmine + ChromeHeadless.
+- **Tests**: ✅ 24/24 (suite completa), Karma/Jasmine + ChromeHeadless.
 - **Cobertura**: **100%** de `login.component.ts` (Stmts 22/22, Branches 3/3, Funcs 5/5, Lines 16/16) — umbral production ≥80%.
 - **Secrets**: sin secretos hardcodeados en el código de la feature.
 - **Sync**: `APPROVED` (Functional ↔ Technical ↔ Tasks ↔ Code consistente, 0 issues).
