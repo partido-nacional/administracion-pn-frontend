@@ -6,6 +6,7 @@ import { ContactosService, FichaAdhesion, FichaAdhesionDetalle } from '../agenda
 import { AdhesionesService } from './adhesiones.service';
 import { PageTitleService } from '../../core/page-title.service';
 import { CatalogosService } from '../../core/catalogos.service';
+import { resolverConfirmado } from './confirmado-baja.util';
 
 @Component({
   selector: 'app-fichas-contacto',
@@ -259,18 +260,12 @@ export class FichasContactoComponent {
   onConfirmadoChange(v: boolean | null) {
     const f = this.detalle();
     if (!f) return;
-    if (v === false) {
-      const today = new Date().toISOString().slice(0, 10);
-      const fecha = window.prompt('Ingrese la fecha de salida (YYYY-MM-DD):', f.fechaSalida || today);
-      if (!fecha || !/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
-        return;
-      }
-      f.aporteConfirmado = false;
-      f.fechaSalida = fecha;
-    } else {
-      f.aporteConfirmado = v;
-      f.fechaSalida = undefined;
-    }
+    // Siempre aplicamos el estado (mantiene el <select> en sync con el modelo).
+    // Al marcar "Baja", la fecha de salida se prellena con hoy y se edita en el
+    // <input type="date"> inline; no se usa window.prompt.
+    const estado = resolverConfirmado(v, f.fechaSalida);
+    f.aporteConfirmado = estado.aporteConfirmado;
+    f.fechaSalida = estado.fechaSalida;
     this.detalle.set({ ...f });
   }
 

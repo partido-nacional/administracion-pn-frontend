@@ -143,7 +143,7 @@ Constructor (`:278-282`): título `'Fichas de Adhesión'`, lee `contactoId`, y c
 
 - `onSistContribChange(s)` (`:236-244`): setea `sistContrib` y **limpia** los campos que dejan de aplicar (`telefonoAntel`, `cedulaResponsable`, `fechaVencimiento`, `fechaUltimoPago`); re-emite con `detalle.set({...f})`.
 - `onAporteTodoChange(v)` (`:246-258`): si `v===true`, limpia `sector`, `aporteSecretariaAgrupacion`, `aporteAgrupacion`, `departamentoAgrupacion`, `codigoAgrupacion`.
-- `onConfirmadoChange(v)` (`:260-276`): si `v===false`, abre `window.prompt('Ingrese la fecha de salida (YYYY-MM-DD):', ...)`, valida regex `/^\d{4}-\d{2}-\d{2}$/`; si inválida **aborta el cambio** (no setea); si válida setea `aporteConfirmado=false` + `fechaSalida`. Si `v !== false` limpia `fechaSalida`.
+- `onConfirmadoChange(v)`: delega en el helper `resolverConfirmado` (`confirmado-baja.util.ts`) y **siempre** aplica el estado con `detalle.set({...f})`, manteniendo el `<select>` sincronizado con el modelo. Si `v===false` (Baja) prellena `fechaSalida` con la existente o con hoy (editable en el `<input type="date">` inline); si `v !== false` limpia `fechaSalida`. **No usa `window.prompt`.**
 
 **Operaciones:**
 
@@ -171,7 +171,7 @@ Catálogos como **constantes de módulo** (`:9-22`): `SISTEMAS`, `DEPARTAMENTOS`
 
 **Plantilla** (`:28-161`): misma estructura de campos condicionales que el detalle de `FichasContacto` (Sistema de Contribución con condicionales Cédula/Antel/Fechas, Aporte Todo al Partido con bloque de agrupación, Confirmado con fecha de salida, Carnet, Art.46, Departamental), pero **sin** `editMode` (todos editables). Encabezado "Nueva Ficha de Adhesión" + "Contacto: {contactoNombre()} (#{contactoId})" (`:36-37`).
 
-**Lógica condicional** idéntica a `FichasContacto`: `showTelefonoAntel`/`showCedula`/`showFechasPago` (`:183-185`), `onSistContribChange` (`:187-195`), `onAporteTodoChange` (`:197-209`), `onConfirmadoChange` con `window.prompt` + regex (`:211-227`).
+**Lógica condicional** idéntica a `FichasContacto`: `showTelefonoAntel`/`showCedula`/`showFechasPago`, `onSistContribChange`, `onAporteTodoChange`, `onConfirmadoChange` (comparte el helper `resolverConfirmado`; fecha de salida vía `<input type="date">` inline, sin `window.prompt`).
 
 **Validaciones de alta:** **No hay validación explícita** en `guardar()` (`:264-270`): toma `ficha()`, si es `null` retorna; si no, `adhSvc.createLocal(f)` (→ `POST /adhesiones/locales`) y al completar navega a `['/agenda', contactoId, 'fichas']`. Las únicas "validaciones" son las restricciones de los inputs (`type=number`, `type=date`) y la regex de la fecha de salida en `onConfirmadoChange`. No hay manejo de error del POST (sin callback `error`).
 
@@ -238,7 +238,7 @@ Catálogos como **constantes de módulo** (`:9-22`): `SISTEMAS`, `DEPARTAMENTOS`
 
 - **Tabs por signal** en el listado (`tab.set(...)`), sin router; la solapa `'nuevo'` se muestra solo desde el botón "+ Nuevo Adherente", no aparece en la barra de tabs.
 - **Confirmaciones nativas**: `confirm()` antes de eliminar web/local (`:309`, `:316`); `alert()` si falta `contactoId` al crear local (`:323`).
-- **Prompt nativo** para la fecha de salida cuando se marca "Confirmado = D (false)" (`fichas-contacto.component.ts:265`, `nueva-ficha.component.ts:216`), con validación regex `YYYY-MM-DD`; si se cancela o es inválida, el cambio se **descarta**.
+- ~~**Prompt nativo** para la fecha de salida cuando se marca "Confirmado = D (false)", con validación regex; si se cancela o es inválida, el cambio se descarta.~~ ✅ **Resuelto** (feature 005): se eliminó `window.prompt`; la fecha de salida se captura en el `<input type="date">` inline (prellenado con hoy) y el `<select>` "Confirmado" ya no queda desincronizado al no completar la fecha. Lógica compartida en `confirmado-baja.util.ts`.
 - **Expansión inline** de fichas con `stopPropagation()` en los controles internos para que clicar dentro del detalle no colapse la fila.
 - **Edición optimista local**: `detalle` se muta in-place y se re-emite con `signal.set({...f})`; "Cancelar" restaura desde la copia `original` (deep clone JSON).
 - **Campos condicionales** que se limpian al cambiar `sistContrib` / `aporteTodoAlPartido` para no enviar datos inconsistentes.

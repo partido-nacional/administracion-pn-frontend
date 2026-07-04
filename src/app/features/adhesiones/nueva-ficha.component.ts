@@ -6,6 +6,7 @@ import { ContactosService, FichaAdhesionDetalle } from '../agenda/contactos.serv
 import { AdhesionesService } from './adhesiones.service';
 import { PageTitleService } from '../../core/page-title.service';
 import { CatalogosService } from '../../core/catalogos.service';
+import { resolverConfirmado, hoyISO } from './confirmado-baja.util';
 
 const SISTEMAS = ['Antel', 'OCA', 'VISA', 'MASTER', 'EBROU', 'ANUAL', 'Otro'];
 const DEPARTAMENTOS = [
@@ -209,18 +210,12 @@ export class NuevaFichaComponent {
   onConfirmadoChange(v: boolean | null) {
     const f = this.ficha();
     if (!f) return;
-    if (v === false) {
-      const today = new Date().toISOString().slice(0, 10);
-      const fecha = window.prompt('Ingrese la fecha de salida (YYYY-MM-DD):', f.fechaSalida || today);
-      if (!fecha || !/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
-        return;
-      }
-      f.aporteConfirmado = false;
-      f.fechaSalida = fecha;
-    } else {
-      f.aporteConfirmado = v;
-      f.fechaSalida = undefined;
-    }
+    // Siempre aplicamos el estado (mantiene el <select> en sync con el modelo).
+    // Al marcar "Baja", la fecha de salida se prellena con hoy y se edita en el
+    // <input type="date"> inline; no se usa window.prompt.
+    const estado = resolverConfirmado(v, f.fechaSalida);
+    f.aporteConfirmado = estado.aporteConfirmado;
+    f.fechaSalida = estado.fechaSalida;
     this.ficha.set({ ...f });
   }
 
@@ -232,7 +227,7 @@ export class NuevaFichaComponent {
     this.contactoId = +this.route.snapshot.paramMap.get('contactoId')!;
     this.contactosSvc.get(this.contactoId).subscribe(c => {
       this.contactoNombre.set(`${c.apellido}, ${c.nombre}`);
-      const today = new Date().toISOString().slice(0, 10);
+      const today = hoyISO();
       const dep = c.departamento && DEPARTAMENTOS.includes(c.departamento) ? c.departamento : undefined;
       this.ficha.set({
         id: 0,
