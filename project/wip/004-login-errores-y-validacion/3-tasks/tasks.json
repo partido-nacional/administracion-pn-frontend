@@ -1,0 +1,154 @@
+{
+  "feature": "login-errores-y-validacion",
+  "local_config": {
+    "database": null,
+    "cross_repo_dependency": null
+  },
+  "stats": {
+    "total": 5,
+    "done": 2,
+    "by_layer": {
+      "1": 2,
+      "2": 3
+    }
+  },
+  "execution_strategy": "sequential",
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "Login: error diferenciado + reset loading + botón deshabilitado por form inválido",
+      "description": "En login.component.ts reemplazar el handler de error (e?.error?.message ?? 'Error de autenticación') por una función pura mensajeError(status: number) que mapea err.status → mensaje (401/0/>=500/otro, ver BR-1). Tipar el callback como HttpErrorResponse. Agregar loading.set(false) en el next (éxito) antes de navegar. En el template, cambiar [disabled]=\"loading()\" por [disabled]=\"loading() || f.invalid\". Mantener error.set(null) al inicio de submit(). Sin tocar AuthService.",
+      "status": "completed",
+      "layer": 1,
+      "depends_on": [],
+      "files": [
+        "src/app/features/auth/login.component.ts"
+      ],
+      "acceptance_criteria": [
+        "AC-4: 401 → 'Usuario o clave inválidos'",
+        "AC-5: status 0 → mensaje de sin conexión",
+        "AC-6: status >=500 → mensaje de error de servidor",
+        "AC-7: otro status → fallback 'No se pudo iniciar sesión. Intentá de nuevo.'",
+        "AC-3: loading vuelve a false en éxito y en error",
+        "AC-8: el error se limpia al reintentar el submit",
+        "AC-9: botón deshabilitado por loading() || f.invalid",
+        "GATE: npm run build passes"
+      ],
+      "references": [
+        "US-1",
+        "US-2",
+        "US-3",
+        "BR-1",
+        "BR-3",
+        "tech: Architecture Overview",
+        "tech: Implementation Notes"
+      ]
+    },
+    {
+      "id": "TASK-002",
+      "title": "Unit tests del login (login.component.spec.ts)",
+      "description": "Crear login.component.spec.ts con AuthService mockeado (spy). Cubrir: éxito → navega a /inicio y loading queda false; error 401/0/500/otro → cada uno setea el mensaje correcto de BR-1 y loading false; botón deshabilitado con form inválido y habilitado con form válido. Apoyarse en el runner Karma/Jasmine ya montado (feature 002) y tsconfig.spec.json.",
+      "status": "completed",
+      "layer": 1,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "files": [
+        "src/app/features/auth/login.component.spec.ts"
+      ],
+      "acceptance_criteria": [
+        "Test de éxito: navega a /inicio, loading false",
+        "Tests de error 401/0/500/otro: mensaje esperado por cada status (BR-1), loading false",
+        "Test de validación: botón disabled con campos vacíos, enabled con form válido",
+        "Cobertura ≥80% en login.component.ts",
+        "GATE: npm test passes"
+      ],
+      "references": [
+        "US-1",
+        "US-2",
+        "US-3",
+        "tech: Non-Functional Requirements (Testing)"
+      ]
+    },
+    {
+      "id": "TASK-003",
+      "title": "Code review",
+      "description": "Revisar el cambio FE: función mensajeError pura y testeable, tipado HttpErrorResponse, sin código muerto, naming y estilo consistentes con el codebase, sin regresión del binding ngModel/ngForm ni del spinner.",
+      "status": "pending",
+      "layer": 2,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002"
+      ],
+      "files": [],
+      "acceptance_criteria": [
+        "Sin código muerto ni fallback plano viejo residual",
+        "mensajeError cubre los 4 casos y es testeable en aislamiento",
+        "Naming y estilo consistentes; sin regresión de signals/spinner"
+      ],
+      "references": [
+        "tech: Implementation Notes"
+      ]
+    },
+    {
+      "id": "TASK-004",
+      "title": "Performance review",
+      "description": "Verificar que no se introducen suscripciones colgadas ni submits concurrentes: el botón deshabilitado por loading evita doble envío; el subscribe se completa (o se maneja) sin fugas.",
+      "status": "pending",
+      "layer": 2,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002"
+      ],
+      "files": [],
+      "acceptance_criteria": [
+        "Botón deshabilitado durante loading evita doble submit (EC-3)",
+        "Sin suscripciones redundantes ni fugas"
+      ],
+      "references": [
+        "EC-3",
+        "NFR: Performance"
+      ]
+    },
+    {
+      "id": "TASK-005",
+      "title": "Security review",
+      "description": "Confirmar que no se expone el message crudo del backend en 5xx (textos propios en español), que el mapeo por status no filtra información sensible más allá del 401, y que no se agregan secretos ni credenciales en el componente (CLAUDE.md → Secrets).",
+      "status": "pending",
+      "layer": 2,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002"
+      ],
+      "files": [],
+      "acceptance_criteria": [
+        "No se muestra el 'Internal server error' crudo del backend (BR-2)",
+        "Sin secretos/credenciales nuevas en el componente",
+        "El mapeo por status no filtra si el usuario existe más allá del 401"
+      ],
+      "references": [
+        "BR-2",
+        "NFR: Security"
+      ]
+    }
+  ],
+  "dependency_graph": {
+    "by_layer": {
+      "1": {
+        "level_0": [
+          "TASK-001"
+        ],
+        "level_1": [
+          "TASK-002"
+        ]
+      },
+      "2": {
+        "level_0": [
+          "TASK-003",
+          "TASK-004",
+          "TASK-005"
+        ]
+      }
+    }
+  }
+}
