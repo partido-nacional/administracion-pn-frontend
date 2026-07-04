@@ -73,7 +73,16 @@ const FIRMAS_PENDIENTE = [
   'Juventud (2)'
 ];
 
-const fmt = (v: any) => (v == null || v === '') ? '—' : String(v);
+/** Escapa HTML para evitar inyección (XSS) al interpolar datos en el string del documento. */
+const esc = (v: any) =>
+  String(v ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
+const fmt = (v: any) => (v == null || v === '') ? '—' : esc(v);
 
 function tipoLabel(t?: string): string {
   if (t === 'D') return 'DEPARTAMENTAL';
@@ -139,7 +148,7 @@ function buildHtml(d: PrintAgrupacionData, opts: { firmas: boolean; titulo: stri
 <html lang="es">
 <head>
   <meta charset="utf-8">
-  <title>${opts.titulo} — ${d.nombre} (${d.periodo})</title>
+  <title>${esc(opts.titulo)} — ${esc(d.nombre)} (${esc(d.periodo)})</title>
   <style>
     @page { size: A4; margin: 18mm 16mm; }
     * { box-sizing: border-box; }
@@ -193,10 +202,10 @@ function buildHtml(d: PrintAgrupacionData, opts: { firmas: boolean; titulo: stri
 </head>
 <body>
   <header>
-    <h1>${opts.titulo}</h1>
+    <h1>${esc(opts.titulo)}</h1>
     <div class="sub">
-      <span><strong>Agrupación:</strong> ${d.nombre}</span>
-      <span><strong>Período:</strong> ${d.periodo}</span>
+      <span><strong>Agrupación:</strong> ${esc(d.nombre)}</span>
+      <span><strong>Período:</strong> ${esc(d.periodo)}</span>
       ${tituloEstado}
     </div>
   </header>
@@ -247,7 +256,7 @@ function buildHtml(d: PrintAgrupacionData, opts: { firmas: boolean; titulo: stri
     </table>
   </div>
 
-  <h2 class="sec">Sublemas (período ${d.periodo})</h2>
+  <h2 class="sec">Sublemas (período ${esc(d.periodo)})</h2>
   <table class="kv">
     ${row('Sublema 1', d.sublema1)}
     ${row('Sublema 2', d.sublema2)}

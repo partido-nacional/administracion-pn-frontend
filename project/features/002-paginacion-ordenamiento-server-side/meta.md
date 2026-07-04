@@ -17,7 +17,7 @@ repos:
   backend: /Users/chrisreznio/Documents/partido-nacional/administracion-pn-backend
 rollout: piloto  # piloto (1-2 grillas alto volumen) -> resto
 
-Current Stage: implementation
+Current Stage: done
 
 stages:
   functional:
@@ -31,6 +31,7 @@ stages:
     status: approved
     approved_at: 2026-06-30
   implementation:
-    status: pending
-    completed_tasks: 0
+    status: done
+    completed_tasks: 15
     total_tasks: 15
+    finished_at: 2026-07-04

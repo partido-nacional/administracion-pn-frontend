@@ -2,8 +2,8 @@
 
 > Items captured during development. Use `/project.backlog` to manage.
 
-**Last Updated**: 2026-06-30
-**Total Items**: 23 (10 TODO, 13 DEBT, 0 IDEA)
+**Last Updated**: 2026-07-04
+**Total Items**: 24 (11 TODO, 13 DEBT, 0 IDEA)
 
 > Origen común: ingeniería inversa a máximo detalle (reverse-eng) del frontend Angular, 2026-06-14. Cada ítem fue verificado contra el código por un agente lector. Confirmar `archivo:línea` antes de arreglar.
 
@@ -38,7 +38,7 @@
 
 ### TODO-004: Paginación decorativa (sin handlers, render del array completo)
 - **Priority**: Medium
-- **Status**: in-progress → `project/wip/002-paginacion-ordenamiento-server-side`
+- **Status**: RESOLVED → `project/features/002-paginacion-ordenamiento-server-side` (2026-07-04)
 - **Created**: 2026-06-14
 - **Origin**: transversal
 - **Context**: Los controles de paginación (`<` `1` `>`) en agenda, adhesiones, listados y productos no tienen handlers; se renderiza todo el array en memoria. No escala con volumen real (ver `docs/migracion` del backend).
@@ -47,7 +47,7 @@
 
 ### TODO-005: Búsqueda de contactos resuelta 100% en cliente
 - **Priority**: Medium
-- **Status**: in-progress → `project/wip/002-paginacion-ordenamiento-server-side`
+- **Status**: RESOLVED → `project/features/002-paginacion-ordenamiento-server-side` (2026-07-04)
 - **Created**: 2026-06-14
 - **Origin**: feature/agenda
 - **Context**: `AgendaListado` hace `GET /contactos` sin `?q=&departamento=` y filtra/ordena client-side; el backend ya soporta búsqueda server-side. No escala.
@@ -92,21 +92,31 @@
 
 ### TODO-010: Login — `loading` no se resetea y validación no bloquea submit
 - **Priority**: Low
-- **Status**: pending
+- **Status**: RESOLVED → `project/features/004-login-errores-y-validacion` (2026-07-04)
 - **Created**: 2026-06-14
 - **Origin**: feature/auth
 - **Context**: En el camino feliz no se llama `loading.set(false)` (`:54`); el botón solo se deshabilita por `loading()`, no por `form.invalid` (`:31`).
 - **Affected Files**: src/app/features/auth/login.component.ts
 - **Complexity**: S
 
+### TODO-011: Verificación E2E de "Sincronizar Nube" de adhesiones web (espejo backend)
+- **Priority**: Medium
+- **Status**: pending
+- **Created**: 2026-07-04
+- **Origin**: feature/003-sincronizacion-adhesiones-web (TASK-003, dependencia cross-repo)
+- **Context**: El FE de la sync nube quedó completo y archivado (`project/features/003-sincronizacion-adhesiones-web`), pero la verificación E2E manual (TASK-003) quedó **bloqueada** porque depende del endpoint del backend espejo `POST /adhesiones/web/sincronizar`, que aún no está disponible. Cuando el backend implemente y despliegue ese endpoint, verificar vía `/verify`: presionar "Sincronizar Nube" dispara la sync real, muestra estado de carga → resumen ("X nuevas, Y ya existían") → recarga listado + stats con adhesiones reales; probar caso vacío y caso de error sin romper la UI. Documentar la verificación.
+- **Affected Files**: src/app/features/adhesiones/adhesiones-listado.component.ts, adhesiones.service.ts; (espejo) administracion-pn-backend → `POST /adhesiones/web/sincronizar`
+- **Complexity**: S
+- **Risk if Ignored**: La feature FE queda sin verificación end-to-end contra el backend real. *(Convención de IDs cruzados — ver `CLAUDE.md` → Workspace.)*
+
 ## 🔧 Technical Debt
 
 ### DEBT-001: Sin tests automatizados
 - **Priority**: High
-- **Status**: pending
+- **Status**: partially-resolved (runner montado en feature 002; falta ampliar cobertura a otras features)
 - **Created**: 2026-06-14
 - **Origin**: transversal
-- **Context**: No hay Karma/Jasmine ni ningún `*.spec.ts`, ni `tsconfig.spec.json`. Cero red de seguridad.
+- **Context**: ~~No hay Karma/Jasmine ni ningún `*.spec.ts`, ni `tsconfig.spec.json`.~~ Feature 002 montó el runner (Karma/Jasmine, `tsconfig.spec.json`, `karma.conf.js`, script `npm test`, job CI "Unit Tests") + specs de paginado. Falta extender specs al resto del proyecto.
 - **Affected Files**: (todo el proyecto)
 - **Complexity**: L
 - **Risk if Ignored**: Regresiones invisibles; refactors riesgosos.
