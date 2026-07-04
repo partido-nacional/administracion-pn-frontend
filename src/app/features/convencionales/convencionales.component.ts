@@ -1,16 +1,22 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { PageTitleService } from '../../core/page-title.service';
+import { ConvencionalesService } from '../../core/services/convencionales.service';
+import {
+  ConvencionalDto, ConvencionalInput, ConvencionalStats,
+  ListaDto, ListaInput, ListaTipo,
+} from '../../core/models/convencionales';
 
-interface Convencional { id: number; nombre: string; lista: string; codigoLrf: string; departamento: string; cargoLista: string; contacto: string; }
-interface Lista { codigoLrf: string; nombre: string; departamento: string; titulares: number; suplentes: number; }
+/** Display-only de las tabs fuera de alcance (Departamentales / Integrantes): shape heredado. */
+interface ConvDisplay { id: number; nombre: string; lista: string; codigoLrf: string; departamento: string; cargoLista: string; contacto: string; }
 interface IntegranteLista { nombre: string; cedula: string; lista: string; codigoLrf: string; tipo: string; departamento: string; cargoLista: string; orden: number; contacto: string; }
-interface Stats { nacionales: number; departamentales: number; listasOdn: number; listasOdd: number; }
 
 type Tab = 'nacionales' | 'departamentales' | 'odn' | 'odd' | 'integrantes';
+type ModalKind = 'convencional' | 'lista';
+type ModalMode = 'nueva' | 'editar';
 
 @Component({
   selector: 'app-convencionales',
@@ -37,30 +43,31 @@ type Tab = 'nacionales' | 'departamentales' | 'odn' | 'odd' | 'integrantes';
         <div class="toolbar-left">
           <div class="search-box">
             <span class="search-icon">🔍</span>
-            <input class="search-input" placeholder="Buscar por nombre, lista, departamento…" [(ngModel)]="q">
+            <input class="search-input" placeholder="Buscar por organismo, posición, departamento…" [(ngModel)]="q">
           </div>
         </div>
-        <button class="btn btn-secondary">Exportar TSV</button>
+        <button class="btn btn-primary" (click)="abrirNuevoConvencional()">+ Nuevo Convencional</button>
       </div>
 
       <div class="card"><div class="card-body" style="padding:0;overflow-x:auto">
         <table class="table">
           <thead>
-            <tr><th>ID</th><th>Nombre</th><th>Lista ODN</th><th>Código LRF</th><th>Departamento</th><th>Cargo</th><th>Contacto</th><th></th></tr>
+            <tr><th>ID</th><th>Contacto</th><th>Departamento</th><th>Condición</th><th>Adherente</th><th>Organismo</th><th>Posición</th><th>Fecha Inicio</th><th>Fecha Fin</th><th></th></tr>
           </thead>
           <tbody>
-            @for (c of filtrar(nacionales()); track c.id) {
+            @for (c of filtrarNacionales(); track c.id) {
               <tr>
                 <td>{{ c.id }}</td>
-                <td><strong>{{ c.nombre }}</strong></td>
-                <td>{{ c.lista }}</td>
-                <td>{{ c.codigoLrf }}</td>
-                <td><span class="badge dept">{{ c.departamento }}</span></td>
-                <td>{{ c.cargoLista }}</td>
-                <td><a class="action-link">{{ c.contacto }}</a></td>
-                <td class="action-group">
-                  <a class="action-link">Detalle</a>
-                  <button class="btn-pencil" title="Editar (no implementado)">
+                <td>#{{ c.contactoId }}</td>
+                <td><span class="badge dept">{{ c.departamento || '—' }}</span></td>
+                <td>{{ c.condicion || '—' }}</td>
+                <td>{{ c.adherente ? '☑' : '☐' }}</td>
+                <td>{{ c.nombreOrganismo || '—' }}</td>
+                <td>{{ c.posicion || '—' }}</td>
+                <td>{{ fmtFecha(c.fechaInicio) }}</td>
+                <td>{{ fmtFecha(c.fechaFin) }}</td>
+                <td>
+                  <button class="btn-pencil" (click)="abrirEditarConvencional(c)" title="Editar">
                     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                       <path d="M12 20h9"/>
                       <path d="M16.5 3.5a2.121 2.121 0 113 3L7 19l-4 1 1-4 12.5-12.5z"/>
@@ -68,6 +75,8 @@ type Tab = 'nacionales' | 'departamentales' | 'odn' | 'odd' | 'integrantes';
                   </button>
                 </td>
               </tr>
+            } @empty {
+              <tr><td colspan="10"><div class="empty-state"><div class="empty-state-text">Sin convencionales nacionales</div></div></td></tr>
             }
           </tbody>
         </table>
@@ -98,23 +107,29 @@ type Tab = 'nacionales' | 'departamentales' | 'odn' | 'odd' | 'integrantes';
     }
 
     @if (tab()==='odn' || tab()==='odd') {
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input class="search-input" placeholder="Buscar por nombre de lista…" [(ngModel)]="q">
+          </div>
+        </div>
+        <button class="btn btn-primary" (click)="abrirNuevaLista()">+ Nueva Lista {{ tab()==='odn' ? 'ODN' : 'ODD' }}</button>
+      </div>
       <div class="card"><div class="card-body" style="padding:0;overflow-x:auto">
         <table class="table">
           <thead>
-            <tr><th>Código LRF</th><th>Nombre de Lista</th><th>Departamento</th><th>Titulares</th><th>Suplentes</th><th>Total</th><th></th></tr>
+            <tr><th>ID</th><th>Nombre de Lista</th><th>Tipo</th><th>Agrupación</th><th></th></tr>
           </thead>
           <tbody>
-            @for (l of (tab()==='odn' ? odn() : odd()); track l.codigoLrf) {
+            @for (l of filtrarListas(); track l.id) {
               <tr>
-                <td><strong>{{ l.codigoLrf }}</strong></td>
-                <td>{{ l.nombre }}</td>
-                <td><span class="badge dept">{{ l.departamento }}</span></td>
-                <td>{{ l.titulares }}</td>
-                <td>{{ l.suplentes }}</td>
-                <td>{{ l.titulares + l.suplentes }}</td>
-                <td class="action-group">
-                  <a class="action-link">Ver Integrantes</a>
-                  <button class="btn-pencil" title="Editar (no implementado)">
+                <td>{{ l.id }}</td>
+                <td><strong>{{ l.nombre }}</strong></td>
+                <td>{{ l.tipo }}</td>
+                <td>{{ l.agrupacionId != null ? '#' + l.agrupacionId : '—' }}</td>
+                <td>
+                  <button class="btn-pencil" (click)="abrirEditarLista(l)" title="Editar">
                     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                       <path d="M12 20h9"/>
                       <path d="M16.5 3.5a2.121 2.121 0 113 3L7 19l-4 1 1-4 12.5-12.5z"/>
@@ -122,6 +137,8 @@ type Tab = 'nacionales' | 'departamentales' | 'odn' | 'odd' | 'integrantes';
                   </button>
                 </td>
               </tr>
+            } @empty {
+              <tr><td colspan="5"><div class="empty-state"><div class="empty-state-text">Sin listas {{ tab()==='odn' ? 'ODN' : 'ODD' }}</div></div></td></tr>
             }
           </tbody>
         </table>
@@ -163,45 +180,177 @@ type Tab = 'nacionales' | 'departamentales' | 'odn' | 'odd' | 'integrantes';
         </table>
       </div></div>
     }
-  `
+
+    @if (modalKind()) {
+      <div class="modal-backdrop" (click)="cerrarModal()">
+        <div class="nv-modal" (click)="$event.stopPropagation()">
+          <div class="nv-header">
+            <div class="nv-title">{{ tituloModal() }}</div>
+            <button class="nv-close" (click)="cerrarModal()">×</button>
+          </div>
+          <div class="nv-body">
+            @if (modalKind()==='convencional') {
+              <div class="nv-grid">
+                <div class="fg"><label>Contacto ID *</label><input type="number" [(ngModel)]="form.contactoId" name="c-contacto"></div>
+                <div class="fg"><label>Tipo</label>
+                  <select [(ngModel)]="form.tipo" name="c-tipo">
+                    <option value="Nacional">Nacional</option>
+                    <option value="Departamental">Departamental</option>
+                  </select>
+                </div>
+                <div class="fg"><label>Departamento</label>
+                  <select [(ngModel)]="form.departamento" name="c-depto">
+                    <option value="">—</option>
+                    @for (d of departamentos; track d) { <option [ngValue]="d">{{ d }}</option> }
+                  </select>
+                </div>
+                <div class="fg"><label>Condición</label><input [(ngModel)]="form.condicion" name="c-cond"></div>
+                <div class="fg"><label>Organismo</label><input [(ngModel)]="form.nombreOrganismo" name="c-org"></div>
+                <div class="fg"><label>Posición</label><input [(ngModel)]="form.posicion" name="c-pos"></div>
+                <div class="fg"><label>Fecha Inicio *</label><input type="date" [(ngModel)]="form.fechaInicio" name="c-fini"></div>
+                <div class="fg"><label>Fecha Fin</label><input type="date" [(ngModel)]="form.fechaFin" name="c-ffin"></div>
+                <div class="fg check"><label><input type="checkbox" [(ngModel)]="form.adherente" name="c-adh"> Adherente</label></div>
+              </div>
+            } @else {
+              <div class="nv-grid">
+                <div class="fg full"><label>Nombre de Lista *</label><input [(ngModel)]="form.nombre" name="l-nombre"></div>
+                <div class="fg"><label>Tipo</label>
+                  <select [(ngModel)]="form.tipo" name="l-tipo">
+                    <option value="ODN">ODN</option>
+                    <option value="ODD">ODD</option>
+                  </select>
+                </div>
+                <div class="fg"><label>Agrupación ID</label><input type="number" [(ngModel)]="form.agrupacionId" name="l-agr"></div>
+              </div>
+            }
+            @if (modalError()) { <div class="nv-err">{{ modalError() }}</div> }
+          </div>
+          <div class="nv-footer">
+            <button class="btn btn-secondary" (click)="cerrarModal()">Cancelar</button>
+            <button class="btn btn-primary" (click)="guardar()" [disabled]="modalBusy()">
+              {{ modalBusy() ? 'Guardando…' : (modalMode()==='editar' ? 'Guardar cambios' : 'Crear') }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+  `,
+  styles: [`
+    .modal-backdrop {
+      position:fixed; inset:0; background:rgba(15,23,42,.55);
+      display:flex; align-items:center; justify-content:center; z-index:1000; padding:20px;
+    }
+    .nv-modal {
+      background:#fff; border-radius:10px; width:min(720px, 100%);
+      max-height:92vh; display:flex; flex-direction:column;
+      box-shadow:0 20px 50px rgba(0,0,0,.3); overflow:hidden;
+    }
+    .nv-header {
+      display:flex; justify-content:space-between; align-items:center;
+      padding:14px 20px; background:#1e3a8a; color:#fff;
+    }
+    .nv-title { font-size:16px; font-weight:600; }
+    .nv-close { background:transparent; border:none; color:#fff; font-size:24px; cursor:pointer; }
+    .nv-body { padding:18px 22px; overflow-y:auto; flex:1; }
+    .nv-footer {
+      padding:12px 20px; border-top:1px solid #eef1f5; background:#fafbfd;
+      display:flex; gap:10px; justify-content:flex-end;
+    }
+    .nv-grid { display:grid; grid-template-columns:repeat(2, 1fr); gap:12px 16px; }
+    @media (max-width:600px) { .nv-grid { grid-template-columns:1fr; } }
+    .fg { display:flex; flex-direction:column; gap:4px; }
+    .fg.full { grid-column:1 / -1; }
+    .fg.check { justify-content:flex-end; }
+    .fg.check label { flex-direction:row; display:flex; align-items:center; gap:8px; text-transform:none; font-size:13px; color:#222; }
+    .fg label { font-size:11px; font-weight:600; color:#666; text-transform:uppercase; letter-spacing:.4px; }
+    .fg input:not([type=checkbox]), .fg select {
+      padding:8px 10px; font-size:13px; font-family:inherit;
+      border:1px solid #cfd6e0; border-radius:5px; outline:none;
+    }
+    .fg input:focus, .fg select:focus {
+      border-color:#1e3a8a; box-shadow:0 0 0 3px rgba(30,58,138,.12);
+    }
+    .nv-err {
+      margin-top:12px; padding:8px 12px; background:#fdecea; color:#a8261b;
+      border-radius:5px; font-size:13px;
+    }
+  `]
 })
 export class ConvencionalesComponent {
   private http = inject(HttpClient);
   private titleSvc = inject(PageTitleService);
+  private svc = inject(ConvencionalesService);
 
   tab = signal<Tab>('nacionales');
   q = '';
   filtroTipo = '';
 
-  nacionales = signal<Convencional[]>([]);
-  departamentales = signal<Convencional[]>([]);
-  odn = signal<Lista[]>([]);
-  odd = signal<Lista[]>([]);
+  departamentos = [
+    'Artigas','Canelones','Cerro Largo','Colonia','Durazno','Flores','Florida',
+    'Lavalleja','Maldonado','Montevideo','Paysandú','Río Negro','Rivera','Rocha',
+    'Salto','San José','Soriano','Tacuarembó','Treinta y Tres','Nacional'
+  ];
+
+  nacionales = signal<ConvencionalDto[]>([]);
+  departamentales = signal<ConvDisplay[]>([]);
+  odn = signal<ListaDto[]>([]);
+  odd = signal<ListaDto[]>([]);
   integ = signal<IntegranteLista[]>([]);
-  stats = signal<Stats>({ nacionales: 0, departamentales: 0, listasOdn: 0, listasOdd: 0 });
+  stats = signal<ConvencionalStats>({ nacionales: 0, departamentales: 0, listasOdn: 0, listasOdd: 0 });
+
+  // ── modal (alta/edición de Convencional o Lista) ──────────
+  modalKind = signal<ModalKind | null>(null);
+  modalMode = signal<ModalMode>('nueva');
+  editId = signal<number | null>(null);
+  modalBusy = signal(false);
+  modalError = signal('');
+  form: any = {};
+
+  tituloModal = computed(() => {
+    const acc = this.modalMode() === 'editar' ? 'Editar' : 'Nuevo';
+    return this.modalKind() === 'lista'
+      ? `${this.modalMode() === 'editar' ? 'Editar' : 'Nueva'} Lista`
+      : `${acc} Convencional`;
+  });
 
   constructor() {
     this.titleSvc.set('Convencionales');
-    this.http.get<Stats>(`${environment.apiUrl}/convencionales/stats`).subscribe(s => this.stats.set(s));
-    this.http.get<Convencional[]>(`${environment.apiUrl}/convencionales/nacionales`).subscribe(x => this.nacionales.set(x));
+    this.svc.getStats().subscribe(s => this.stats.set(s));
+    this.loadNacionales();
   }
 
   setTab(t: Tab) {
     this.tab.set(t);
     if (t === 'departamentales' && this.departamentales().length === 0)
-      this.http.get<Convencional[]>(`${environment.apiUrl}/convencionales/departamentales`).subscribe(x => this.departamentales.set(x));
-    if (t === 'odn' && this.odn().length === 0)
-      this.http.get<Lista[]>(`${environment.apiUrl}/convencionales/listas/odn`).subscribe(x => this.odn.set(x));
-    if (t === 'odd' && this.odd().length === 0)
-      this.http.get<Lista[]>(`${environment.apiUrl}/convencionales/listas/odd`).subscribe(x => this.odd.set(x));
+      this.http.get<ConvDisplay[]>(`${environment.apiUrl}/convencionales/departamentales`).subscribe(x => this.departamentales.set(x));
+    if (t === 'odn' && this.odn().length === 0) this.loadListas('ODN');
+    if (t === 'odd' && this.odd().length === 0) this.loadListas('ODD');
     if (t === 'integrantes' && this.integ().length === 0)
       this.http.get<IntegranteLista[]>(`${environment.apiUrl}/convencionales/integrantes`).subscribe(x => this.integ.set(x));
   }
 
-  filtrar(arr: Convencional[]) {
+  private loadNacionales() { this.svc.getNacionales().subscribe(x => this.nacionales.set(x)); }
+  private loadListas(tipo: ListaTipo) {
+    this.svc.getListas(tipo).subscribe(x => (tipo === 'ODN' ? this.odn : this.odd).set(x));
+  }
+  private refreshStats() { this.svc.getStats().subscribe(s => this.stats.set(s)); }
+
+  filtrarNacionales() {
+    const arr = this.nacionales();
     if (!this.q) return arr;
     const q = this.q.toLowerCase();
-    return arr.filter(c => c.nombre.toLowerCase().includes(q) || c.lista.toLowerCase().includes(q) || c.departamento.toLowerCase().includes(q));
+    return arr.filter(c =>
+      (c.departamento || '').toLowerCase().includes(q) ||
+      (c.condicion || '').toLowerCase().includes(q) ||
+      (c.nombreOrganismo || '').toLowerCase().includes(q) ||
+      (c.posicion || '').toLowerCase().includes(q));
+  }
+
+  filtrarListas() {
+    const arr = this.tab() === 'odn' ? this.odn() : this.odd();
+    if (!this.q) return arr;
+    const q = this.q.toLowerCase();
+    return arr.filter(l => l.nombre.toLowerCase().includes(q));
   }
 
   filtrarInteg() {
@@ -212,5 +361,112 @@ export class ConvencionalesComponent {
       arr = arr.filter(i => i.nombre.toLowerCase().includes(q) || i.lista.toLowerCase().includes(q));
     }
     return arr;
+  }
+
+  // ── helpers de fecha ──────────────────────────────────────
+  fmtFecha(v?: string | null): string {
+    if (!v) return '—';
+    const s = String(v);
+    if (/^\d{4}-\d{2}-\d{2}/.test(s)) { const [y, m, d] = s.slice(0, 10).split('-'); return `${d}/${m}/${y}`; }
+    return s;
+  }
+  private toInputDate(v?: string | null): string {
+    if (!v) return '';
+    const s = String(v);
+    if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
+    const mm = s.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+    return mm ? `${mm[3]}-${mm[2]}-${mm[1]}` : '';
+  }
+  private extractError(err: any, fallback: string): string {
+    return err?.error?.message || err?.error?.errorCode || err?.message || fallback;
+  }
+
+  // ── Convencional ──────────────────────────────────────────
+  abrirNuevoConvencional() {
+    this.form = { contactoId: null, tipo: 'Nacional', departamento: '', condicion: '', nombreOrganismo: '', posicion: '', fechaInicio: '', fechaFin: '', adherente: false };
+    this.modalError.set(''); this.editId.set(null);
+    this.modalMode.set('nueva'); this.modalKind.set('convencional');
+  }
+
+  abrirEditarConvencional(c: ConvencionalDto) {
+    this.form = {
+      contactoId: c.contactoId,
+      tipo: c.tipo || 'Nacional',
+      departamento: c.departamento || '',
+      condicion: c.condicion || '',
+      nombreOrganismo: c.nombreOrganismo || '',
+      posicion: c.posicion || '',
+      fechaInicio: this.toInputDate(c.fechaInicio),
+      fechaFin: this.toInputDate(c.fechaFin),
+      adherente: !!c.adherente,
+    };
+    this.modalError.set(''); this.editId.set(c.id);
+    this.modalMode.set('editar'); this.modalKind.set('convencional');
+  }
+
+  // ── Lista ─────────────────────────────────────────────────
+  abrirNuevaLista() {
+    this.form = { nombre: '', tipo: this.tab() === 'odd' ? 'ODD' : 'ODN', agrupacionId: null };
+    this.modalError.set(''); this.editId.set(null);
+    this.modalMode.set('nueva'); this.modalKind.set('lista');
+  }
+
+  abrirEditarLista(l: ListaDto) {
+    this.form = { nombre: l.nombre, tipo: l.tipo || 'ODN', agrupacionId: l.agrupacionId ?? null };
+    this.modalError.set(''); this.editId.set(l.id);
+    this.modalMode.set('editar'); this.modalKind.set('lista');
+  }
+
+  cerrarModal() {
+    this.modalKind.set(null); this.editId.set(null); this.modalError.set('');
+  }
+
+  guardar() {
+    if (this.modalKind() === 'convencional') this.guardarConvencional();
+    else this.guardarLista();
+  }
+
+  private guardarConvencional() {
+    if (this.form.contactoId == null || this.form.contactoId === '') { this.modalError.set('El Contacto ID es obligatorio.'); return; }
+    if (!this.form.fechaInicio) { this.modalError.set('La Fecha Inicio es obligatoria.'); return; }
+    const input: ConvencionalInput = {
+      contactoId: Number(this.form.contactoId),
+      tipo: this.form.tipo || 'Nacional',
+      departamento: this.form.departamento || null,
+      condicion: this.form.condicion || null,
+      adherente: !!this.form.adherente,
+      nombreOrganismo: this.form.nombreOrganismo || null,
+      posicion: this.form.posicion || null,
+      fechaInicio: this.form.fechaInicio,
+      fechaFin: this.form.fechaFin || null,
+    };
+    this.modalBusy.set(true); this.modalError.set('');
+    const id = this.editId();
+    const req = this.modalMode() === 'editar' && id != null
+      ? this.svc.updateConvencional(id, input)
+      : this.svc.createConvencional(input);
+    req.subscribe({
+      next: () => { this.modalBusy.set(false); this.cerrarModal(); this.loadNacionales(); this.refreshStats(); },
+      error: (err) => { this.modalBusy.set(false); this.modalError.set(this.extractError(err, 'No se pudo guardar el convencional.')); },
+    });
+  }
+
+  private guardarLista() {
+    if (!this.form.nombre?.trim()) { this.modalError.set('El nombre de la lista es obligatorio.'); return; }
+    const tipo = (this.form.tipo || 'ODN') as ListaTipo;
+    const input: ListaInput = {
+      nombre: this.form.nombre.trim(),
+      tipo,
+      agrupacionId: this.form.agrupacionId == null || this.form.agrupacionId === '' ? null : Number(this.form.agrupacionId),
+    };
+    this.modalBusy.set(true); this.modalError.set('');
+    const id = this.editId();
+    const req = this.modalMode() === 'editar' && id != null
+      ? this.svc.updateLista(id, input)
+      : this.svc.createLista(input);
+    req.subscribe({
+      next: () => { this.modalBusy.set(false); this.cerrarModal(); this.loadListas(tipo); this.refreshStats(); },
+      error: (err) => { this.modalBusy.set(false); this.modalError.set(this.extractError(err, 'No se pudo guardar la lista.')); },
+    });
   }
 }

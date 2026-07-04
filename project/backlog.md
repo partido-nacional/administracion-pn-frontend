@@ -240,3 +240,15 @@
 - **Affected Files**: administracion-pn-backend → endpoint `/debitos/dashboard`; (front) src/app/features/debitos/debitos.component.ts
 - **Complexity**: S
 - **Risk if Ignored**: El contrato sigue exponiendo un estado inexistente; los totales/porcentajes server-side quedan inflados para cualquier otro consumidor del endpoint.
+
+### DEBT-014: Extraer el modal de alta/edición a un componente/estilo compartido (shared/)
+- **Priority**: Low
+- **Status**: pending
+- **Created**: 2026-07-04
+- **Origin**: feature/habilitar-botones-edicion (code review Layer 2)
+- **Context**: El patrón de modal (backdrop + `.nv-modal/.nv-header/.nv-body/.nv-footer/.nv-grid/.fg/.nv-err` + `modoModal/busy/error` + footer con "Guardando…") está **duplicado** en `agrupaciones.component.ts`, `convencionales.component.ts` y `organismos.component.ts` (CSS repetido ~60 líneas por componente). Extraer a un componente reutilizable en `shared/components/` (p.ej. `<app-modal-form>`) o al menos a una hoja de estilos compartida, y migrar los tres consumidores. Alineado con DEBT-011 (shared/).
+- **Affected Files**: src/app/shared/components/** (nuevo), src/app/features/{agrupaciones,convencionales,organismos}/*.component.ts
+- **Complexity**: M
+- **Risk if Ignored**: Divergencia visual entre modales y triple mantenimiento del mismo CSS.
+
+> Nota (2026-07-04): durante esta feature se verificó que **el runner de tests YA está operativo** (`tsconfig.spec.json`, target `test` con `karma.conf.js`, specs corriendo — 64 tests en verde). El premise de **DEBT-012** ("no hay runner configurado") quedó **desactualizado**; revisar/cerrar DEBT-001/012.
