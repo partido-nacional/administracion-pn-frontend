@@ -62,7 +62,7 @@ type Tab = 'todos' | 'padron' | 'duplicados' | 'exportar';
                   </select>
                 </th>
                 <th><input class="column-filter" [ngModel]="fCel()"   (ngModelChange)="fCel.set($event); onFilter()"   placeholder="Filtrar..."></th>
-                <th><input class="column-filter" [ngModel]="fEmail()" (ngModelChange)="fEmail.set($event); onFilter()" placeholder="Filtrar..."></th>
+                <th></th>
                 <th>
                   <select class="column-filter" [ngModel]="fAdh()" (ngModelChange)="fAdh.set($event); onFilter()">
                     <option value="">Todas</option>
@@ -376,7 +376,6 @@ export class AgendaListadoComponent implements OnInit {
   fCred = signal('');
   fDepto = signal('');
   fCel = signal('');
-  fEmail = signal('');
   fAdh = signal('');
 
   private buildQuery(all = false): GridQuery {
@@ -386,7 +385,7 @@ export class AgendaListadoComponent implements OnInit {
       filters: {
         id: this.fId(), nombre: this.fNombre(), cedula: this.fCedula(),
         credencial: this.fCred(), departamento: this.fDepto(), celular: this.fCel(),
-        email: this.fEmail(), adhesion: this.fAdh(),
+        adhesion: this.fAdh(),
       },
     };
   }
@@ -428,7 +427,6 @@ export class AgendaListadoComponent implements OnInit {
         { campo: 'Credencial', valor: this.fCred() },
         { campo: 'Departamento', valor: this.fDepto() },
         { campo: 'Celular', valor: this.fCel() },
-        { campo: 'Email', valor: this.fEmail() },
         { campo: 'Adhesión', valor: this.fAdh() }
       ];
       const labels: Record<string, string> = {
