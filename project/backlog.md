@@ -38,7 +38,7 @@
 
 ### TODO-004: Paginación decorativa (sin handlers, render del array completo)
 - **Priority**: Medium
-- **Status**: in-progress → `project/wip/002-paginacion-ordenamiento-server-side`
+- **Status**: RESOLVED → `project/features/002-paginacion-ordenamiento-server-side` (2026-07-04)
 - **Created**: 2026-06-14
 - **Origin**: transversal
 - **Context**: Los controles de paginación (`<` `1` `>`) en agenda, adhesiones, listados y productos no tienen handlers; se renderiza todo el array en memoria. No escala con volumen real (ver `docs/migracion` del backend).
@@ -47,7 +47,7 @@
 
 ### TODO-005: Búsqueda de contactos resuelta 100% en cliente
 - **Priority**: Medium
-- **Status**: in-progress → `project/wip/002-paginacion-ordenamiento-server-side`
+- **Status**: RESOLVED → `project/features/002-paginacion-ordenamiento-server-side` (2026-07-04)
 - **Created**: 2026-06-14
 - **Origin**: feature/agenda
 - **Context**: `AgendaListado` hace `GET /contactos` sin `?q=&departamento=` y filtra/ordena client-side; el backend ya soporta búsqueda server-side. No escala.
@@ -103,10 +103,10 @@
 
 ### DEBT-001: Sin tests automatizados
 - **Priority**: High
-- **Status**: pending
+- **Status**: partially-resolved (runner montado en feature 002; falta ampliar cobertura a otras features)
 - **Created**: 2026-06-14
 - **Origin**: transversal
-- **Context**: No hay Karma/Jasmine ni ningún `*.spec.ts`, ni `tsconfig.spec.json`. Cero red de seguridad.
+- **Context**: ~~No hay Karma/Jasmine ni ningún `*.spec.ts`, ni `tsconfig.spec.json`.~~ Feature 002 montó el runner (Karma/Jasmine, `tsconfig.spec.json`, `karma.conf.js`, script `npm test`, job CI "Unit Tests") + specs de paginado. Falta extender specs al resto del proyecto.
 - **Affected Files**: (todo el proyecto)
 - **Complexity**: L
 - **Risk if Ignored**: Regresiones invisibles; refactors riesgosos.

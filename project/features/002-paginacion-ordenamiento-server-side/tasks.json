@@ -9,7 +9,7 @@
   },
   "stats": {
     "total": 15,
-    "done": 14,
+    "done": 15,
     "by_layer": {
       "1": 12,
       "2": 3
@@ -188,7 +188,7 @@
       "id": "TASK-007",
       "title": "Checkpoint de validación del piloto",
       "description": "Verificar end-to-end movimientos y contactos con backend en :5000: paginación, filtros, orden, export y ausencia de regresiones. Confirmar el contrato/patrón antes de replicar. Documentar hallazgos en progress/.",
-      "status": "pending",
+      "status": "done",
       "layer": 1,
       "depends_on": [
         "TASK-005",
@@ -208,7 +208,8 @@
         "US-2",
         "US-3",
         "US-4"
-      ]
+      ],
+      "note": "Piloto validado en prod por el usuario (movimientos + contactos OK)."
     },
     {
       "id": "TASK-008",
