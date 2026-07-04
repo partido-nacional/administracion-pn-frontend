@@ -1,7 +1,6 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Subject, debounceTime } from 'rxjs';
 import { PageTitleService } from '../../core/page-title.service';
 import { PaginatorComponent } from '../../shared/components/paginator/paginator.component';
 import { ListadosService, IntPN } from '../../core/services/listados.service';
@@ -26,22 +25,6 @@ import { exportarCSV } from '../../core/exportar-csv';
               <th style="min-width:100px" class="sortable" (click)="sortBy('departamento')">Departamento {{ arrow('departamento') }}</th>
               <th style="min-width:160px">Mail Particular</th>
               <th style="min-width:160px">Mail Trabajo</th>
-            </tr>
-            <tr class="filter-row">
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fApellidos" (ngModelChange)="onFilter()"></th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fNombres" (ngModelChange)="onFilter()"></th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fTel1" (ngModelChange)="onFilter()"></th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fTel2" (ngModelChange)="onFilter()"></th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fMovil" (ngModelChange)="onFilter()"></th>
-              <th>
-                <select class="column-filter" [(ngModel)]="fDepto" (ngModelChange)="onFilter()">
-                  <option value="">Todos</option>
-                  <option>Canelones</option><option>Colonia</option><option>Maldonado</option>
-                  <option>Paysandu</option><option>Salto</option><option>Soriano</option>
-                </select>
-              </th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fMailP" (ngModelChange)="onFilter()"></th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fMailT" (ngModelChange)="onFilter()"></th>
             </tr>
           </thead>
           <tbody>
@@ -89,14 +72,8 @@ export class IntendenciasPnComponent implements OnInit {
   loading = signal(false);
   exporting = signal(false);
 
-  fApellidos = ''; fNombres = ''; fTel1 = ''; fTel2 = '';
-  fMovil = ''; fDepto = ''; fMailP = ''; fMailT = '';
-
-  private filter$ = new Subject<void>();
-
   constructor() {
     this.titleSvc.set('Listados — Intendencias PN');
-    this.filter$.pipe(debounceTime(300)).subscribe(() => { this.page.set(1); this.load(); });
   }
 
   ngOnInit() { this.load(); }
@@ -104,10 +81,7 @@ export class IntendenciasPnComponent implements OnInit {
   private query(all = false): GridQuery {
     return {
       page: this.page(), pageSize: this.pageSize(), sort: this.sort(), order: this.order(), all,
-      filters: {
-        apellidos: this.fApellidos, nombres: this.fNombres, tel1: this.fTel1, tel2: this.fTel2,
-        movil: this.fMovil, depto: this.fDepto, mailP: this.fMailP, mailT: this.fMailT,
-      },
+      filters: {},
     };
   }
 
@@ -119,7 +93,6 @@ export class IntendenciasPnComponent implements OnInit {
     });
   }
 
-  onFilter() { this.filter$.next(); }
   onPage(p: number) { this.page.set(p); this.load(); }
   onPageSize(size: number) { this.pageSize.set(size); this.page.set(1); this.load(); }
 
