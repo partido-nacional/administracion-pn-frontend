@@ -8,7 +8,6 @@ import { ContactosService, Contacto, ContactoListado } from './contactos.service
 import { DuplicadosContactosComponent } from './duplicados-contactos.component';
 import { PaginatorComponent } from '../../shared/components/paginator/paginator.component';
 import { GridQuery, SortOrder, DEFAULT_PAGE_SIZE } from '../../core/models/paged';
-import { imprimirContactos } from './imprimir-contactos';
 import { exportarCSV } from '../../core/exportar-csv';
 
 type Tab = 'todos' | 'padron' | 'duplicados' | 'exportar';
@@ -20,7 +19,6 @@ type Tab = 'todos' | 'padron' | 'duplicados' | 'exportar';
   template: `
     <div class="topbar-inline">
       <button class="btn btn-secondary" (click)="exportarCsv()" title="Exportar CSV">📥 CSV</button>
-      <button class="btn btn-secondary" (click)="imprimir()" title="Imprimir / PDF">🖨 Imprimir</button>
       <a routerLink="/agenda/nuevo" class="btn btn-primary">+ Nuevo Contacto</a>
     </div>
 
@@ -416,31 +414,6 @@ export class AgendaListadoComponent implements OnInit {
   indicador(col: string): string {
     if (this.sort() !== col) return '';
     return this.order() === 'asc' ? '▲' : '▼';
-  }
-
-  imprimir() {
-    this.svc.listado(this.buildQuery(true)).subscribe(r => {
-      const filtros = [
-        { campo: 'ID', valor: this.fId() },
-        { campo: 'Nombre', valor: this.fNombre() },
-        { campo: 'Cédula', valor: this.fCedula() },
-        { campo: 'Credencial', valor: this.fCred() },
-        { campo: 'Departamento', valor: this.fDepto() },
-        { campo: 'Celular', valor: this.fCel() },
-        { campo: 'Adhesión', valor: this.fAdh() }
-      ];
-      const labels: Record<string, string> = {
-        id: 'ID', apellido: 'Nombre', nombre: 'Nombre', cedula: 'Cédula', credencial: 'Credencial',
-        departamento: 'Departamento', celular: 'Celular', email: 'Email', adhesion: 'Adhesión'
-      };
-      const s = this.sort();
-      const orden = s ? [{ campo: labels[s] || s, dir: this.order() }] : [];
-      imprimirContactos(r.items.map(c => ({
-        id: c.id, nombre: c.nombre, apellido: c.apellido,
-        cedula: c.cedula, credencial: c.credencial, departamento: c.departamento,
-        celular: c.celular, email: c.email, adhesion: c.adhesion
-      })), { filtros, orden });
-    });
   }
 
   waChoice = signal<ContactoListado | null>(null);

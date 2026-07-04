@@ -118,7 +118,7 @@ type Tab = 'gestion' | 'listar' | 'ventas' | 'donaciones' | 'form';
                 <th>Estado</th><th></th>
               </tr>
               <tr class="filter-row">
-                <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fpId()"     (ngModelChange)="fpId.set($event); onFilterProd()"></th>
+                <th></th>
                 <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fpNombre()" (ngModelChange)="fpNombre.set($event); onFilterProd()"></th>
                 <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fpDesc()"   (ngModelChange)="fpDesc.set($event); onFilterProd()"></th>
                 <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fpPrecio()" (ngModelChange)="fpPrecio.set($event); onFilterProd()"></th>
@@ -176,7 +176,6 @@ type Tab = 'gestion' | 'listar' | 'ventas' | 'donaciones' | 'form';
           <input type="date" class="form-input" style="width:150px; padding:6px 10px; font-size:13px">
           <label style="font-size:13px; font-weight:500; color:var(--gray-600)">hasta</label>
           <input type="date" class="form-input" style="width:150px; padding:6px 10px; font-size:13px">
-          <input type="text" class="form-input" placeholder="Filtrar por comprador..." style="width:220px; padding:6px 10px; font-size:13px" [ngModel]="fvComprador()" (ngModelChange)="fvComprador.set($event); onFilterVenta()">
           <button class="btn btn-primary" style="padding:6px 16px; font-size:13px">Filtrar</button>
         </div>
         <button class="btn btn-primary" (click)="abrirNuevaVenta()">+ Nueva Venta</button>
@@ -221,7 +220,6 @@ type Tab = 'gestion' | 'listar' | 'ventas' | 'donaciones' | 'form';
           <input type="date" class="form-input" style="width:150px; padding:6px 10px; font-size:13px">
           <label style="font-size:13px; font-weight:500; color:var(--gray-600)">hasta</label>
           <input type="date" class="form-input" style="width:150px; padding:6px 10px; font-size:13px">
-          <input type="text" class="form-input" placeholder="Filtrar por destinatario..." style="width:220px; padding:6px 10px; font-size:13px" [ngModel]="fdDest()" (ngModelChange)="fdDest.set($event); onFilterDonacion()">
           <button class="btn btn-primary" style="padding:6px 16px; font-size:13px">Filtrar</button>
         </div>
         <button class="btn btn-primary">+ Nueva Donacion</button>
@@ -706,10 +704,8 @@ export class ProductosComponent {
 
   fmFecha = signal(''); fmProducto = signal(''); fmTipo = signal('');
   fmCantidad = signal(''); fmMotivo = signal(''); fmObs = signal('');
-  fpId = signal(''); fpNombre = signal(''); fpDesc = signal('');
+  fpNombre = signal(''); fpDesc = signal('');
   fpPrecio = signal(''); fpStock = signal(''); fpEstado = signal('');
-  fvComprador = signal('');
-  fdDest = signal('');
 
   formP: Partial<ProductoListado> = { activo: true, precio: 0 };
 
@@ -725,7 +721,7 @@ export class ProductosComponent {
 
   private prodQuery(): GridQuery {
     return { page: this.prodPage(), pageSize: this.prodPageSize(), sort: this.prodSort(), order: this.prodOrder(),
-      filters: { id: this.fpId(), nombre: this.fpNombre(), desc: this.fpDesc(), precio: this.fpPrecio(), stock: this.fpStock(), estado: this.fpEstado() } };
+      filters: { nombre: this.fpNombre(), desc: this.fpDesc(), precio: this.fpPrecio(), stock: this.fpStock(), estado: this.fpEstado() } };
   }
   private movQuery(): GridQuery {
     return { page: this.movPage(), pageSize: this.movPageSize(), sort: this.movSort(), order: this.movOrder(),
@@ -776,12 +772,12 @@ export class ProductosComponent {
   private donacionesFilter$ = new Subject<void>();
 
   loadVentas() {
-    const q: GridQuery = { page: this.ventasPage(), pageSize: this.ventasPageSize(), filters: { comprador: this.fvComprador() } };
+    const q: GridQuery = { page: this.ventasPage(), pageSize: this.ventasPageSize(), filters: {} };
     this.http.get<PagedResult<Venta>>(`${environment.apiUrl}/ventas`, { params: buildPagedParams(q) })
       .subscribe({ next: r => { this.ventas.set(r.items); this.ventasTotal.set(r.total); }, error: () => {} });
   }
   loadDonaciones() {
-    const q: GridQuery = { page: this.donacionesPage(), pageSize: this.donacionesPageSize(), filters: { destinatario: this.fdDest() } };
+    const q: GridQuery = { page: this.donacionesPage(), pageSize: this.donacionesPageSize(), filters: {} };
     this.http.get<PagedResult<Donacion>>(`${environment.apiUrl}/donaciones`, { params: buildPagedParams(q) })
       .subscribe({ next: r => { this.donaciones.set(r.items); this.donacionesTotal.set(r.total); }, error: () => {} });
   }

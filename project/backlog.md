@@ -2,8 +2,8 @@
 
 > Items captured during development. Use `/project.backlog` to manage.
 
-**Last Updated**: 2026-06-30
-**Total Items**: 23 (10 TODO, 13 DEBT, 0 IDEA)
+**Last Updated**: 2026-07-04
+**Total Items**: 24 (11 TODO, 13 DEBT, 0 IDEA)
 
 > Origen común: ingeniería inversa a máximo detalle (reverse-eng) del frontend Angular, 2026-06-14. Cada ítem fue verificado contra el código por un agente lector. Confirmar `archivo:línea` antes de arreglar.
 
@@ -56,11 +56,11 @@
 
 ### TODO-006: Merge de duplicados no transaccional
 - **Priority**: Medium
-- **Status**: pending
+- **Status**: done (2026-07-04)
 - **Created**: 2026-06-14
 - **Origin**: feature/agenda
-- **Context**: `DuplicadosContactos` hace `DELETE` seguido de `PUT` en llamadas separadas; si el `PUT` falla, queda estado inconsistente.
-- **Affected Files**: src/app/features/agenda/duplicados-contactos.component.ts (~281-294)
+- **Context**: `DuplicadosContactos` hacía `DELETE` seguido de `PUT` en llamadas separadas; si el `PUT` fallaba, quedaba estado inconsistente. **Resuelto**: (1) se agregó un modal de **confirmación con resumen** antes de ejecutar el merge; (2) el merge pasó a un endpoint **transaccional** en el backend (`POST /api/contactos/{keepId}/merge`, espejo backend CON-09) que reasigna los registros relacionados del duplicado, borra el duplicado y actualiza el conservado en una sola transacción.
+- **Affected Files**: src/app/features/agenda/duplicados-contactos.component.ts; contactos.service.ts; administracion-pn-backend → ContactosController.Merge
 - **Complexity**: M
 
 ### TODO-007: Dashboard — eventos sin edición y `fechaFin` nunca capturada
@@ -92,12 +92,22 @@
 
 ### TODO-010: Login — `loading` no se resetea y validación no bloquea submit
 - **Priority**: Low
-- **Status**: pending
+- **Status**: RESOLVED → `project/features/004-login-errores-y-validacion` (2026-07-04)
 - **Created**: 2026-06-14
 - **Origin**: feature/auth
 - **Context**: En el camino feliz no se llama `loading.set(false)` (`:54`); el botón solo se deshabilita por `loading()`, no por `form.invalid` (`:31`).
 - **Affected Files**: src/app/features/auth/login.component.ts
 - **Complexity**: S
+
+### TODO-011: Verificación E2E de "Sincronizar Nube" de adhesiones web (espejo backend)
+- **Priority**: Medium
+- **Status**: pending
+- **Created**: 2026-07-04
+- **Origin**: feature/003-sincronizacion-adhesiones-web (TASK-003, dependencia cross-repo)
+- **Context**: El FE de la sync nube quedó completo y archivado (`project/features/003-sincronizacion-adhesiones-web`), pero la verificación E2E manual (TASK-003) quedó **bloqueada** porque depende del endpoint del backend espejo `POST /adhesiones/web/sincronizar`, que aún no está disponible. Cuando el backend implemente y despliegue ese endpoint, verificar vía `/verify`: presionar "Sincronizar Nube" dispara la sync real, muestra estado de carga → resumen ("X nuevas, Y ya existían") → recarga listado + stats con adhesiones reales; probar caso vacío y caso de error sin romper la UI. Documentar la verificación.
+- **Affected Files**: src/app/features/adhesiones/adhesiones-listado.component.ts, adhesiones.service.ts; (espejo) administracion-pn-backend → `POST /adhesiones/web/sincronizar`
+- **Complexity**: S
+- **Risk if Ignored**: La feature FE queda sin verificación end-to-end contra el backend real. *(Convención de IDs cruzados — ver `CLAUDE.md` → Workspace.)*
 
 ## 🔧 Technical Debt
 

@@ -29,18 +29,12 @@ import { exportarCSV } from '../../core/exportar-csv';
               <th style="min-width:100px">Departamento</th>
             </tr>
             <tr class="filter-row">
-              <th>
-                <select class="column-filter" [(ngModel)]="fCortesia" (ngModelChange)="onFilter()">
-                  <option value="">Todos</option>
-                  <option>Sr.</option><option>Sra.</option><option>Dr.</option><option>Dra.</option>
-                  <option>Ing.</option><option>Lic.</option><option>Cr.</option>
-                </select>
-              </th>
+              <th></th>
               <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fApellidos" (ngModelChange)="onFilter()"></th>
               <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fNombres" (ngModelChange)="onFilter()"></th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fTel" (ngModelChange)="onFilter()"></th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fCel" (ngModelChange)="onFilter()"></th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fMail" (ngModelChange)="onFilter()"></th>
+              <th></th>
+              <th></th>
+              <th></th>
               <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fPos" (ngModelChange)="onFilter()"></th>
               <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fOrg" (ngModelChange)="onFilter()"></th>
               <th>
@@ -98,8 +92,7 @@ export class AlcaldesComponent implements OnInit {
   loading = signal(false);
   exporting = signal(false);
 
-  fCortesia = ''; fApellidos = ''; fNombres = ''; fTel = ''; fCel = '';
-  fMail = ''; fPos = ''; fOrg = ''; fDepto = '';
+  fApellidos = ''; fNombres = ''; fPos = ''; fOrg = ''; fDepto = '';
 
   private filter$ = new Subject<void>();
 
@@ -114,8 +107,7 @@ export class AlcaldesComponent implements OnInit {
     return {
       page: this.page(), pageSize: this.pageSize(), sort: this.sort(), order: this.order(), all,
       filters: {
-        cortesia: this.fCortesia, apellidos: this.fApellidos, nombres: this.fNombres,
-        tel: this.fTel, cel: this.fCel, mail: this.fMail, pos: this.fPos,
+        apellidos: this.fApellidos, nombres: this.fNombres, pos: this.fPos,
         org: this.fOrg, depto: this.fDepto,
       },
     };

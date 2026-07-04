@@ -27,9 +27,16 @@ import { exportarCSV } from '../../core/exportar-csv';
             <tr class="filter-row">
               <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fApellidos" (ngModelChange)="onFilter()"></th>
               <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fNombres" (ngModelChange)="onFilter()"></th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fCel" (ngModelChange)="onFilter()"></th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fMail" (ngModelChange)="onFilter()"></th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fPos" (ngModelChange)="onFilter()"></th>
+              <th>
+                <select class="column-filter" [(ngModel)]="fDepartamento" (ngModelChange)="onFilter()">
+                  <option value="">Todos los departamentos</option>
+                  @for (d of departamentos; track d) {
+                    <option [value]="d">{{ d }}</option>
+                  }
+                </select>
+              </th>
+              <th></th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
@@ -74,7 +81,13 @@ export class JovenesComponent implements OnInit {
   loading = signal(false);
   exporting = signal(false);
 
-  fApellidos = ''; fNombres = ''; fCel = ''; fMail = ''; fPos = '';
+  fApellidos = ''; fNombres = ''; fDepartamento = '';
+
+  readonly departamentos = [
+    'Artigas', 'Canelones', 'Cerro Largo', 'Colonia', 'Durazno', 'Flores', 'Florida',
+    'Lavalleja', 'Maldonado', 'Montevideo', 'Paysandú', 'Río Negro', 'Rivera', 'Rocha',
+    'Salto', 'San José', 'Soriano', 'Tacuarembó', 'Treinta y Tres',
+  ];
 
   private filter$ = new Subject<void>();
 
@@ -90,7 +103,7 @@ export class JovenesComponent implements OnInit {
       page: this.page(), pageSize: this.pageSize(), sort: this.sort(), order: this.order(), all,
       filters: {
         apellidos: this.fApellidos, nombres: this.fNombres,
-        cel: this.fCel, mail: this.fMail, pos: this.fPos,
+        departamento: this.fDepartamento,
       },
     };
   }

@@ -1,6 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
 
@@ -28,7 +29,8 @@ import { AuthService } from '../../core/auth.service';
         @if (error()) {
           <div style="background:#fee2e2;color:#991b1b;padding:10px 12px;border-radius:4px;font-size:13px;margin-bottom:12px;">{{ error() }}</div>
         }
-        <button class="btn btn-primary" style="width:100%;justify-content:center;" [disabled]="loading()">
+        <button class="btn btn-primary" style="width:100%;justify-content:center;" [disabled]="loading() || f.invalid">
+          @if (loading()) { <span class="spinner" aria-hidden="true"></span> }
           {{ loading() ? 'Ingresando…' : 'Ingresar' }}
         </button>
       </form>
@@ -51,8 +53,15 @@ export class LoginComponent {
     this.loading.set(true);
     this.error.set(null);
     this.auth.login(this.usuario, this.clave).subscribe({
-      next: () => this.router.navigate(['/inicio']),
-      error: e => { this.error.set(e?.error?.message ?? 'Error de autenticación'); this.loading.set(false); }
+      next: () => { this.loading.set(false); this.router.navigate(['/inicio']); },
+      error: (err: HttpErrorResponse) => { this.error.set(this.mensajeError(err.status)); this.loading.set(false); }
     });
+  }
+
+  private mensajeError(status: number): string {
+    if (status === 401) return 'Usuario o clave inválidos';
+    if (status === 0) return 'No hay conexión con el servidor. Verificá tu conexión e intentá de nuevo.';
+    if (status >= 500) return 'Ocurrió un error en el servidor. Intentá de nuevo más tarde.';
+    return 'No se pudo iniciar sesión. Intentá de nuevo.';
   }
 }
