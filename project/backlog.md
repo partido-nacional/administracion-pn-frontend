@@ -189,6 +189,7 @@
 - **Affected Files**: src/app/features/adhesiones/*.component.ts, src/app/features/agrupaciones/*.component.ts
 - **Complexity**: M
 - **Risk if Ignored**: Datos inconsistentes entre pantallas. *(Espejo del backend: feature `catalogos`.)*
+- **Progreso (2026-07-04, feature 006-ficha-adhesion-form-compartido)**: se eliminó la **divergencia** de `SISTEMAS`/`DEPARTAMENTOS`/`APORTES_SEC_AGR` entre las dos fichas de adhesión — ahora hay una única copia en `src/app/shared/adhesiones/ficha-adhesion.constants.ts`. **Falta** (sigue pending): (1) cablear esas listas hardcodeadas al backend (`/api/catalogos/*`); (2) unificar la lista divergente de Sector/Sist.Contrib. del **alta rápida** de `adhesiones-listado.component.ts`. (`sectores` ya se consume dinámico vía `CatalogosService.sectores()`.)
 
 ### DEBT-008: Datos y labels hardcodeados en la UI
 - **Priority**: Low

@@ -1,0 +1,299 @@
+{
+  "feature": "ficha-adhesion-form-compartido",
+  "local_config": {
+    "database": null
+  },
+  "stats": {
+    "total": 11,
+    "done": 11,
+    "by_layer": {
+      "1": 8,
+      "2": 3
+    }
+  },
+  "execution_strategy": "batched",
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "Módulo compartido de constantes + funciones puras de ficha",
+      "description": "Crear src/app/shared/adhesiones/ficha-adhesion.constants.ts con SISTEMAS/DEPARTAMENTOS/APORTES_SEC_AGR, los helpers show* y las funciones puras applySistContrib/applyAporteTodo/applyConfirmado(f,v,promptFn) que devuelven una copia de la ficha aplicando las reglas BR-1/2/3. Sin dependencia de Angular.",
+      "status": "completed",
+      "layer": 1,
+      "depends_on": [],
+      "files": [
+        "src/app/shared/adhesiones/ficha-adhesion.constants.ts"
+      ],
+      "acceptance_criteria": [
+        "AC-1: constantes y funciones exportadas desde un único módulo",
+        "BR-1: applySistContrib limpia telefonoAntel/cedulaResponsable/fechaVencimiento/fechaUltimoPago según el sistema",
+        "BR-2: applyAporteTodo(true) limpia sector/aporteSecretariaAgrupacion/aporteAgrupacion/departamentoAgrupacion/codigoAgrupacion",
+        "BR-3: applyConfirmado(false) usa promptFn; si retorna null/inválida devuelve la ficha sin cambios",
+        "GATE: npm run build pasa"
+      ],
+      "references": [
+        "US-1",
+        "BR-1",
+        "BR-2",
+        "BR-3"
+      ]
+    },
+    {
+      "id": "TASK-002",
+      "title": "Unit tests de las funciones puras",
+      "description": "Especificar ficha-adhesion.constants.spec.ts cubriendo limpieza de campos por sistema, aporte-todo, y los tres caminos de applyConfirmado (cancelado, fecha inválida, fecha válida). Cobertura ≥80% del módulo.",
+      "status": "completed",
+      "layer": 1,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "files": [
+        "src/app/shared/adhesiones/ficha-adhesion.constants.spec.ts"
+      ],
+      "acceptance_criteria": [
+        "AC-2: tests para applySistContrib/applyAporteTodo/applyConfirmado",
+        "EC-1: cambiar de sistema no deja valores fantasma",
+        "GATE: npm test pasa (headless)"
+      ],
+      "references": [
+        "US-1",
+        "EC-1"
+      ]
+    },
+    {
+      "id": "TASK-003",
+      "title": "Refactor nueva-ficha para consumir el módulo compartido",
+      "description": "Quitar de nueva-ficha.component.ts las consts SISTEMAS/DEPARTAMENTOS/APORTES_SEC_AGR y los handlers duplicados; delegar en las funciones puras del módulo compartido. Preservar defaults del alta y el guardado (createLocal + navegación).",
+      "status": "completed",
+      "layer": 1,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "files": [
+        "src/app/features/adhesiones/nueva-ficha.component.ts"
+      ],
+      "acceptance_criteria": [
+        "AC-3: no queda ninguna copia de constantes/handlers en el componente",
+        "AC-5: guardar llama createLocal(f) y navega al listado",
+        "AC-6: defaults del alta preservados",
+        "GATE: npm run build pasa"
+      ],
+      "references": [
+        "US-2"
+      ]
+    },
+    {
+      "id": "TASK-004",
+      "title": "Refactor fichas-contacto para consumir el módulo compartido",
+      "description": "Quitar de fichas-contacto.component.ts las constantes inline y los handlers duplicados; delegar en las funciones puras. Preservar el toggle Editar/Cancelar/Guardar, updateLocal, recarga y normalización de fechas.",
+      "status": "completed",
+      "layer": 1,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "files": [
+        "src/app/features/adhesiones/fichas-contacto.component.ts"
+      ],
+      "acceptance_criteria": [
+        "AC-3: no queda copia de constantes/handlers en el componente",
+        "AC-8: Cancelar revierte al original; Guardar llama updateLocal y recarga",
+        "AC-9: normalización de fechas al abrir el detalle preservada",
+        "GATE: npm run build pasa"
+      ],
+      "references": [
+        "US-3"
+      ]
+    },
+    {
+      "id": "TASK-005",
+      "title": "Componente presentacional FichaAdhesionFormComponent",
+      "description": "Crear src/app/shared/adhesiones/ficha-adhesion-form.component.ts (standalone) con ficha=model.required<FichaAdhesionDetalle>(), disabled=input<boolean>(), sectores=input<string[]>(). Mueve el bloque de markup condicional del formulario; los handlers internos delegan en las funciones puras de TASK-001.",
+      "status": "completed",
+      "layer": 1,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "files": [
+        "src/app/shared/adhesiones/ficha-adhesion-form.component.ts"
+      ],
+      "acceptance_criteria": [
+        "AC-1: markup condicional (sistContrib, aporte-todo, confirmado) vive solo en este componente",
+        "BR-1/2/3: reglas condicionales preservadas vía las funciones puras",
+        "GATE: npm run build pasa"
+      ],
+      "references": [
+        "US-1",
+        "US-2",
+        "US-3"
+      ]
+    },
+    {
+      "id": "TASK-006",
+      "title": "Cablear nueva-ficha al componente de formulario",
+      "description": "Reemplazar el markup del form en nueva-ficha por <app-ficha-adhesion-form [(ficha)]=... [sectores]=...> siempre editable. Quitar el markup duplicado del template. Preservar defaults y guardado.",
+      "status": "completed",
+      "layer": 1,
+      "depends_on": [
+        "TASK-005",
+        "TASK-003"
+      ],
+      "files": [
+        "src/app/features/adhesiones/nueva-ficha.component.ts"
+      ],
+      "acceptance_criteria": [
+        "AC-4: mismos campos y campos condicionales que hoy",
+        "AC-3: sin markup de form duplicado en el componente",
+        "GATE: npm run build pasa"
+      ],
+      "references": [
+        "US-2"
+      ]
+    },
+    {
+      "id": "TASK-007",
+      "title": "Cablear la fila expandible de fichas-contacto al componente de formulario",
+      "description": "Reemplazar el markup del detalle en fichas-contacto por <app-ficha-adhesion-form [(ficha)]=detalle [disabled]=!editMode() [sectores]=...>. Quitar el markup duplicado. Preservar toggle Editar/Cancelar/Guardar.",
+      "status": "completed",
+      "layer": 1,
+      "depends_on": [
+        "TASK-005",
+        "TASK-004"
+      ],
+      "files": [
+        "src/app/features/adhesiones/fichas-contacto.component.ts"
+      ],
+      "acceptance_criteria": [
+        "AC-7: mismos campos condicionales en la fila expandible; toggle funciona igual",
+        "AC-3: sin markup de form duplicado en el componente",
+        "GATE: npm run build pasa"
+      ],
+      "references": [
+        "US-3"
+      ]
+    },
+    {
+      "id": "TASK-008",
+      "title": "Unit test de FichaAdhesionFormComponent",
+      "description": "Especificar ficha-adhesion-form.component.spec.ts: render de campos condicionales según sistContrib, estado disabled deshabilita inputs, two-way model refleja cambios de reglas.",
+      "status": "completed",
+      "layer": 1,
+      "depends_on": [
+        "TASK-005"
+      ],
+      "files": [
+        "src/app/shared/adhesiones/ficha-adhesion-form.component.spec.ts"
+      ],
+      "acceptance_criteria": [
+        "AC-4/AC-7: campos condicionales renderizan según sistContrib y aporte-todo",
+        "EC-2: two-way model propaga cambios al padre",
+        "GATE: npm test pasa (headless)"
+      ],
+      "references": [
+        "US-1",
+        "EC-2"
+      ]
+    },
+    {
+      "id": "TASK-009",
+      "title": "Code review",
+      "description": "Revisar diseño, dead code, naming y que no quede duplicación residual entre los dos componentes. Verificar que las funciones puras son la única fuente de las reglas.",
+      "status": "completed",
+      "layer": 2,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002",
+        "TASK-003",
+        "TASK-004",
+        "TASK-005",
+        "TASK-006",
+        "TASK-007",
+        "TASK-008"
+      ],
+      "files": [],
+      "acceptance_criteria": [
+        "Cero duplicación de constantes/handlers/markup entre nueva-ficha y fichas-contacto",
+        "Sin dead code ni imports huérfanos"
+      ],
+      "references": [
+        "US-1"
+      ]
+    },
+    {
+      "id": "TASK-010",
+      "title": "Performance review",
+      "description": "Confirmar que el refactor no agrega llamadas HTTP ni re-render innecesario; el número de requests de alta/edición es idéntico al actual.",
+      "status": "completed",
+      "layer": 2,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002",
+        "TASK-003",
+        "TASK-004",
+        "TASK-005",
+        "TASK-006",
+        "TASK-007",
+        "TASK-008"
+      ],
+      "files": [],
+      "acceptance_criteria": [
+        "Sin cambio en cantidad de requests HTTP de alta/edición",
+        "Sin loops de change detection por el two-way model"
+      ],
+      "references": [
+        "US-2",
+        "US-3"
+      ]
+    },
+    {
+      "id": "TASK-011",
+      "title": "Security review",
+      "description": "Verificar que el markup usa binding de Angular (auto-escape), sin innerHTML/document.write; sin secretos ni datos sensibles nuevos expuestos.",
+      "status": "completed",
+      "layer": 2,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002",
+        "TASK-003",
+        "TASK-004",
+        "TASK-005",
+        "TASK-006",
+        "TASK-007",
+        "TASK-008"
+      ],
+      "files": [],
+      "acceptance_criteria": [
+        "Sin innerHTML/document.write en el componente nuevo",
+        "Sin superficie XSS ni secretos hardcodeados"
+      ],
+      "references": [
+        "US-1"
+      ]
+    }
+  ],
+  "dependency_graph": {
+    "by_layer": {
+      "1": {
+        "level_0": [
+          "TASK-001"
+        ],
+        "level_1": [
+          "TASK-002",
+          "TASK-003",
+          "TASK-004",
+          "TASK-005"
+        ],
+        "level_2": [
+          "TASK-006",
+          "TASK-007",
+          "TASK-008"
+        ]
+      },
+      "2": {
+        "level_0": [
+          "TASK-009",
+          "TASK-010",
+          "TASK-011"
+        ]
+      }
+    }
+  }
+}
