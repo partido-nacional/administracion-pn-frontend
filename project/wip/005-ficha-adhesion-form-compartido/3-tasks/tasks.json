@@ -5,7 +5,7 @@
   },
   "stats": {
     "total": 11,
-    "done": 8,
+    "done": 11,
     "by_layer": {
       "1": 8,
       "2": 3
@@ -196,7 +196,7 @@
       "id": "TASK-009",
       "title": "Code review",
       "description": "Revisar diseño, dead code, naming y que no quede duplicación residual entre los dos componentes. Verificar que las funciones puras son la única fuente de las reglas.",
-      "status": "pending",
+      "status": "completed",
       "layer": 2,
       "depends_on": [
         "TASK-001",
@@ -221,7 +221,7 @@
       "id": "TASK-010",
       "title": "Performance review",
       "description": "Confirmar que el refactor no agrega llamadas HTTP ni re-render innecesario; el número de requests de alta/edición es idéntico al actual.",
-      "status": "pending",
+      "status": "completed",
       "layer": 2,
       "depends_on": [
         "TASK-001",
@@ -247,7 +247,7 @@
       "id": "TASK-011",
       "title": "Security review",
       "description": "Verificar que el markup usa binding de Angular (auto-escape), sin innerHTML/document.write; sin secretos ni datos sensibles nuevos expuestos.",
-      "status": "pending",
+      "status": "completed",
       "layer": 2,
       "depends_on": [
         "TASK-001",
