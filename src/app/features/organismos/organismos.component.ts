@@ -45,11 +45,6 @@ const m = (val: any, q: string) => !q || norm(val).includes(q.toLowerCase());
       <div class="card"><div class="card-body" style="padding:0;overflow-x:auto">
         <table class="table" style="min-width:1400px">
           <thead>
-            <tr>
-              <th>Id</th><th>Ámbito</th><th>Nombre</th><th>Descripción</th><th>Dirección</th>
-              <th>Ciudad</th><th>Departamento</th><th>País</th><th>Art. 44</th>
-              <th>Orden Dpto.</th><th>Observaciones</th><th></th>
-            </tr>
             <tr class="filter-row">
               <th><input class="column-filter" [ngModel]="fOrgId()"     (ngModelChange)="fOrgId.set($event)"     placeholder="Filtrar..."></th>
               <th>
@@ -80,6 +75,11 @@ const m = (val: any, q: string) => !q || norm(val).includes(q.toLowerCase());
               <th><input class="column-filter" [ngModel]="fOrgOrd()"    (ngModelChange)="fOrgOrd.set($event)"    placeholder="Filtrar..."></th>
               <th></th>
               <th></th>
+            </tr>
+            <tr>
+              <th>Id</th><th>Ámbito</th><th>Nombre</th><th>Descripción</th><th>Dirección</th>
+              <th>Ciudad</th><th>Departamento</th><th>País</th><th>Art. 44</th>
+              <th>Orden Dpto.</th><th>Observaciones</th><th></th>
             </tr>
           </thead>
           <tbody>
@@ -118,10 +118,6 @@ const m = (val: any, q: string) => !q || norm(val).includes(q.toLowerCase());
       <div class="card"><div class="card-body" style="padding:0;overflow-x:auto">
         <table class="table" style="min-width:1100px">
           <thead>
-            <tr>
-              <th>Id Info.</th><th>Id Tipo</th><th>Id Org. Est.</th><th>Id Org. Part.</th>
-              <th>Dirección</th><th>Teléfono</th><th>Email</th><th>Observaciones</th><th></th>
-            </tr>
             <tr class="filter-row">
               <th><input class="column-filter" [ngModel]="fInfId()"    (ngModelChange)="fInfId.set($event)"    placeholder="Filtrar..."></th>
               <th></th>
@@ -132,6 +128,10 @@ const m = (val: any, q: string) => !q || norm(val).includes(q.toLowerCase());
               <th><input class="column-filter" [ngModel]="fInfMail()"  (ngModelChange)="fInfMail.set($event)"  placeholder="Filtrar..."></th>
               <th></th>
               <th></th>
+            </tr>
+            <tr>
+              <th>Id Info.</th><th>Id Tipo</th><th>Id Org. Est.</th><th>Id Org. Part.</th>
+              <th>Dirección</th><th>Teléfono</th><th>Email</th><th>Observaciones</th><th></th>
             </tr>
           </thead>
           <tbody>
@@ -167,10 +167,6 @@ const m = (val: any, q: string) => !q || norm(val).includes(q.toLowerCase());
       <div class="card"><div class="card-body" style="padding:0;overflow-x:auto">
         <table class="table">
           <thead>
-            <tr>
-              <th>ID Contacto</th><th>Cred. Cívica</th><th>Apellidos</th><th>Nombres</th>
-              <th>Celular</th><th>Mail</th><th>Posición</th><th>Organismo</th><th>Depto.</th>
-            </tr>
             <tr class="filter-row">
               <th><input class="column-filter" [ngModel]="fIntId()"   (ngModelChange)="fIntId.set($event)"   placeholder="Filtrar..."></th>
               <th></th>
@@ -186,6 +182,10 @@ const m = (val: any, q: string) => !q || norm(val).includes(q.toLowerCase());
                   @for (d of intDeptos(); track d) { <option [ngValue]="d">{{ d }}</option> }
                 </select>
               </th>
+            </tr>
+            <tr>
+              <th>ID Contacto</th><th>Cred. Cívica</th><th>Apellidos</th><th>Nombres</th>
+              <th>Celular</th><th>Mail</th><th>Posición</th><th>Organismo</th><th>Depto.</th>
             </tr>
           </thead>
           <tbody>
@@ -214,13 +214,13 @@ const m = (val: any, q: string) => !q || norm(val).includes(q.toLowerCase());
       <div class="card"><div class="card-body" style="padding:0;overflow-x:auto">
         <table class="table">
           <thead>
-            <tr><th>Nombre</th><th>Cargo</th><th>Organismo</th><th>Período</th></tr>
             <tr class="filter-row">
               <th><input class="column-filter" [ngModel]="fRefNom()" (ngModelChange)="fRefNom.set($event)" placeholder="Filtrar..."></th>
               <th><input class="column-filter" [ngModel]="fRefCar()" (ngModelChange)="fRefCar.set($event)" placeholder="Filtrar..."></th>
               <th></th>
               <th></th>
             </tr>
+            <tr><th>Nombre</th><th>Cargo</th><th>Organismo</th><th>Período</th></tr>
           </thead>
           <tbody>
             @for (r of referenciasFiltradas(); track $index) {

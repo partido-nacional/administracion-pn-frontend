@@ -149,6 +149,19 @@ type Tab = 'todas' | 'pendientes' | 'fichas' | 'periodo' | 'padron';
       <div class="card"><div class="card-body" style="padding:0;overflow-x:auto">
         <table class="table">
           <thead>
+            <tr class="filter-row">
+              <th>
+                <select class="column-filter" [ngModel]="fPadSerie()" (ngModelChange)="fPadSerie.set($event)">
+                  <option value="">Todas</option>
+                  @for (s of padronSeries(); track s) { <option [ngValue]="s">{{ s }}</option> }
+                </select>
+              </th>
+              <th><input class="column-filter" [ngModel]="fPadNro()"    (ngModelChange)="fPadNro.set($event)"    placeholder="Filtrar..."></th>
+              <th><input class="column-filter" [ngModel]="fPadPNom()"   (ngModelChange)="fPadPNom.set($event)"   placeholder="Filtrar..."></th>
+              <th><input class="column-filter" [ngModel]="fPadSNom()"   (ngModelChange)="fPadSNom.set($event)"   placeholder="Filtrar..."></th>
+              <th><input class="column-filter" [ngModel]="fPadPApe()"   (ngModelChange)="fPadPApe.set($event)"   placeholder="Filtrar..."></th>
+              <th><input class="column-filter" [ngModel]="fPadSApe()"   (ngModelChange)="fPadSApe.set($event)"   placeholder="Filtrar..."></th>
+            </tr>
             <tr>
               <th style="width:34px"></th>
               <th class="sortable" (click)="onSort('id')">Id <span class="ind">{{ indicador('id') }}</span></th>
@@ -289,19 +302,6 @@ type Tab = 'todas' | 'pendientes' | 'fichas' | 'periodo' | 'padron';
           <thead>
             <tr>
               <th>Serie</th><th>Nro.</th><th>Primer Nombre</th><th>Segundo Nombre</th><th>Primer Apellido</th><th>Segundo Apellido</th>
-            </tr>
-            <tr class="filter-row">
-              <th>
-                <select class="column-filter" [ngModel]="fPadSerie()" (ngModelChange)="fPadSerie.set($event)">
-                  <option value="">Todas</option>
-                  @for (s of padronSeries(); track s) { <option [ngValue]="s">{{ s }}</option> }
-                </select>
-              </th>
-              <th><input class="column-filter" [ngModel]="fPadNro()"    (ngModelChange)="fPadNro.set($event)"    placeholder="Filtrar..."></th>
-              <th><input class="column-filter" [ngModel]="fPadPNom()"   (ngModelChange)="fPadPNom.set($event)"   placeholder="Filtrar..."></th>
-              <th><input class="column-filter" [ngModel]="fPadSNom()"   (ngModelChange)="fPadSNom.set($event)"   placeholder="Filtrar..."></th>
-              <th><input class="column-filter" [ngModel]="fPadPApe()"   (ngModelChange)="fPadPApe.set($event)"   placeholder="Filtrar..."></th>
-              <th><input class="column-filter" [ngModel]="fPadSApe()"   (ngModelChange)="fPadSApe.set($event)"   placeholder="Filtrar..."></th>
             </tr>
           </thead>
           <tbody>

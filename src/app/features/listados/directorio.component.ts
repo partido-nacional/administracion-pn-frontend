@@ -17,19 +17,19 @@ import { exportarCSV } from '../../core/exportar-csv';
       <div class="card-body" style="padding:0">
         <table class="table">
           <thead>
-            <tr>
-              <th style="min-width:130px" class="sortable" (click)="sortBy('apellidos')">Apellidos {{ arrow('apellidos') }}</th>
-              <th style="min-width:110px" class="sortable" (click)="sortBy('nombres')">Nombres {{ arrow('nombres') }}</th>
-              <th style="min-width:110px">Celular</th>
-              <th style="min-width:180px">Mail</th>
-              <th style="min-width:150px">Posicion Organismo</th>
-            </tr>
             <tr class="filter-row">
               <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fApellidos" (ngModelChange)="onFilter()"></th>
               <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fNombres" (ngModelChange)="onFilter()"></th>
               <th></th>
               <th></th>
               <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fPos" (ngModelChange)="onFilter()"></th>
+            </tr>
+            <tr>
+              <th style="min-width:130px" class="sortable" (click)="sortBy('apellidos')">Apellidos {{ arrow('apellidos') }}</th>
+              <th style="min-width:110px" class="sortable" (click)="sortBy('nombres')">Nombres {{ arrow('nombres') }}</th>
+              <th style="min-width:110px">Celular</th>
+              <th style="min-width:180px">Mail</th>
+              <th style="min-width:150px">Posicion Organismo</th>
             </tr>
           </thead>
           <tbody>
