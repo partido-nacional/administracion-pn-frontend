@@ -3,9 +3,9 @@
  * Contrato de backend aún no implementado — ver DEBT cross-repo en `project/backlog.md`.
  */
 
-export type RolUsuario = 'Administrador' | 'Hacienda' | 'Comunicaciones' | 'Administrativo' | 'IT';
+export type RolUsuario = 'Secretaria' | 'Comunicaciones' | 'Hacienda' | 'IT';
 
-export const ROLES_USUARIO: RolUsuario[] = ['Administrador', 'Hacienda', 'Comunicaciones', 'Administrativo', 'IT'];
+export const ROLES_USUARIO: RolUsuario[] = ['Secretaria', 'Comunicaciones', 'Hacienda', 'IT'];
 
 /** Usuario tal cual lo devuelve el backend (nunca incluye la clave). */
 export interface UsuarioDto {

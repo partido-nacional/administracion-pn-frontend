@@ -33,6 +33,7 @@
         <span class="nav-label">Agenda</span>
       </a>
 
+      @if (puede('agrupaciones')) {
       <a routerLink="/agrupaciones" routerLinkActive="active" class="nav-item" title="Agrupaciones">
         <span class="nav-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -44,7 +45,9 @@
         </span>
         <span class="nav-label">Agrupaciones</span>
       </a>
+      }
 
+      @if (puede('listados')) {
       <a class="nav-item nav-parent" [class.open]="isOpen('listados')" (click)="toggle('listados')" title="Listados">
         <span class="nav-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -75,7 +78,9 @@
         <a routerLink="/listados/convencionales" routerLinkActive="active" class="nav-subitem">Convencionales</a>
         <a routerLink="/listados/directorio" routerLinkActive="active" class="nav-subitem">Directorio</a>
       </div>
+      }
 
+      @if (puede('productos')) {
       <a routerLink="/productos" routerLinkActive="active" class="nav-item" title="Productos">
         <span class="nav-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -87,7 +92,9 @@
         </span>
         <span class="nav-label">Productos</span>
       </a>
+      }
 
+      @if (puede('adhesiones')) {
       <a routerLink="/adhesiones" routerLinkActive="active" class="nav-item" title="Adhesiones">
         <span class="nav-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -99,6 +106,7 @@
         </span>
         <span class="nav-label">Adhesiones</span>
       </a>
+      }
 
       <!-- Débitos oculto temporalmente (feature 007-ocultar-seccion-debitos). Descomentar para restaurar. -->
       <!--
@@ -113,6 +121,7 @@
       </a>
       -->
 
+      @if (puede('organismos')) {
       <a routerLink="/organismos" routerLinkActive="active" class="nav-item" title="Organismos">
         <span class="nav-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -126,7 +135,9 @@
         </span>
         <span class="nav-label">Organismos</span>
       </a>
+      }
 
+      @if (puede('convencionales')) {
       <a routerLink="/convencionales" routerLinkActive="active" class="nav-item" title="Convencionales">
         <span class="nav-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -138,8 +149,9 @@
         </span>
         <span class="nav-label">Convencionales</span>
       </a>
+      }
 
-      @if (user()?.rol === 'Administrador') {
+      @if (puede('usuarios')) {
         <a routerLink="/usuarios" routerLinkActive="active" class="nav-item" title="Usuarios">
           <span class="nav-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

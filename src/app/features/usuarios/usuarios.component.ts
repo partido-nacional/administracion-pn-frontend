@@ -112,7 +112,7 @@ export class UsuariosComponent {
   }
 
   private formVacio() {
-    return { usuario: '', nombre: '', rol: 'Administrativo' as RolUsuario, clave: '' };
+    return { usuario: '', nombre: '', rol: 'Secretaria' as RolUsuario, clave: '' };
   }
 
   private cargar() {
