@@ -11,6 +11,7 @@ import { PaginatorComponent } from '../../shared/components/paginator/paginator.
 import { ModalFormComponent } from '../../shared/components/modal-form/modal-form.component';
 import { GridQuery, PagedResult, SortOrder, DEFAULT_PAGE_SIZE } from '../../core/models/paged';
 import { buildPagedParams } from '../../core/services/paged';
+import { toggleSort, sortArrow } from '../../shared/grid/grid-sort';
 
 interface Agrupacion {
   id: number; codAgrup: string; codDepto: string; pendiente: boolean; tipo: string; solic: number;
@@ -409,14 +410,13 @@ export class AgrupacionesComponent {
   loadingTodas = signal(false);
 
   onSort(field: string) {
-    if (this.sort() === field) this.order.set(this.order() === 'asc' ? 'desc' : 'asc');
-    else { this.sort.set(field); this.order.set('asc'); }
+    toggleSort(this.sort, this.order, field);
     this.page.set(1);
     this.loadTodas();
   }
 
   indicador(field: string): string {
-    return this.sort() !== field ? '' : (this.order() === 'asc' ? '▲' : '▼');
+    return sortArrow(this.sort(), this.order(), field);
   }
 
   onPage(p: number) { this.page.set(p); this.loadTodas(); }
