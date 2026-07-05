@@ -88,11 +88,11 @@ const DIAS_SEM = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
       </div>
     </div>
 
-    @if (modal() === 'crear') {
+    @if (modal() === 'crear' || modal() === 'editar') {
       <div class="modal-backdrop" (click)="cerrarModal()">
         <div class="ev-modal" (click)="$event.stopPropagation()">
           <div class="ev-header">
-            <div class="ev-title">Nuevo evento</div>
+            <div class="ev-title">{{ modal() === 'editar' ? 'Editar evento' : 'Nuevo evento' }}</div>
             <button class="ev-close" (click)="cerrarModal()">×</button>
           </div>
           <div class="ev-body">
@@ -123,7 +123,7 @@ const DIAS_SEM = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
           </div>
           <div class="ev-footer">
             <button class="btn btn-secondary" (click)="cerrarModal()">Cancelar</button>
-            <button class="btn btn-primary" (click)="guardarNuevo()" [disabled]="busy()">
+            <button class="btn btn-primary" (click)="modal() === 'editar' ? guardarEdicion() : guardarNuevo()" [disabled]="busy()">
               {{ busy() ? 'Guardando…' : 'Guardar' }}
             </button>
           </div>
@@ -156,6 +156,7 @@ const DIAS_SEM = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
           </div>
           <div class="ev-footer">
             <button class="btn btn-danger" (click)="eliminar()" [disabled]="busy()">Eliminar</button>
+            <button class="btn btn-primary" (click)="abrirEditar(eventoSel()!)" [disabled]="busy()">Editar</button>
             <button class="btn btn-secondary" (click)="cerrarModal()">Cerrar</button>
           </div>
         </div>
@@ -282,8 +283,9 @@ export class DashboardComponent {
   anio = signal(new Date().getFullYear());
   mes = signal(new Date().getMonth()); // 0-11
 
-  modal = signal<'crear' | 'ver' | null>(null);
+  modal = signal<'crear' | 'editar' | 'ver' | null>(null);
   eventoSel = signal<Evento | null>(null);
+  editId = signal<number | null>(null);
   modalError = signal('');
   busy = signal(false);
   soloPrivados = signal(false);
@@ -377,8 +379,21 @@ export class DashboardComponent {
     this.eventoSel.set(e);
     this.modal.set('ver');
   }
+  abrirEditar(e: Evento) {
+    this.form = {
+      titulo: e.titulo,
+      fecha: e.fechaInicio.slice(0, 10),
+      hora: e.fechaInicio.slice(11, 16),
+      tipo: e.tipo || '',
+      descripcion: e.descripcion || '',
+      esPublico: e.esPublico,
+    };
+    this.editId.set(e.id);
+    this.modalError.set('');
+    this.modal.set('editar');
+  }
   cerrarModal() {
-    this.modal.set(null); this.eventoSel.set(null); this.modalError.set('');
+    this.modal.set(null); this.eventoSel.set(null); this.editId.set(null); this.modalError.set('');
   }
 
   guardarNuevo() {
@@ -399,6 +414,30 @@ export class DashboardComponent {
       error: (err) => {
         this.busy.set(false);
         this.modalError.set(err?.error?.message || 'No se pudo crear el evento.');
+      }
+    });
+  }
+
+  guardarEdicion() {
+    const id = this.editId();
+    if (id == null) return;
+    if (!this.form.titulo.trim()) { this.modalError.set('El título es obligatorio.'); return; }
+    if (!this.form.fecha || !this.form.hora) { this.modalError.set('Fecha y hora son obligatorias.'); return; }
+    this.busy.set(true);
+    const fechaInicio = `${this.form.fecha}T${this.form.hora}:00`;
+    this.http.put(`${environment.apiUrl}/calendario/eventos/${id}`, {
+      titulo: this.form.titulo.trim(),
+      fechaInicio,
+      fechaFin: null,
+      descripcion: this.form.descripcion || null,
+      tipo: this.form.tipo || null,
+      creadorNombre: this.usuario(),
+      esPublico: this.form.esPublico
+    }).subscribe({
+      next: () => { this.busy.set(false); this.cerrarModal(); this.cargarEventos(); },
+      error: (err) => {
+        this.busy.set(false);
+        this.modalError.set(err?.error?.message || 'No se pudo guardar el evento.');
       }
     });
   }
