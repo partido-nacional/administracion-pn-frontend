@@ -33,6 +33,30 @@ export class ShellComponent {
 
   isOpen(key: string) { return !!this.openMenus()[key]; }
 
+  /**
+   * Secciones restringidas por rol (matriz RBAC). Las no listadas (inicio, agenda) son
+   * accesibles para todos los roles. Fuente de verdad en el backend (feature 003); acá
+   * se replica solo para ocultar el nav y bloquear la navegación (UX), no como seguridad.
+   */
+  private readonly accesoPorSeccion: Record<string, string[]> = {
+    agrupaciones: ['Secretaria', 'Hacienda', 'IT'],
+    listados: ['Secretaria', 'Hacienda', 'IT'],
+    productos: ['Secretaria', 'Hacienda', 'IT'],
+    organismos: ['Secretaria', 'Hacienda', 'IT'],
+    convencionales: ['Secretaria', 'Hacienda', 'IT'],
+    adhesiones: ['Hacienda', 'IT'],
+    debitos: ['Hacienda', 'IT'],
+    usuarios: ['IT'],
+  };
+
+  /** True si el rol actual puede ver/entrar a la sección (o si la sección es abierta). */
+  puede(seccion: string): boolean {
+    const roles = this.accesoPorSeccion[seccion];
+    if (!roles) return true;
+    const rol = this.user()?.rol;
+    return !!rol && roles.includes(rol);
+  }
+
   toggleSidebar() { this.sidebarCollapsed.update(v => !v); }
 
   toggleDarkMode() {

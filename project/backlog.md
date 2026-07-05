@@ -2,8 +2,8 @@
 
 > Items captured during development. Use `/project.backlog` to manage.
 
-**Last Updated**: 2026-07-04
-**Total Items**: 26 (12 TODO, 14 DEBT, 0 IDEA) · resueltos: DEBT-012, DEBT-014
+**Last Updated**: 2026-07-05
+**Total Items**: 27 (13 TODO, 14 DEBT, 0 IDEA) · resueltos: DEBT-012, DEBT-014
 
 > Origen común: ingeniería inversa a máximo detalle (reverse-eng) del frontend Angular, 2026-06-14. Cada ítem fue verificado contra el código por un agente lector. Confirmar `archivo:línea` antes de arreglar.
 
@@ -117,6 +117,16 @@
 - **Context**: En las fichas de adhesión, con `aporteConfirmado === false` (Baja) el usuario podía **borrar manualmente** la `fechaSalida` del `<input type="date">` inline y guardar, dejando un estado incoherente (baja sin fecha). **Resuelto**: helper `normalizarFechaSalida` (en `confirmado-baja.util.ts`) invocado en el `guardar()` de ambos componentes: si es Baja y falta la fecha, se completa con hoy antes de persistir. Con tests.
 - **Affected Files**: src/app/features/adhesiones/confirmado-baja.util.ts, fichas-contacto.component.ts, nueva-ficha.component.ts
 - **Complexity**: S
+
+### TODO-013: Verificación E2E de la sección Usuarios (espejo backend pendiente)
+- **Priority**: Medium
+- **Status**: pending
+- **Created**: 2026-07-05
+- **Origin**: feature/gestion-usuarios (dependencia cross-repo)
+- **Context**: Se construyó la sección **Usuarios** completa en el FE (listado, alta/edición con rol, activar/desactivar, resetear clave), con item de menú visible solo para rol `Administrador` (`adminGuard`, nuevo). El backend **no tiene** todavía los endpoints correspondientes (`GET/POST /api/usuarios`, `PUT /api/usuarios/{id}`, `PUT /api/usuarios/{id}/estado`, `POST /api/usuarios/{id}/resetear-clave`) — el contrato quedó definido solo del lado FE (`core/models/usuarios.ts`), sin espejo documentado en `administracion-pn-backend`. Cuando el backend implemente esos endpoints, verificar vía `/verify`: alta de usuario con cada rol (`Administrador`, `Hacienda`, `Comunicaciones`, `Administrativo`, `IT`), edición, activar/desactivar y reseteo de clave (confirmar que la clave temporal se muestra una sola vez y no se persiste en el FE); confirmar también que un usuario con rol distinto de `Administrador` no puede acceder a `/usuarios` (redirect a `/inicio`).
+- **Affected Files**: src/app/features/usuarios/usuarios.component.ts, core/services/usuarios.service.ts, core/models/usuarios.ts, core/admin.guard.ts, app.routes.ts, layout/shell.component.html; (espejo pendiente) administracion-pn-backend → `/api/usuarios/*`
+- **Complexity**: M
+- **Risk if Ignored**: La sección queda visualmente completa pero no funcional contra datos reales; sin el guard verificado en el backend (autorización real del rol), la restricción de acceso depende solo del cliente. *(Convención de IDs cruzados — ver `CLAUDE.md` → Workspace.)*
 
 ## 🔧 Technical Debt
 
