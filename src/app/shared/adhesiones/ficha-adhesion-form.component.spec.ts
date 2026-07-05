@@ -75,18 +75,19 @@ describe('FichaAdhesionFormComponent', () => {
     inputs.forEach((el: any) => expect(el.disabled).toBeTrue());
   }));
 
-  it('onSistContribChange aplica la regla y actualiza el model (two-way)', () => {
+  it('onSistContribChange cambia el sistema y NO borra datos cargados (fix 009)', () => {
     setFicha(ficha({ sistContrib: 'Antel', telefonoAntel: '099' }));
     component.onSistContribChange('OCA');
     expect(component.ficha().sistContrib).toBe('OCA');
-    expect(component.ficha().telefonoAntel).toBeUndefined();
+    // El campo se oculta pero su valor se conserva hasta guardar.
+    expect(component.ficha().telefonoAntel).toBe('099');
   });
 
-  it('onAporteTodoChange(true) limpia los campos de sector', () => {
+  it('onAporteTodoChange(true) setea el flag y NO borra los campos de sector (fix 009)', () => {
     setFicha(ficha({ aporteTodoAlPartido: false, sector: 'X' }));
     component.onAporteTodoChange(true);
     expect(component.ficha().aporteTodoAlPartido).toBeTrue();
-    expect(component.ficha().sector).toBeUndefined();
+    expect(component.ficha().sector).toBe('X');
   });
 
   describe('onConfirmadoChange (BR-3 / TODO-012, sin window.prompt)', () => {

@@ -5,13 +5,20 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { PageTitleService } from '../../core/page-title.service';
 import { exportarCSV, CsvColumn } from '../../core/exportar-csv';
+import { OrganismosService } from '../../core/services/organismos.service';
+import { ModalFormComponent } from '../../shared/components/modal-form/modal-form.component';
+import {
+  Ambito, OrganismoTodosDto, OrganismoInput,
+  TipoOrganismoDto, InfoOrganizacionDto, InfoOrganizacionInput,
+} from '../../core/models/organismos';
 
-interface Organismo { id: number; nombre: string; descripcion: string; direccion: string; ciudad: string; departamento: string; pais: string; art44: boolean; ordenDpto: number; observaciones?: string; }
-interface InfoOrg { id: number; idTipo: number; idEstatal: number; idPartidario: number; nombreCompania: string; nombreAbreviado: string; departamento: string; }
+/** Display-only de las tabs fuera de alcance (Integrantes / Referencias): shape heredado. */
 interface IntegranteOrg { idContacto: number; credCivica: string; apellidos: string; nombres: string; celular: string; mail: string; posicion: string; organismo: string; departamento: string; }
 interface RefPart { nombre: string; cargo: string; organismo: string; periodo: string; }
 
 type Tab = 'todos' | 'info' | 'integrantes' | 'referencias';
+type ModalKind = 'organismo' | 'info';
+type ModalMode = 'nueva' | 'editar';
 
 const norm = (s: any) => (s ?? '').toString().toLowerCase();
 const m = (val: any, q: string) => !q || norm(val).includes(q.toLowerCase());
@@ -19,9 +26,11 @@ const m = (val: any, q: string) => !q || norm(val).includes(q.toLowerCase());
 @Component({
   selector: 'app-organismos',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ModalFormComponent],
   template: `
     <div class="topbar-inline">
+      @if (tab()==='todos') { <button class="btn btn-primary" (click)="abrirNuevoOrganismo()">+ Nuevo Organismo</button> }
+      @if (tab()==='info') { <button class="btn btn-primary" (click)="abrirNuevaInfo()">+ Nueva Info</button> }
       <button class="btn btn-secondary" (click)="exportarCsvTab()" title="Exportar CSV">📥 CSV</button>
     </div>
 
@@ -34,15 +43,22 @@ const m = (val: any, q: string) => !q || norm(val).includes(q.toLowerCase());
 
     @if (tab()==='todos') {
       <div class="card"><div class="card-body" style="padding:0;overflow-x:auto">
-        <table class="table" style="min-width:1300px">
+        <table class="table" style="min-width:1400px">
           <thead>
             <tr>
-              <th>Id</th><th>Nombre</th><th>Descripción</th><th>Dirección</th>
+              <th>Id</th><th>Ámbito</th><th>Nombre</th><th>Descripción</th><th>Dirección</th>
               <th>Ciudad</th><th>Departamento</th><th>País</th><th>Art. 44</th>
               <th>Orden Dpto.</th><th>Observaciones</th><th></th>
             </tr>
             <tr class="filter-row">
               <th><input class="column-filter" [ngModel]="fOrgId()"     (ngModelChange)="fOrgId.set($event)"     placeholder="Filtrar..."></th>
+              <th>
+                <select class="column-filter" [ngModel]="fOrgAmb()" (ngModelChange)="fOrgAmb.set($event)">
+                  <option value="">Todos</option>
+                  <option value="Estatal">Estatal</option>
+                  <option value="Partidario">Partidario</option>
+                </select>
+              </th>
               <th><input class="column-filter" [ngModel]="fOrgNom()"    (ngModelChange)="fOrgNom.set($event)"    placeholder="Filtrar..."></th>
               <th></th>
               <th></th>
@@ -67,9 +83,10 @@ const m = (val: any, q: string) => !q || norm(val).includes(q.toLowerCase());
             </tr>
           </thead>
           <tbody>
-            @for (o of organismosFiltrados(); track o.id) {
+            @for (o of organismosFiltrados(); track $index) {
               <tr>
                 <td>{{ o.id }}</td>
+                <td><span class="badge" [class.amb-est]="o.ambito==='Estatal'" [class.amb-part]="o.ambito==='Partidario'">{{ o.ambito }}</span></td>
                 <td><strong>{{ o.nombre }}</strong></td>
                 <td>{{ o.descripcion }}</td>
                 <td>{{ o.direccion }}</td>
@@ -80,7 +97,7 @@ const m = (val: any, q: string) => !q || norm(val).includes(q.toLowerCase());
                 <td>{{ o.ordenDpto }}</td>
                 <td>{{ o.observaciones || '—' }}</td>
                 <td>
-                  <button class="btn-pencil" title="Editar (no implementado)">
+                  <button class="btn-pencil" (click)="abrirEditarOrganismo(o)" title="Editar">
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                       <path d="M12 20h9"/>
                       <path d="M16.5 3.5a2.121 2.121 0 113 3L7 19l-4 1 1-4 12.5-12.5z"/>
@@ -89,7 +106,7 @@ const m = (val: any, q: string) => !q || norm(val).includes(q.toLowerCase());
                 </td>
               </tr>
             } @empty {
-              <tr><td colspan="11"><div class="empty-state"><div class="empty-state-text">Sin resultados</div></div></td></tr>
+              <tr><td colspan="12"><div class="empty-state"><div class="empty-state-text">Sin resultados</div></div></td></tr>
             }
           </tbody>
         </table>
@@ -99,25 +116,21 @@ const m = (val: any, q: string) => !q || norm(val).includes(q.toLowerCase());
 
     @if (tab()==='info') {
       <div class="card"><div class="card-body" style="padding:0;overflow-x:auto">
-        <table class="table">
+        <table class="table" style="min-width:1100px">
           <thead>
             <tr>
               <th>Id Info.</th><th>Id Tipo</th><th>Id Org. Est.</th><th>Id Org. Part.</th>
-              <th>Nombre Compañía</th><th>Abreviado</th><th>Departamento</th><th></th>
+              <th>Dirección</th><th>Teléfono</th><th>Email</th><th>Observaciones</th><th></th>
             </tr>
             <tr class="filter-row">
               <th><input class="column-filter" [ngModel]="fInfId()"    (ngModelChange)="fInfId.set($event)"    placeholder="Filtrar..."></th>
               <th></th>
               <th></th>
               <th></th>
-              <th><input class="column-filter" [ngModel]="fInfComp()"  (ngModelChange)="fInfComp.set($event)"  placeholder="Filtrar..."></th>
+              <th><input class="column-filter" [ngModel]="fInfDir()"   (ngModelChange)="fInfDir.set($event)"   placeholder="Filtrar..."></th>
               <th></th>
-              <th>
-                <select class="column-filter" [ngModel]="fInfDep()" (ngModelChange)="fInfDep.set($event)">
-                  <option value="">Todos</option>
-                  @for (d of infoDeptos(); track d) { <option [ngValue]="d">{{ d }}</option> }
-                </select>
-              </th>
+              <th><input class="column-filter" [ngModel]="fInfMail()"  (ngModelChange)="fInfMail.set($event)"  placeholder="Filtrar..."></th>
+              <th></th>
               <th></th>
             </tr>
           </thead>
@@ -125,14 +138,15 @@ const m = (val: any, q: string) => !q || norm(val).includes(q.toLowerCase());
             @for (i of infoFiltrados(); track i.id) {
               <tr>
                 <td>{{ i.id }}</td>
-                <td>{{ i.idTipo }}</td>
-                <td>{{ i.idEstatal }}</td>
-                <td>{{ i.idPartidario }}</td>
-                <td><strong>{{ i.nombreCompania }}</strong></td>
-                <td>{{ i.nombreAbreviado }}</td>
-                <td><span class="badge dept">{{ i.departamento }}</span></td>
+                <td>{{ i.tipoOrganismoId ?? '—' }}</td>
+                <td>{{ i.organismoEstatalId ?? '—' }}</td>
+                <td>{{ i.organismoPartidarioId ?? '—' }}</td>
+                <td>{{ i.direccion || '—' }}</td>
+                <td>{{ i.telefono || '—' }}</td>
+                <td>{{ i.email || '—' }}</td>
+                <td>{{ i.observaciones || '—' }}</td>
                 <td>
-                  <button class="btn-pencil" title="Editar (no implementado)">
+                  <button class="btn-pencil" (click)="abrirEditarInfo(i)" title="Editar">
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                       <path d="M12 20h9"/>
                       <path d="M16.5 3.5a2.121 2.121 0 113 3L7 19l-4 1 1-4 12.5-12.5z"/>
@@ -141,7 +155,7 @@ const m = (val: any, q: string) => !q || norm(val).includes(q.toLowerCase());
                 </td>
               </tr>
             } @empty {
-              <tr><td colspan="8"><div class="empty-state"><div class="empty-state-text">Sin resultados</div></div></td></tr>
+              <tr><td colspan="9"><div class="empty-state"><div class="empty-state-text">Sin resultados</div></div></td></tr>
             }
           </tbody>
         </table>
@@ -224,47 +238,114 @@ const m = (val: any, q: string) => !q || norm(val).includes(q.toLowerCase());
         <div class="footer">Mostrando {{ referenciasFiltradas().length }} de {{ referencias().length }}</div>
       </div></div>
     }
+
+    @if (modalKind()) {
+      <app-modal-form
+        [title]="tituloModal()"
+        [busy]="modalBusy()"
+        [error]="modalError()"
+        [saveLabel]="modalMode()==='editar' ? 'Guardar cambios' : 'Crear'"
+        (save)="guardar()" (cancel)="cerrarModal()">
+            @if (modalKind()==='organismo') {
+              <div class="nv-grid">
+                <div class="fg"><label>Ámbito *</label>
+                  <select [(ngModel)]="form.ambito" name="o-amb" [disabled]="modalMode()==='editar'">
+                    <option value="Estatal">Estatal</option>
+                    <option value="Partidario">Partidario</option>
+                  </select>
+                </div>
+                <div class="fg"><label>Tipo de Organismo *</label>
+                  <select [(ngModel)]="form.tipoOrganismoId" name="o-tipo">
+                    <option [ngValue]="null">— Seleccioná —</option>
+                    @for (t of tipos(); track t.id) { <option [ngValue]="t.id">{{ t.nombre }}</option> }
+                  </select>
+                </div>
+                <div class="fg full"><label>Nombre *</label><input [(ngModel)]="form.nombre" name="o-nombre"></div>
+                <div class="fg"><label>Nombre Compañía</label><input [(ngModel)]="form.nombreCompania" name="o-comp"></div>
+                <div class="fg"><label>Categoría</label><input [(ngModel)]="form.categoria" name="o-cat"></div>
+                <div class="fg full"><label>Descripción</label><input [(ngModel)]="form.descripcion" name="o-desc"></div>
+                <div class="fg full"><label>Dirección</label><input [(ngModel)]="form.direccion" name="o-dir"></div>
+                <div class="fg"><label>Ciudad</label><input [(ngModel)]="form.ciudad" name="o-ciu"></div>
+                <div class="fg"><label>Departamento</label>
+                  <select [(ngModel)]="form.departamento" name="o-dep">
+                    <option value="">—</option>
+                    @for (d of departamentos; track d) { <option [ngValue]="d">{{ d }}</option> }
+                  </select>
+                </div>
+                <div class="fg"><label>País</label><input [(ngModel)]="form.pais" name="o-pais"></div>
+                <div class="fg"><label>Orden Dpto.</label><input type="number" [(ngModel)]="form.ordenDpto" name="o-ord"></div>
+                <div class="fg full"><label>Observaciones</label><input [(ngModel)]="form.observaciones" name="o-obs"></div>
+                <div class="fg check"><label><input type="checkbox" [(ngModel)]="form.art44" name="o-art"> Art. 44</label></div>
+              </div>
+            } @else {
+              <div class="nv-grid">
+                <div class="fg"><label>Tipo de Organismo</label>
+                  <select [(ngModel)]="form.tipoOrganismoId" name="i-tipo">
+                    <option [ngValue]="null">—</option>
+                    @for (t of tipos(); track t.id) { <option [ngValue]="t.id">{{ t.nombre }}</option> }
+                  </select>
+                </div>
+                <div class="fg"><label>Org. Estatal ID</label><input type="number" [(ngModel)]="form.organismoEstatalId" name="i-est"></div>
+                <div class="fg"><label>Org. Partidario ID</label><input type="number" [(ngModel)]="form.organismoPartidarioId" name="i-part"></div>
+                <div class="fg full"><label>Dirección</label><input [(ngModel)]="form.direccion" name="i-dir"></div>
+                <div class="fg"><label>Teléfono</label><input [(ngModel)]="form.telefono" name="i-tel"></div>
+                <div class="fg"><label>Email</label><input [(ngModel)]="form.email" name="i-mail"></div>
+                <div class="fg full"><label>Observaciones</label><input [(ngModel)]="form.observaciones" name="i-obs"></div>
+              </div>
+            }
+      </app-modal-form>
+    }
   `,
   styles: [`
     .topbar-inline { display:flex; justify-content:flex-end; gap:8px; margin-bottom:16px; }
     .footer { padding:12px 18px; font-size:13px; color:#666; border-top:1px solid #eef1f5; }
+    .badge.amb-est { background:#e6f0ff; color:#1a4f8a; }
+    .badge.amb-part { background:#fdeede; color:#8a5a1a; }
   `]
 })
 export class OrganismosComponent {
   private http = inject(HttpClient);
   private titleSvc = inject(PageTitleService);
+  private svc = inject(OrganismosService);
 
   tab = signal<Tab>('todos');
-  organismos = signal<Organismo[]>([]);
-  info = signal<InfoOrg[]>([]);
+  organismos = signal<OrganismoTodosDto[]>([]);
+  info = signal<InfoOrganizacionDto[]>([]);
+  tipos = signal<TipoOrganismoDto[]>([]);
   integrantes = signal<IntegranteOrg[]>([]);
   referencias = signal<RefPart[]>([]);
 
-  // ── filtros: Todos
-  fOrgId = signal(''); fOrgNom = signal(''); fOrgDep = signal('');
-  fOrgArt = signal(''); fOrgOrd = signal('');
+  departamentos = [
+    'Artigas','Canelones','Cerro Largo','Colonia','Durazno','Flores','Florida',
+    'Lavalleja','Maldonado','Montevideo','Paysandú','Río Negro','Rivera','Rocha',
+    'Salto','San José','Soriano','Tacuarembó','Treinta y Tres','Nacional'
+  ];
 
-  orgDeptos = computed(() => Array.from(new Set(this.organismos().map(o => o.departamento).filter(Boolean))).sort());
+  // ── filtros: Todos (reducidos — chore reducir-filtros de develop)
+  fOrgId = signal(''); fOrgAmb = signal(''); fOrgNom = signal('');
+  fOrgDep = signal(''); fOrgArt = signal(''); fOrgOrd = signal('');
+
+  orgDeptos = computed(() => Array.from(new Set(this.organismos().map(o => o.departamento).filter(Boolean))).sort() as string[]);
 
   organismosFiltrados = computed(() => this.organismos().filter(o =>
-    m(o.id, this.fOrgId()) && m(o.nombre, this.fOrgNom()) &&
+    m(o.id, this.fOrgId()) &&
+    (!this.fOrgAmb() || o.ambito === this.fOrgAmb()) &&
+    m(o.nombre, this.fOrgNom()) &&
     (!this.fOrgDep() || o.departamento === this.fOrgDep()) &&
     (!this.fOrgArt() || (this.fOrgArt() === 'si' ? o.art44 : !o.art44)) &&
     m(o.ordenDpto, this.fOrgOrd())
   ));
 
-  // ── filtros: Info
-  fInfId = signal(''); fInfComp = signal(''); fInfDep = signal('');
-
-  infoDeptos = computed(() => Array.from(new Set(this.info().map(i => i.departamento).filter(Boolean))).sort());
+  // ── filtros: Info (reducidos)
+  fInfId = signal(''); fInfDir = signal(''); fInfMail = signal('');
 
   infoFiltrados = computed(() => this.info().filter(i =>
     m(i.id, this.fInfId()) &&
-    m(i.nombreCompania, this.fInfComp()) &&
-    (!this.fInfDep() || i.departamento === this.fInfDep())
+    m(i.direccion, this.fInfDir()) &&
+    m(i.email, this.fInfMail())
   ));
 
-  // ── filtros: Integrantes
+  // ── filtros: Integrantes (reducidos)
   fIntId = signal(''); fIntApe = signal(''); fIntNom = signal('');
   fIntOrg = signal(''); fIntDep = signal('');
 
@@ -277,34 +358,164 @@ export class OrganismosComponent {
     (!this.fIntDep() || i.departamento === this.fIntDep())
   ));
 
-  // ── filtros: Referencias
+  // ── filtros: Referencias (reducidos)
   fRefNom = signal(''); fRefCar = signal('');
 
   referenciasFiltradas = computed(() => this.referencias().filter(r =>
     m(r.nombre, this.fRefNom()) && m(r.cargo, this.fRefCar())
   ));
 
+  // ── modal (alta/edición de Organismo o Info) ──────────────
+  modalKind = signal<ModalKind | null>(null);
+  modalMode = signal<ModalMode>('nueva');
+  editId = signal<number | null>(null);
+  modalBusy = signal(false);
+  modalError = signal('');
+  form: any = {};
+
+  tituloModal = computed(() => {
+    if (this.modalKind() === 'info') return this.modalMode() === 'editar' ? 'Editar Info de Organización' : 'Nueva Info de Organización';
+    return this.modalMode() === 'editar' ? 'Editar Organismo' : 'Nuevo Organismo';
+  });
+
   constructor() {
     this.titleSvc.set('Organismos');
-    this.http.get<Organismo[]>(`${environment.apiUrl}/organismos`).subscribe(x => this.organismos.set(x));
+    this.svc.getTodos().subscribe(x => this.organismos.set(x));
+    this.svc.getTipos().subscribe(x => this.tipos.set(x));
   }
 
   setTab(t: Tab) {
     this.tab.set(t);
-    if (t === 'info' && this.info().length === 0)
-      this.http.get<InfoOrg[]>(`${environment.apiUrl}/organismos/info`).subscribe(x => this.info.set(x));
+    if (t === 'info' && this.info().length === 0) this.loadInfo();
     if (t === 'integrantes' && this.integrantes().length === 0)
       this.http.get<IntegranteOrg[]>(`${environment.apiUrl}/organismos/integrantes`).subscribe(x => this.integrantes.set(x));
     if (t === 'referencias' && this.referencias().length === 0)
       this.http.get<RefPart[]>(`${environment.apiUrl}/organismos/referencias`).subscribe(x => this.referencias.set(x));
   }
 
+  private loadTodos() { this.svc.getTodos().subscribe(x => this.organismos.set(x)); }
+  private loadInfo() { this.svc.getInfo().subscribe(x => this.info.set(x)); }
+
+  private extractError(err: any, fallback: string): string {
+    return err?.error?.message || err?.error?.errorCode || err?.message || fallback;
+  }
+
+  // ── Organismo ─────────────────────────────────────────────
+  abrirNuevoOrganismo() {
+    this.form = { ambito: 'Estatal', tipoOrganismoId: null, nombre: '', nombreCompania: '', categoria: '', descripcion: '', direccion: '', ciudad: '', departamento: '', pais: '', ordenDpto: 0, observaciones: '', art44: false };
+    this.modalError.set(''); this.editId.set(null);
+    this.modalMode.set('nueva'); this.modalKind.set('organismo');
+  }
+
+  abrirEditarOrganismo(o: OrganismoTodosDto) {
+    this.form = {
+      ambito: o.ambito,
+      tipoOrganismoId: o.tipoOrganismoId ?? null,
+      nombre: o.nombre || '',
+      nombreCompania: o.nombreCompania || '',
+      categoria: o.categoria || '',
+      descripcion: o.descripcion || '',
+      direccion: o.direccion || '',
+      ciudad: o.ciudad || '',
+      departamento: o.departamento || '',
+      pais: o.pais || '',
+      ordenDpto: o.ordenDpto ?? 0,
+      observaciones: o.observaciones || '',
+      art44: !!o.art44,
+    };
+    this.modalError.set(''); this.editId.set(o.id);
+    this.modalMode.set('editar'); this.modalKind.set('organismo');
+  }
+
+  // ── Info ──────────────────────────────────────────────────
+  abrirNuevaInfo() {
+    this.form = { tipoOrganismoId: null, organismoEstatalId: null, organismoPartidarioId: null, direccion: '', telefono: '', email: '', observaciones: '' };
+    this.modalError.set(''); this.editId.set(null);
+    this.modalMode.set('nueva'); this.modalKind.set('info');
+  }
+
+  abrirEditarInfo(i: InfoOrganizacionDto) {
+    this.form = {
+      tipoOrganismoId: i.tipoOrganismoId ?? null,
+      organismoEstatalId: i.organismoEstatalId ?? null,
+      organismoPartidarioId: i.organismoPartidarioId ?? null,
+      direccion: i.direccion || '',
+      telefono: i.telefono || '',
+      email: i.email || '',
+      observaciones: i.observaciones || '',
+    };
+    this.modalError.set(''); this.editId.set(i.id);
+    this.modalMode.set('editar'); this.modalKind.set('info');
+  }
+
+  cerrarModal() {
+    this.modalKind.set(null); this.editId.set(null); this.modalError.set('');
+  }
+
+  guardar() {
+    if (this.modalKind() === 'organismo') this.guardarOrganismo();
+    else this.guardarInfo();
+  }
+
+  private num(v: any): number | null { return v == null || v === '' ? null : Number(v); }
+
+  private guardarOrganismo() {
+    if (!this.form.nombre?.trim()) { this.modalError.set('El nombre es obligatorio.'); return; }
+    if (this.form.tipoOrganismoId == null) { this.modalError.set('El tipo de organismo es obligatorio.'); return; }
+    const ambito = this.form.ambito as Ambito;
+    const input: OrganismoInput = {
+      nombre: this.form.nombre.trim(),
+      nombreCompania: this.form.nombreCompania || null,
+      tipoOrganismoId: Number(this.form.tipoOrganismoId),
+      categoria: this.form.categoria || null,
+      descripcion: this.form.descripcion || null,
+      direccion: this.form.direccion || null,
+      ciudad: this.form.ciudad || null,
+      departamento: this.form.departamento || null,
+      pais: this.form.pais || null,
+      art44: !!this.form.art44,
+      ordenDpto: this.form.ordenDpto == null || this.form.ordenDpto === '' ? 0 : Number(this.form.ordenDpto),
+      observaciones: this.form.observaciones || null,
+    };
+    this.modalBusy.set(true); this.modalError.set('');
+    const id = this.editId();
+    const req = this.modalMode() === 'editar' && id != null
+      ? this.svc.updateOrganismo(ambito, id, input)
+      : this.svc.createOrganismo(ambito, input);
+    req.subscribe({
+      next: () => { this.modalBusy.set(false); this.cerrarModal(); this.loadTodos(); },
+      error: (err) => { this.modalBusy.set(false); this.modalError.set(this.extractError(err, 'No se pudo guardar el organismo.')); },
+    });
+  }
+
+  private guardarInfo() {
+    const input: InfoOrganizacionInput = {
+      tipoOrganismoId: this.num(this.form.tipoOrganismoId),
+      organismoEstatalId: this.num(this.form.organismoEstatalId),
+      organismoPartidarioId: this.num(this.form.organismoPartidarioId),
+      direccion: this.form.direccion || null,
+      telefono: this.form.telefono || null,
+      email: this.form.email || null,
+      observaciones: this.form.observaciones || null,
+    };
+    this.modalBusy.set(true); this.modalError.set('');
+    const id = this.editId();
+    const req = this.modalMode() === 'editar' && id != null
+      ? this.svc.updateInfo(id, input)
+      : this.svc.createInfo(input);
+    req.subscribe({
+      next: () => { this.modalBusy.set(false); this.cerrarModal(); this.loadInfo(); },
+      error: (err) => { this.modalBusy.set(false); this.modalError.set(this.extractError(err, 'No se pudo guardar la info.')); },
+    });
+  }
+
   exportarCsvTab() {
     const stamp = new Date().toISOString().slice(0, 10);
     const t = this.tab();
     if (t === 'todos') {
-      const cols: CsvColumn<Organismo>[] = [
+      const cols: CsvColumn<OrganismoTodosDto>[] = [
         { get: 'id', label: 'ID' },
+        { get: 'ambito', label: 'Ámbito' },
         { get: 'nombre', label: 'Nombre' },
         { get: 'descripcion', label: 'Descripción' },
         { get: 'direccion', label: 'Dirección' },
@@ -317,14 +528,15 @@ export class OrganismosComponent {
       ];
       exportarCSV(this.organismosFiltrados(), cols, `organismos-${stamp}.csv`);
     } else if (t === 'info') {
-      const cols: CsvColumn<InfoOrg>[] = [
+      const cols: CsvColumn<InfoOrganizacionDto>[] = [
         { get: 'id', label: 'Id Info.' },
-        { get: 'idTipo', label: 'Id Tipo' },
-        { get: 'idEstatal', label: 'Id Org. Estatal' },
-        { get: 'idPartidario', label: 'Id Org. Partidario' },
-        { get: 'nombreCompania', label: 'Nombre Compañía' },
-        { get: 'nombreAbreviado', label: 'Abreviado' },
-        { get: 'departamento', label: 'Departamento' }
+        { get: 'tipoOrganismoId', label: 'Id Tipo' },
+        { get: 'organismoEstatalId', label: 'Id Org. Estatal' },
+        { get: 'organismoPartidarioId', label: 'Id Org. Partidario' },
+        { get: 'direccion', label: 'Dirección' },
+        { get: 'telefono', label: 'Teléfono' },
+        { get: 'email', label: 'Email' },
+        { get: 'observaciones', label: 'Observaciones' }
       ];
       exportarCSV(this.infoFiltrados(), cols, `info-organismos-${stamp}.csv`);
     } else if (t === 'integrantes') {

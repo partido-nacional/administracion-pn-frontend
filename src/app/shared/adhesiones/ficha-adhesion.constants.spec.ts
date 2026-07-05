@@ -1,7 +1,7 @@
 import {
   SISTEMAS, DEPARTAMENTOS, APORTES_SEC_AGR,
   showTelefonoAntel, showCedula, showFechasPago,
-  applySistContrib, applyAporteTodo,
+  applySistContrib, applyAporteTodo, sanitizarFichaParaGuardar,
 } from './ficha-adhesion.constants';
 import { FichaAdhesionDetalle } from '../../features/agenda/contactos.service';
 
@@ -39,34 +39,25 @@ describe('helpers de visibilidad', () => {
   });
 });
 
-describe('applySistContrib (BR-1)', () => {
-  it('conserva teléfono Antel al elegir Antel y limpia el resto', () => {
+// Fix 009: cambiar una selección condicional NO borra datos; solo setea el disparador.
+// El clearing se movió al guardado (`sanitizarFichaParaGuardar`).
+
+describe('applySistContrib (fix 009: preserva, no borra)', () => {
+  it('cambia el sistema y conserva todos los campos condicionales cargados', () => {
     const f = ficha({ telefonoAntel: '099', cedulaResponsable: '123', fechaVencimiento: '2025-01-01', fechaUltimoPago: '2025-01-02' });
-    const r = applySistContrib(f, 'Antel');
-    expect(r.sistContrib).toBe('Antel');
-    expect(r.telefonoAntel).toBe('099');
-    expect(r.cedulaResponsable).toBeUndefined();
-    expect(r.fechaVencimiento).toBeUndefined();
-    expect(r.fechaUltimoPago).toBeUndefined();
-  });
-  it('conserva cédula para OCA y limpia teléfono/fechas', () => {
-    const f = ficha({ telefonoAntel: '099', cedulaResponsable: '123' });
     const r = applySistContrib(f, 'OCA');
+    expect(r.sistContrib).toBe('OCA');
+    expect(r.telefonoAntel).toBe('099');
     expect(r.cedulaResponsable).toBe('123');
-    expect(r.telefonoAntel).toBeUndefined();
-  });
-  it('conserva fechas de pago para ANUAL', () => {
-    const f = ficha({ fechaVencimiento: '2025-01-01', fechaUltimoPago: '2025-01-02', telefonoAntel: '099' });
-    const r = applySistContrib(f, 'ANUAL');
     expect(r.fechaVencimiento).toBe('2025-01-01');
     expect(r.fechaUltimoPago).toBe('2025-01-02');
-    expect(r.telefonoAntel).toBeUndefined();
   });
-  it('EC-1: alternar de sistema no deja valores fantasma', () => {
-    let f = ficha();
-    f = applySistContrib(f, 'Antel'); f.telefonoAntel = '099';
-    f = applySistContrib(f, 'OCA');
-    expect(f.telefonoAntel).toBeUndefined();
+  it('AC-1: alternar sistema y volver conserva el dato original', () => {
+    let f = ficha({ sistContrib: 'ANUAL', fechaVencimiento: '2025-01-01', fechaUltimoPago: '2025-01-02' });
+    f = applySistContrib(f, 'OCA');   // se oculta pero no se borra
+    f = applySistContrib(f, 'ANUAL'); // vuelve
+    expect(f.fechaVencimiento).toBe('2025-01-01');
+    expect(f.fechaUltimoPago).toBe('2025-01-02');
   });
   it('no muta la ficha original', () => {
     const f = ficha({ telefonoAntel: '099' });
@@ -75,25 +66,81 @@ describe('applySistContrib (BR-1)', () => {
   });
 });
 
-describe('applyAporteTodo (BR-2)', () => {
-  it('true limpia los campos de sector/agrupación', () => {
+describe('applyAporteTodo (fix 009: preserva, no borra)', () => {
+  it('true setea el flag pero conserva los campos de sector/agrupación', () => {
     const f = ficha({
       aporteTodoAlPartido: false, sector: 'X', aporteSecretariaAgrupacion: 'SAS',
       aporteAgrupacion: 'A', departamentoAgrupacion: 'Montevideo', codigoAgrupacion: '9',
     });
     const r = applyAporteTodo(f, true);
     expect(r.aporteTodoAlPartido).toBeTrue();
+    expect(r.sector).toBe('X');
+    expect(r.aporteAgrupacion).toBe('A');
+    expect(r.departamentoAgrupacion).toBe('Montevideo');
+    expect(r.codigoAgrupacion).toBe('9');
+  });
+  it('AC-2: togglear y volver conserva los datos de agrupación', () => {
+    let f = ficha({ aporteTodoAlPartido: false, sector: 'X', aporteAgrupacion: 'A' });
+    f = applyAporteTodo(f, true);
+    f = applyAporteTodo(f, false);
+    expect(f.sector).toBe('X');
+    expect(f.aporteAgrupacion).toBe('A');
+  });
+});
+
+describe('sanitizarFichaParaGuardar (fix 009: limpia al guardar)', () => {
+  it('AC-3: con OCA quita teléfono Antel y fechas de pago, conserva cédula', () => {
+    const f = ficha({ sistContrib: 'OCA', telefonoAntel: '099', cedulaResponsable: '123', fechaVencimiento: '2025-01-01', fechaUltimoPago: '2025-01-02' });
+    const r = sanitizarFichaParaGuardar(f);
+    expect(r.cedulaResponsable).toBe('123');
+    expect(r.telefonoAntel).toBeUndefined();
+    expect(r.fechaVencimiento).toBeUndefined();
+    expect(r.fechaUltimoPago).toBeUndefined();
+  });
+  it('con Antel conserva el teléfono y quita cédula/fechas', () => {
+    const f = ficha({ sistContrib: 'Antel', telefonoAntel: '099', cedulaResponsable: '123', fechaVencimiento: '2025-01-01' });
+    const r = sanitizarFichaParaGuardar(f);
+    expect(r.telefonoAntel).toBe('099');
+    expect(r.cedulaResponsable).toBeUndefined();
+    expect(r.fechaVencimiento).toBeUndefined();
+  });
+  it('con ANUAL conserva las fechas y quita teléfono/cédula', () => {
+    const f = ficha({ sistContrib: 'ANUAL', fechaVencimiento: '2025-01-01', fechaUltimoPago: '2025-01-02', telefonoAntel: '099' });
+    const r = sanitizarFichaParaGuardar(f);
+    expect(r.fechaVencimiento).toBe('2025-01-01');
+    expect(r.fechaUltimoPago).toBe('2025-01-02');
+    expect(r.telefonoAntel).toBeUndefined();
+  });
+  it('AC-4: con aporteTodoAlPartido=true quita sector y campos de agrupación', () => {
+    const f = ficha({
+      aporteTodoAlPartido: true, sector: 'X', aporteSecretariaAgrupacion: 'SAS',
+      aporteAgrupacion: 'A', departamentoAgrupacion: 'Montevideo', codigoAgrupacion: '9',
+    });
+    const r = sanitizarFichaParaGuardar(f);
     expect(r.sector).toBeUndefined();
     expect(r.aporteSecretariaAgrupacion).toBeUndefined();
     expect(r.aporteAgrupacion).toBeUndefined();
     expect(r.departamentoAgrupacion).toBeUndefined();
     expect(r.codigoAgrupacion).toBeUndefined();
   });
-  it('false habilita (no limpia) los campos', () => {
-    const f = ficha({ sector: 'X' });
-    const r = applyAporteTodo(f, false);
-    expect(r.aporteTodoAlPartido).toBeFalse();
+  it('con aporteTodoAlPartido=false conserva los campos de agrupación', () => {
+    const f = ficha({ aporteTodoAlPartido: false, sector: 'X', aporteAgrupacion: 'A' });
+    const r = sanitizarFichaParaGuardar(f);
     expect(r.sector).toBe('X');
+    expect(r.aporteAgrupacion).toBe('A');
+  });
+  it('EC-1: tras alternar sistemas, al guardar solo quedan los campos del sistema final', () => {
+    let f = ficha({ sistContrib: 'Antel', telefonoAntel: '099' });
+    f = applySistContrib(f, 'ANUAL');
+    f.fechaVencimiento = '2025-01-01';
+    const r = sanitizarFichaParaGuardar(f);
+    expect(r.fechaVencimiento).toBe('2025-01-01');
+    expect(r.telefonoAntel).toBeUndefined(); // Antel ya no aplica
+  });
+  it('no muta la ficha original', () => {
+    const f = ficha({ sistContrib: 'OCA', telefonoAntel: '099' });
+    sanitizarFichaParaGuardar(f);
+    expect(f.telefonoAntel).toBe('099');
   });
 });
 

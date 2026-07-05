@@ -6,6 +6,7 @@ import { AdhesionesService } from './adhesiones.service';
 import { PageTitleService } from '../../core/page-title.service';
 import { CatalogosService } from '../../core/catalogos.service';
 import { normalizarFechaSalida } from '../../shared/adhesiones/confirmado-baja.util';
+import { sanitizarFichaParaGuardar } from '../../shared/adhesiones/ficha-adhesion.constants';
 import { FichaAdhesionFormComponent } from '../../shared/adhesiones/ficha-adhesion-form.component';
 
 @Component({
@@ -155,9 +156,11 @@ export class FichasContactoComponent {
     if (!f) return;
     // Coherencia: una Baja siempre debe llevar fecha de salida (TODO-012).
     normalizarFechaSalida(f);
-    this.detalle.set({ ...f });
-    this.adhSvc.updateLocal(f).subscribe(() => {
-      this.original = JSON.parse(JSON.stringify(f));
+    // Saneo al guardar: quita los campos condicionales que no aplican (fix 009).
+    const limpia = sanitizarFichaParaGuardar(f);
+    this.detalle.set({ ...limpia });
+    this.adhSvc.updateLocal(limpia).subscribe(() => {
+      this.original = JSON.parse(JSON.stringify(limpia));
       this.editMode.set(false);
       this.svc.fichasAdhesion(this.contactoId).subscribe(x => this.fichas.set(x));
     });

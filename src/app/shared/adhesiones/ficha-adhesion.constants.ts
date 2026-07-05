@@ -31,24 +31,35 @@ export const showCedula = (s?: string) => s === 'OCA' || s === 'VISA' || s === '
 export const showFechasPago = (s?: string) => s === 'ANUAL';
 
 /**
- * BR-1: aplica el nuevo sistema de contribución y limpia los campos que dejan de
- * aplicar para ese sistema.
+ * Aplica el nuevo sistema de contribución. Solo cambia el campo disparador: NO borra
+ * los campos condicionales (fix 009). Que un campo deje de mostrarse no significa
+ * perder su valor cargado; la limpieza ocurre recién al guardar
+ * (ver `sanitizarFichaParaGuardar`), para no destruir datos por un cambio transitorio.
  */
 export function applySistContrib(f: FichaAdhesionDetalle, s: string): FichaAdhesionDetalle {
-  const next: FichaAdhesionDetalle = { ...f, sistContrib: s };
-  if (!showTelefonoAntel(s)) next.telefonoAntel = undefined;
-  if (!showCedula(s)) next.cedulaResponsable = undefined;
-  if (!showFechasPago(s)) { next.fechaVencimiento = undefined; next.fechaUltimoPago = undefined; }
-  return next;
+  return { ...f, sistContrib: s };
 }
 
 /**
- * BR-2: setea `aporteTodoAlPartido`. Si es `true`, limpia los campos de aporte a
- * sector/agrupación que dejan de aplicar.
+ * Setea `aporteTodoAlPartido`. Solo cambia el campo disparador: NO borra los campos de
+ * sector/agrupación (fix 009). La limpieza ocurre al guardar (ver `sanitizarFichaParaGuardar`).
  */
 export function applyAporteTodo(f: FichaAdhesionDetalle, v: boolean): FichaAdhesionDetalle {
-  const next: FichaAdhesionDetalle = { ...f, aporteTodoAlPartido: v };
-  if (v) {
+  return { ...f, aporteTodoAlPartido: v };
+}
+
+/**
+ * Al GUARDAR: quita los campos condicionales que no aplican al estado final de la ficha
+ * (BR-1/BR-2). Se aplica en el submit —no al cambiar una selección— para que alternar
+ * campos condicionales no borre datos cargados sin aviso (fix 009). El resultado
+ * persistido es equivalente al comportamiento previo: no se guardan campos irrelevantes.
+ */
+export function sanitizarFichaParaGuardar(f: FichaAdhesionDetalle): FichaAdhesionDetalle {
+  const next: FichaAdhesionDetalle = { ...f };
+  if (!showTelefonoAntel(next.sistContrib)) next.telefonoAntel = undefined;
+  if (!showCedula(next.sistContrib)) next.cedulaResponsable = undefined;
+  if (!showFechasPago(next.sistContrib)) { next.fechaVencimiento = undefined; next.fechaUltimoPago = undefined; }
+  if (next.aporteTodoAlPartido) {
     next.sector = undefined;
     next.aporteSecretariaAgrupacion = undefined;
     next.aporteAgrupacion = undefined;
