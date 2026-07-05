@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/auth.guard';
+import { adminGuard } from './core/admin.guard';
 
 export const routes: Routes = [
   { path: 'login', loadComponent: () => import('./features/auth/login.component').then(m => m.LoginComponent) },
@@ -32,7 +33,8 @@ export const routes: Routes = [
       { path: 'debitos', loadComponent: () => import('./features/debitos/debitos.component').then(m => m.DebitosComponent) },
       { path: 'organismos', loadComponent: () => import('./features/organismos/organismos.component').then(m => m.OrganismosComponent) },
       { path: 'agrupaciones', loadComponent: () => import('./features/agrupaciones/agrupaciones.component').then(m => m.AgrupacionesComponent) },
-      { path: 'convencionales', loadComponent: () => import('./features/convencionales/convencionales.component').then(m => m.ConvencionalesComponent) }
+      { path: 'convencionales', loadComponent: () => import('./features/convencionales/convencionales.component').then(m => m.ConvencionalesComponent) },
+      { path: 'usuarios', canActivate: [adminGuard], loadComponent: () => import('./features/usuarios/usuarios.component').then(m => m.UsuariosComponent) }
     ]
   },
   { path: '**', redirectTo: '' }
