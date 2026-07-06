@@ -37,17 +37,6 @@ type Tab = 'todos' | 'padron' | 'duplicados' | 'exportar';
         <div class="card-body" style="padding:0; overflow-x:auto">
           <table class="table">
             <thead>
-              <tr>
-                <th class="sortable" (click)="onSort('id')">ID <span class="ind">{{ indicador('id') }}</span></th>
-                <th class="sortable" (click)="onSort('apellido')">Nombre <span class="ind">{{ indicador('apellido') }}</span></th>
-                <th class="sortable" (click)="onSort('cedula')">Cedula <span class="ind">{{ indicador('cedula') }}</span></th>
-                <th class="sortable" (click)="onSort('credencial')">Credencial <span class="ind">{{ indicador('credencial') }}</span></th>
-                <th class="sortable" (click)="onSort('departamento')">Departamento <span class="ind">{{ indicador('departamento') }}</span></th>
-                <th class="sortable" (click)="onSort('celular')">Celular <span class="ind">{{ indicador('celular') }}</span></th>
-                <th class="sortable" (click)="onSort('email')">Email <span class="ind">{{ indicador('email') }}</span></th>
-                <th class="sortable" (click)="onSort('adhesion')">Adhesion <span class="ind">{{ indicador('adhesion') }}</span></th>
-                <th></th>
-              </tr>
               <tr class="filter-row">
                 <th><input class="column-filter" [ngModel]="fId()"     (ngModelChange)="fId.set($event); onFilter()"     placeholder="Filtrar..."></th>
                 <th><input class="column-filter" [ngModel]="fNombre()" (ngModelChange)="fNombre.set($event); onFilter()" placeholder="Filtrar..."></th>
@@ -69,6 +58,17 @@ type Tab = 'todos' | 'padron' | 'duplicados' | 'exportar';
                     <option>Baja</option>
                   </select>
                 </th>
+                <th></th>
+              </tr>
+              <tr>
+                <th class="sortable" (click)="onSort('id')">ID <span class="ind">{{ indicador('id') }}</span></th>
+                <th class="sortable" (click)="onSort('apellido')">Nombre <span class="ind">{{ indicador('apellido') }}</span></th>
+                <th class="sortable" (click)="onSort('cedula')">Cedula <span class="ind">{{ indicador('cedula') }}</span></th>
+                <th class="sortable" (click)="onSort('credencial')">Credencial <span class="ind">{{ indicador('credencial') }}</span></th>
+                <th class="sortable" (click)="onSort('departamento')">Departamento <span class="ind">{{ indicador('departamento') }}</span></th>
+                <th class="sortable" (click)="onSort('celular')">Celular <span class="ind">{{ indicador('celular') }}</span></th>
+                <th class="sortable" (click)="onSort('email')">Email <span class="ind">{{ indicador('email') }}</span></th>
+                <th class="sortable" (click)="onSort('adhesion')">Adhesion <span class="ind">{{ indicador('adhesion') }}</span></th>
                 <th></th>
               </tr>
             </thead>

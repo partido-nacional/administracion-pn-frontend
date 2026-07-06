@@ -81,22 +81,6 @@ interface AgrupacionPeriodoRow {
     <div class="card"><div class="card-body" style="padding:0; overflow-x:auto">
       <table class="table">
         <thead>
-          <tr>
-            <th style="width:34px"></th>
-            <th class="sortable" (click)="onSort('id')">Id <span class="ind">{{ indicador('id') }}</span></th>
-            <th class="sortable" (click)="onSort('periodo')">Período <span class="ind">{{ indicador('periodo') }}</span></th>
-            <th class="sortable" (click)="onSort('pendiente')">Estado <span class="ind">{{ indicador('pendiente') }}</span></th>
-            <th class="sortable" (click)="onSort('agrid')">Id Agr. <span class="ind">{{ indicador('agrid') }}</span></th>
-            <th class="sortable" (click)="onSort('codagrup')">Cod. Agrup. <span class="ind">{{ indicador('codagrup') }}</span></th>
-            <th class="sortable" (click)="onSort('coddepto')">Cod. Depto. <span class="ind">{{ indicador('coddepto') }}</span></th>
-            <th class="sortable" (click)="onSort('tipo')">Tipo <span class="ind">{{ indicador('tipo') }}</span></th>
-            <th class="sortable" (click)="onSort('nombre')">Nombre <span class="ind">{{ indicador('nombre') }}</span></th>
-            <th class="sortable" (click)="onSort('depto')">Depto. <span class="ind">{{ indicador('depto') }}</span></th>
-            <th class="sortable" (click)="onSort('sector')">Sector <span class="ind">{{ indicador('sector') }}</span></th>
-            <th>Sublemas</th>
-            <th class="sortable" (click)="onSort('ap')" title="Asuntos Políticos">AP <span class="ind">{{ indicador('ap') }}</span></th>
-            <th></th>
-          </tr>
           <tr class="filter-row">
             <th></th>
             <th></th>
@@ -135,6 +119,22 @@ interface AgrupacionPeriodoRow {
             <th></th>
             <th><input class="column-filter" [ngModel]="fSublema()" (ngModelChange)="fSublema.set($event); onFilter()" placeholder="Filtrar..."></th>
             <th></th>
+            <th></th>
+          </tr>
+          <tr>
+            <th style="width:34px"></th>
+            <th class="sortable" (click)="onSort('id')">Id <span class="ind">{{ indicador('id') }}</span></th>
+            <th class="sortable" (click)="onSort('periodo')">Período <span class="ind">{{ indicador('periodo') }}</span></th>
+            <th class="sortable" (click)="onSort('pendiente')">Estado <span class="ind">{{ indicador('pendiente') }}</span></th>
+            <th class="sortable" (click)="onSort('agrid')">Id Agr. <span class="ind">{{ indicador('agrid') }}</span></th>
+            <th class="sortable" (click)="onSort('codagrup')">Cod. Agrup. <span class="ind">{{ indicador('codagrup') }}</span></th>
+            <th class="sortable" (click)="onSort('coddepto')">Cod. Depto. <span class="ind">{{ indicador('coddepto') }}</span></th>
+            <th class="sortable" (click)="onSort('tipo')">Tipo <span class="ind">{{ indicador('tipo') }}</span></th>
+            <th class="sortable" (click)="onSort('nombre')">Nombre <span class="ind">{{ indicador('nombre') }}</span></th>
+            <th class="sortable" (click)="onSort('depto')">Depto. <span class="ind">{{ indicador('depto') }}</span></th>
+            <th class="sortable" (click)="onSort('sector')">Sector <span class="ind">{{ indicador('sector') }}</span></th>
+            <th>Sublemas</th>
+            <th class="sortable" (click)="onSort('ap')" title="Asuntos Políticos">AP <span class="ind">{{ indicador('ap') }}</span></th>
             <th></th>
           </tr>
         </thead>

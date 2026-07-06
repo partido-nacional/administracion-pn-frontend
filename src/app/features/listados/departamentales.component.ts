@@ -19,18 +19,6 @@ const DEPTOS = ['Artigas','Canelones','Cerro Largo','Colonia','Durazno','Flores'
       <div class="card-body" style="padding:0; overflow-x:auto">
         <table class="table" style="min-width:1400px">
           <thead>
-            <tr>
-              <th style="width:60px">Cortesia</th>
-              <th style="min-width:110px" class="sortable" (click)="sortBy('apellidos')">Apellidos {{ arrow('apellidos') }}</th>
-              <th style="min-width:90px" class="sortable" (click)="sortBy('nombre')">Nombre {{ arrow('nombre') }}</th>
-              <th style="min-width:95px">Telefono</th>
-              <th style="min-width:95px">Celular</th>
-              <th style="min-width:150px">Mail</th>
-              <th style="min-width:130px">Posicion Organismo</th>
-              <th style="min-width:100px">Departamento</th>
-              <th style="min-width:160px">Dir. Organizacion</th>
-              <th style="min-width:120px">Ciudad Organizacion</th>
-            </tr>
             <tr class="filter-row">
               <th></th>
               <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fApellidos" (ngModelChange)="onFilter()"></th>
@@ -47,6 +35,18 @@ const DEPTOS = ['Artigas','Canelones','Cerro Largo','Colonia','Durazno','Flores'
               </th>
               <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fDir" (ngModelChange)="onFilter()"></th>
               <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fCiudad" (ngModelChange)="onFilter()"></th>
+            </tr>
+            <tr>
+              <th style="width:60px">Cortesia</th>
+              <th style="min-width:110px" class="sortable" (click)="sortBy('apellidos')">Apellidos {{ arrow('apellidos') }}</th>
+              <th style="min-width:90px" class="sortable" (click)="sortBy('nombre')">Nombre {{ arrow('nombre') }}</th>
+              <th style="min-width:95px">Telefono</th>
+              <th style="min-width:95px">Celular</th>
+              <th style="min-width:150px">Mail</th>
+              <th style="min-width:130px">Posicion Organismo</th>
+              <th style="min-width:100px">Departamento</th>
+              <th style="min-width:160px">Dir. Organizacion</th>
+              <th style="min-width:120px">Ciudad Organizacion</th>
             </tr>
           </thead>
           <tbody>

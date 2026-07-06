@@ -17,21 +17,6 @@ import { exportarCSV } from '../../core/exportar-csv';
       <div class="card-body" style="padding:0; overflow-x:auto">
         <table class="table" style="min-width:1600px">
           <thead>
-            <tr>
-              <th style="width:60px">Cortesia</th>
-              <th style="min-width:110px" class="sortable" (click)="sortBy('apellidos')">Apellidos {{ arrow('apellidos') }}</th>
-              <th style="min-width:90px" class="sortable" (click)="sortBy('nombre')">Nombre {{ arrow('nombre') }}</th>
-              <th style="min-width:140px">Direccion</th>
-              <th style="min-width:140px">Domicilio</th>
-              <th style="min-width:100px" class="sortable" (click)="sortBy('departamento')">Departamento {{ arrow('departamento') }}</th>
-              <th style="min-width:95px">Tel. Movil</th>
-              <th style="min-width:150px">Mail Partido</th>
-              <th style="min-width:140px">Posicion Organismo</th>
-              <th style="min-width:140px">Nombre Organismo</th>
-              <th style="min-width:85px" class="sortable" (click)="sortBy('credcivica')">Cred. Civica {{ arrow('credcivica') }}</th>
-              <th style="min-width:95px" class="sortable" (click)="sortBy('cedulaid')">Cedula Id. {{ arrow('cedulaid') }}</th>
-              <th style="min-width:200px">Observaciones</th>
-            </tr>
             <tr class="filter-row">
               <th></th>
               <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fApellidos" (ngModelChange)="onFilter()"></th>
@@ -58,6 +43,21 @@ import { exportarCSV } from '../../core/exportar-csv';
               <th></th>
               <th></th>
               <th></th>
+            </tr>
+            <tr>
+              <th style="width:60px">Cortesia</th>
+              <th style="min-width:110px" class="sortable" (click)="sortBy('apellidos')">Apellidos {{ arrow('apellidos') }}</th>
+              <th style="min-width:90px" class="sortable" (click)="sortBy('nombre')">Nombre {{ arrow('nombre') }}</th>
+              <th style="min-width:140px">Direccion</th>
+              <th style="min-width:140px">Domicilio</th>
+              <th style="min-width:100px" class="sortable" (click)="sortBy('departamento')">Departamento {{ arrow('departamento') }}</th>
+              <th style="min-width:95px">Tel. Movil</th>
+              <th style="min-width:150px">Mail Partido</th>
+              <th style="min-width:140px">Posicion Organismo</th>
+              <th style="min-width:140px">Nombre Organismo</th>
+              <th style="min-width:85px" class="sortable" (click)="sortBy('credcivica')">Cred. Civica {{ arrow('credcivica') }}</th>
+              <th style="min-width:95px" class="sortable" (click)="sortBy('cedulaid')">Cedula Id. {{ arrow('cedulaid') }}</th>
+              <th style="min-width:200px">Observaciones</th>
             </tr>
           </thead>
           <tbody>
