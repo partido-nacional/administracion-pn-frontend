@@ -70,7 +70,7 @@ describe('LoginComponent', () => {
 
   // AC-10: form precargado (admin/admin123) es válido → botón habilitado
   it('botón habilitado con el form válido', () => {
-    const btn: HTMLButtonElement = fixture.nativeElement.querySelector('button');
+    const btn: HTMLButtonElement = fixture.nativeElement.querySelector('button[type="submit"]');
     expect(btn.disabled).toBeFalse();
   });
 
@@ -84,7 +84,7 @@ describe('LoginComponent', () => {
     f.detectChanges();  // registra los NgModel con valores vacíos
     tick();             // drena el registro async del NgForm
     f.detectChanges();  // re-evalúa [disabled] con f.invalid = true
-    const btn: HTMLButtonElement = f.nativeElement.querySelector('button');
+    const btn: HTMLButtonElement = f.nativeElement.querySelector('button[type="submit"]');
     expect(btn.disabled).toBeTrue();
   }));
 
