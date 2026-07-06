@@ -17,18 +17,6 @@ import { exportarCSV } from '../../core/exportar-csv';
       <div class="card-body" style="padding:0; overflow-x:auto">
         <table class="table" style="min-width:1350px">
           <thead>
-            <tr>
-              <th style="width:70px" class="sortable" (click)="sortBy('id')">ID Contacto {{ arrow('id') }}</th>
-              <th style="min-width:85px">Cred. Civica</th>
-              <th style="min-width:110px" class="sortable" (click)="sortBy('apellidos')">Apellidos {{ arrow('apellidos') }}</th>
-              <th style="min-width:90px" class="sortable" (click)="sortBy('nombres')">Nombres {{ arrow('nombres') }}</th>
-              <th style="min-width:95px">Celular</th>
-              <th style="min-width:160px">Mail</th>
-              <th style="min-width:130px">Posicion Organismo</th>
-              <th style="min-width:140px">Nombre Organismo</th>
-              <th style="min-width:100px">Condicion</th>
-              <th style="min-width:70px; text-align:center">Adherente</th>
-            </tr>
             <tr class="filter-row">
               <th></th>
               <th></th>
@@ -52,6 +40,18 @@ import { exportarCSV } from '../../core/exportar-csv';
                   <option value="no">No</option>
                 </select>
               </th>
+            </tr>
+            <tr>
+              <th style="width:70px" class="sortable" (click)="sortBy('id')">ID Contacto {{ arrow('id') }}</th>
+              <th style="min-width:85px">Cred. Civica</th>
+              <th style="min-width:110px" class="sortable" (click)="sortBy('apellidos')">Apellidos {{ arrow('apellidos') }}</th>
+              <th style="min-width:90px" class="sortable" (click)="sortBy('nombres')">Nombres {{ arrow('nombres') }}</th>
+              <th style="min-width:95px">Celular</th>
+              <th style="min-width:160px">Mail</th>
+              <th style="min-width:130px">Posicion Organismo</th>
+              <th style="min-width:140px">Nombre Organismo</th>
+              <th style="min-width:100px">Condicion</th>
+              <th style="min-width:70px; text-align:center">Adherente</th>
             </tr>
           </thead>
           <tbody>
