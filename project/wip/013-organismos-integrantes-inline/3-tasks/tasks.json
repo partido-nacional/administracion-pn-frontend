@@ -1,0 +1,285 @@
+{
+  "feature": "organismos-integrantes-inline",
+  "local_config": {
+    "database": null,
+    "backend_dependency": "GET /organismos/{estatales|partidarios}/{id}/integrantes (mirror item in administracion-pn-backend; required for e2e integration, not for build)"
+  },
+  "stats": {
+    "total": 9,
+    "done": 6,
+    "by_layer": {
+      "1": 6,
+      "2": 3
+    },
+    "by_layer_done": {
+      "1": 6,
+      "2": 0
+    }
+  },
+  "execution_strategy": "batched",
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "Mover IntegranteOrg a core/models/organismos.ts",
+      "description": "Extraer la interface inline IntegranteOrg de organismos.component.ts al modelo de dominio core/models/organismos.ts y exportarla. Actualizar los imports del componente.",
+      "status": "done",
+      "layer": 1,
+      "depends_on": [],
+      "files": [
+        "src/app/core/models/organismos.ts",
+        "src/app/features/organismos/organismos.component.ts"
+      ],
+      "acceptance_criteria": [
+        "IntegranteOrg queda definida y exportada en core/models/organismos.ts con los campos idContacto, credCivica, apellidos, nombres, celular, mail, posicion, organismo, departamento",
+        "organismos.component.ts importa IntegranteOrg desde core/models (sin definicion inline)",
+        "GATE: npm run build pasa"
+      ],
+      "references": [
+        "US-1",
+        "tech:Data Model & Storage"
+      ]
+    },
+    {
+      "id": "TASK-002",
+      "title": "getIntegrantes(ambito, id) en OrganismosService",
+      "description": "Agregar metodo tipado getIntegrantes que llama GET /organismos/{ambitoPath}/{id}/integrantes reutilizando ambitoPath. Devuelve Observable<IntegranteOrg[]>.",
+      "status": "done",
+      "layer": 1,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "files": [
+        "src/app/core/services/organismos.service.ts"
+      ],
+      "acceptance_criteria": [
+        "getIntegrantes(ambito: Ambito, id: number) construye la URL con ambitoPath (estatales|partidarios) y el id",
+        "Retorna Observable<IntegranteOrg[]> tipado; no transforma errores",
+        "GATE: npm run build pasa"
+      ],
+      "references": [
+        "US-1",
+        "BR-1",
+        "BR-3",
+        "tech:API Contract"
+      ]
+    },
+    {
+      "id": "TASK-003",
+      "title": "Eliminar la pestana Integrantes del componente",
+      "description": "Quitar la tab 'integrantes' de Organismos: type Tab, boton/bloque del template, senal integrantes, computeds integrantesFiltrados/intDeptos, filtros fInt*, rama 'integrantes' de exportarCsvTab y la carga en setTab. Eliminar HttpClient/environment si quedan sin uso (referencias todavia los usa).",
+      "status": "done",
+      "layer": 1,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "files": [
+        "src/app/features/organismos/organismos.component.ts"
+      ],
+      "acceptance_criteria": [
+        "AC-10: la tab 'Integrantes' no aparece en la barra de pestanas",
+        "AC-11: las tabs 'todos', 'info' y 'referencias' siguen funcionando",
+        "AC-12: la rama CSV de integrantes y sus CsvColumn se eliminan; el CSV de las otras tabs sigue disponible",
+        "Se elimina todo el estado/filtros/computed muertos asociados a integrantes",
+        "GATE: npm run build pasa"
+      ],
+      "references": [
+        "US-3"
+      ]
+    },
+    {
+      "id": "TASK-004",
+      "title": "Filas expandibles + grilla inline de integrantes",
+      "description": "Hacer expandibles las filas de 'Todos los Organismos' reusando el patron clickable/detalle-row de integrantes-contacto. Estado por signals: expandedOrgKey (acordeon), integrantesPorOrg (cache), orgLoading, orgError. Al expandir se lazy-carga via getIntegrantes; grilla simple con Cred.Civica, Apellidos, Nombres, Celular, Mail, Posicion, Depto.",
+      "status": "done",
+      "layer": 1,
+      "depends_on": [
+        "TASK-002",
+        "TASK-003"
+      ],
+      "files": [
+        "src/app/features/organismos/organismos.component.ts"
+      ],
+      "acceptance_criteria": [
+        "AC-1: filas clickeables con indicador de expandible (cursor/hover + estado abierto/cerrado)",
+        "AC-2/AC-5: al expandir se muestra la grilla anidada de integrantes de ese organismo con las columnas Cred.Civica, Apellidos, Nombres, Celular, Mail, Posicion, Depto. (sin columna Organismo)",
+        "AC-3/AC-4: click de nuevo colapsa; abrir una colapsa la anterior (una sola abierta, key ${ambito}:${id})",
+        "AC-6: primer expand dispara la peticion y muestra loading",
+        "AC-7: organismo sin integrantes muestra estado vacio",
+        "AC-8: fallo muestra error dentro de la fila-detalle con reintento",
+        "AC-9: re-expandir usa cache (no refetch)",
+        "EC-3: respuesta fuera de orden no pinta resultados en otro organismo (verificar key antes de escribir)",
+        "GATE: npm run build pasa"
+      ],
+      "references": [
+        "US-1",
+        "US-2",
+        "EC-1",
+        "EC-2",
+        "EC-3",
+        "EC-4",
+        "EC-5"
+      ]
+    },
+    {
+      "id": "TASK-005",
+      "title": "Tests service: getIntegrantes",
+      "description": "Extender organismos.service.spec.ts para cubrir getIntegrantes: URL correcta segun ambito (estatales|partidarios) e id, y mapeo de la respuesta, usando HttpTestingController.",
+      "status": "done",
+      "layer": 1,
+      "depends_on": [
+        "TASK-002"
+      ],
+      "files": [
+        "src/app/core/services/organismos.service.spec.ts"
+      ],
+      "acceptance_criteria": [
+        "Test verifica GET a /organismos/estatales/{id}/integrantes para ambito Estatal",
+        "Test verifica GET a /organismos/partidarios/{id}/integrantes para ambito Partidario",
+        "Test verifica que la respuesta se emite como IntegranteOrg[]",
+        "GATE: npm test -- --watch=false --browsers=ChromeHeadless pasa"
+      ],
+      "references": [
+        "US-1",
+        "BR-1",
+        "BR-3"
+      ]
+    },
+    {
+      "id": "TASK-006",
+      "title": "Tests componente: expand/acordeon/cache/estados",
+      "description": "Extender organismos.component.spec.ts: la tab Integrantes ya no se renderiza; toggle expande/colapsa; acordeon (una abierta); cache evita refetch; estados loading/vacio/error. Usar HttpTestingController para simular getIntegrantes.",
+      "status": "done",
+      "layer": 1,
+      "depends_on": [
+        "TASK-004"
+      ],
+      "files": [
+        "src/app/features/organismos/organismos.component.spec.ts"
+      ],
+      "acceptance_criteria": [
+        "Test confirma que no existe la tab 'Integrantes' en el template",
+        "Test cubre expand -> muestra integrantes; re-click -> colapsa; abrir otra -> colapsa la anterior",
+        "Test cubre cache (segundo expand no hace nueva request) y estados vacio/error",
+        "GATE: npm test -- --watch=false --browsers=ChromeHeadless pasa"
+      ],
+      "references": [
+        "US-1",
+        "US-2",
+        "US-3"
+      ]
+    },
+    {
+      "id": "TASK-007",
+      "title": "Code review",
+      "description": "Revisar el diff completo de la feature: diseno, codigo muerto, naming, coherencia con el patron existente y las reglas objetivo de arquitectura (service/model). Reportar y corregir hallazgos.",
+      "status": "pending",
+      "layer": 2,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002",
+        "TASK-003",
+        "TASK-004",
+        "TASK-005",
+        "TASK-006"
+      ],
+      "files": [
+        "src/app/features/organismos/organismos.component.ts",
+        "src/app/core/services/organismos.service.ts",
+        "src/app/core/models/organismos.ts"
+      ],
+      "acceptance_criteria": [
+        "Sin codigo muerto tras eliminar la tab Integrantes",
+        "IntegranteOrg no queda duplicada inline en ningun componente",
+        "Patron de fila expandible coherente con integrantes-contacto"
+      ],
+      "references": [
+        "US-1",
+        "US-2",
+        "US-3"
+      ]
+    },
+    {
+      "id": "TASK-008",
+      "title": "Performance review",
+      "description": "Verificar carga lazy por organismo, cache efectiva (sin refetch) y ausencia de recomputos/peticiones innecesarias al expandir/colapsar o filtrar.",
+      "status": "pending",
+      "layer": 2,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002",
+        "TASK-003",
+        "TASK-004",
+        "TASK-005",
+        "TASK-006"
+      ],
+      "files": [
+        "src/app/features/organismos/organismos.component.ts"
+      ],
+      "acceptance_criteria": [
+        "Integrantes se piden solo al primer expand de cada organismo",
+        "Re-expandir no dispara nuevas peticiones (cache)",
+        "No se carga la lista global de integrantes de una sola vez"
+      ],
+      "references": [
+        "US-2",
+        "AC-9",
+        "tech:Non-Functional Requirements"
+      ]
+    },
+    {
+      "id": "TASK-009",
+      "title": "Security review",
+      "description": "Confirmar que la vista es solo lectura, que las peticiones pasan por el auth interceptor (JWT) y que no se exponen ni logean datos sensibles de integrantes.",
+      "status": "pending",
+      "layer": 2,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002",
+        "TASK-003",
+        "TASK-004",
+        "TASK-005",
+        "TASK-006"
+      ],
+      "files": [
+        "src/app/features/organismos/organismos.component.ts",
+        "src/app/core/services/organismos.service.ts"
+      ],
+      "acceptance_criteria": [
+        "No hay endpoints de escritura de integrantes en esta vista (solo lectura)",
+        "getIntegrantes usa el mismo canal autenticado que el resto de Organismos",
+        "Sin datos sensibles en console.log ni en la URL"
+      ],
+      "references": [
+        "BR-2",
+        "tech:Non-Functional Requirements"
+      ]
+    }
+  ],
+  "dependency_graph": {
+    "by_layer": {
+      "1": {
+        "level_0": [
+          "TASK-001"
+        ],
+        "level_1": [
+          "TASK-002",
+          "TASK-003"
+        ],
+        "level_2": [
+          "TASK-004",
+          "TASK-005"
+        ],
+        "level_3": [
+          "TASK-006"
+        ]
+      },
+      "2": {
+        "level_0": [
+          "TASK-007",
+          "TASK-008",
+          "TASK-009"
+        ]
+      }
+    }
+  }
+}
