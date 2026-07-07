@@ -41,6 +41,31 @@ describe('OrganismosService', () => {
     expect(http.expectOne(`${BASE}/tipos`).request.method).toBe('GET');
   });
 
+  it('getIntegrantes("Estatal", id) → GET /estatales/{id}/integrantes', () => {
+    svc.getIntegrantes('Estatal', 7).subscribe();
+    const req = http.expectOne(`${BASE}/estatales/7/integrantes`);
+    expect(req.request.method).toBe('GET');
+    req.flush([]);
+  });
+
+  it('getIntegrantes("Partidario", id) → GET /partidarios/{id}/integrantes (ruta por ámbito)', () => {
+    svc.getIntegrantes('Partidario', 12).subscribe();
+    const req = http.expectOne(`${BASE}/partidarios/12/integrantes`);
+    expect(req.request.method).toBe('GET');
+    req.flush([]);
+  });
+
+  it('getIntegrantes() emite el array de integrantes recibido', () => {
+    let recibidos: any[] = [];
+    svc.getIntegrantes('Estatal', 1).subscribe((x) => (recibidos = x));
+    http.expectOne(`${BASE}/estatales/1/integrantes`).flush([
+      { idContacto: 99, credCivica: 'ABC12345', apellidos: 'Pérez', nombres: 'Juan',
+        celular: '099', mail: 'j@x.com', posicion: 'Titular', organismo: 'Org 1', departamento: 'Montevideo' },
+    ]);
+    expect(recibidos.length).toBe(1);
+    expect(recibidos[0].idContacto).toBe(99);
+  });
+
   it('createOrganismo("Estatal") → POST /estatales', () => {
     svc.createOrganismo('Estatal', organismo()).subscribe();
     const req = http.expectOne(`${BASE}/estatales`);

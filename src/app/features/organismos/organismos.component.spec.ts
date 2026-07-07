@@ -4,7 +4,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { of, throwError } from 'rxjs';
 import { OrganismosComponent } from './organismos.component';
 import { OrganismosService } from '../../core/services/organismos.service';
-import { OrganismoTodosDto, InfoOrganizacionDto } from '../../core/models/organismos';
+import { OrganismoTodosDto, InfoOrganizacionDto, IntegranteOrg } from '../../core/models/organismos';
 
 describe('OrganismosComponent', () => {
   let fixture: ComponentFixture<OrganismosComponent>;
@@ -14,15 +14,17 @@ describe('OrganismosComponent', () => {
   const orgEstatal: OrganismoTodosDto = { id: 3, ambito: 'Estatal', nombre: 'Min. X', tipoOrganismoId: 2, art44: false, ordenDpto: 1 };
   const orgPart: OrganismoTodosDto = { id: 4, ambito: 'Partidario', nombre: 'Comité Y', tipoOrganismoId: 5, art44: true, ordenDpto: 0 };
   const info: InfoOrganizacionDto = { id: 8, tipoOrganismoId: 2, organismoEstatalId: 3, organismoPartidarioId: null, direccion: 'Calle 1', telefono: '099', email: 'a@b.com', observaciones: null };
+  const integrante: IntegranteOrg = { idContacto: 99, credCivica: 'ABC12345', apellidos: 'Pérez', nombres: 'Juan', celular: '099', mail: 'j@x.com', posicion: 'Titular', organismo: 'Min. X', departamento: 'Montevideo' };
 
   beforeEach(() => {
     svc = jasmine.createSpyObj('OrganismosService', [
-      'getTodos', 'getInfo', 'getTipos',
+      'getTodos', 'getInfo', 'getTipos', 'getIntegrantes',
       'createOrganismo', 'updateOrganismo', 'createInfo', 'updateInfo',
     ]);
     svc.getTodos.and.returnValue(of([orgEstatal, orgPart]));
     svc.getInfo.and.returnValue(of([info]));
     svc.getTipos.and.returnValue(of([{ id: 2, nombre: 'Ministerio' }, { id: 5, nombre: 'Comité' }]));
+    svc.getIntegrantes.and.returnValue(of([integrante]));
     svc.createOrganismo.and.returnValue(of(orgEstatal));
     svc.updateOrganismo.and.returnValue(of(orgPart));
     svc.createInfo.and.returnValue(of(info));
@@ -106,5 +108,64 @@ describe('OrganismosComponent', () => {
     expect(svc.createInfo).toHaveBeenCalledTimes(1);
     expect(cmp.modalKind()).toBeNull();
     expect(svc.getInfo).toHaveBeenCalled();
+  });
+
+  // ── Integrantes inline (por organismo) ────────────────────
+  it('ya no existe la pestaña "Integrantes" en la barra de tabs', () => {
+    const tabs = Array.from(fixture.nativeElement.querySelectorAll('.tabs .tab')).map((t: any) => t.textContent.trim());
+    expect(tabs).not.toContain('Integrantes');
+    expect(tabs).toContain('Todos los Organismos');
+    expect(tabs).toContain('Ref. Partidarias');
+  });
+
+  it('toggleOrg() expande y carga integrantes por ámbito + id', () => {
+    cmp.toggleOrg(orgEstatal);
+    expect(cmp.isExpanded(orgEstatal)).toBeTrue();
+    expect(svc.getIntegrantes).toHaveBeenCalledWith('Estatal', 3);
+    expect(cmp.integrantesDe(orgEstatal)).toEqual([integrante]);
+  });
+
+  it('toggleOrg() de nuevo colapsa el mismo organismo', () => {
+    cmp.toggleOrg(orgEstatal);
+    cmp.toggleOrg(orgEstatal);
+    expect(cmp.isExpanded(orgEstatal)).toBeFalse();
+  });
+
+  it('acordeón: expandir otro organismo colapsa el anterior', () => {
+    cmp.toggleOrg(orgEstatal);
+    cmp.toggleOrg(orgPart);
+    expect(cmp.isExpanded(orgEstatal)).toBeFalse();
+    expect(cmp.isExpanded(orgPart)).toBeTrue();
+    expect(svc.getIntegrantes).toHaveBeenCalledWith('Partidario', 4);
+  });
+
+  it('caché: colapsar y re-expandir no dispara una nueva petición', () => {
+    cmp.toggleOrg(orgEstatal);            // carga
+    cmp.toggleOrg(orgEstatal);            // colapsa
+    cmp.toggleOrg(orgEstatal);            // re-expande desde caché
+    expect(svc.getIntegrantes).toHaveBeenCalledTimes(1);
+  });
+
+  it('estado vacío: organismo sin integrantes', () => {
+    svc.getIntegrantes.and.returnValue(of([]));
+    cmp.toggleOrg(orgPart);
+    expect(cmp.integrantesDe(orgPart)).toEqual([]);
+    expect(cmp.orgError()[cmp.orgKey(orgPart)]).toBeUndefined();
+  });
+
+  it('estado de error: fallo al cargar integrantes setea el mensaje de error', () => {
+    svc.getIntegrantes.and.returnValue(throwError(() => new HttpErrorResponse({ status: 500, error: { message: 'Boom' } })));
+    cmp.toggleOrg(orgPart);
+    expect(cmp.orgError()[cmp.orgKey(orgPart)]).toBe('Boom');
+    expect(cmp.orgLoading()[cmp.orgKey(orgPart)]).toBeFalse();
+  });
+
+  it('reintento tras error vuelve a llamar getIntegrantes', () => {
+    svc.getIntegrantes.and.returnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+    cmp.toggleOrg(orgPart);
+    svc.getIntegrantes.and.returnValue(of([integrante]));
+    cmp.loadIntegrantes(orgPart);
+    expect(cmp.integrantesDe(orgPart)).toEqual([integrante]);
+    expect(cmp.orgError()[cmp.orgKey(orgPart)]).toBeUndefined();
   });
 });

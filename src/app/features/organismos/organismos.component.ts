@@ -10,13 +10,13 @@ import { ModalFormComponent } from '../../shared/components/modal-form/modal-for
 import {
   Ambito, OrganismoTodosDto, OrganismoInput,
   TipoOrganismoDto, InfoOrganizacionDto, InfoOrganizacionInput,
+  IntegranteOrg,
 } from '../../core/models/organismos';
 
-/** Display-only de las tabs fuera de alcance (Integrantes / Referencias): shape heredado. */
-interface IntegranteOrg { idContacto: number; credCivica: string; apellidos: string; nombres: string; celular: string; mail: string; posicion: string; organismo: string; departamento: string; }
+/** Display-only de la tab Referencias (fuera de alcance): shape heredado. */
 interface RefPart { nombre: string; cargo: string; organismo: string; periodo: string; }
 
-type Tab = 'todos' | 'info' | 'integrantes' | 'referencias';
+type Tab = 'todos' | 'info' | 'referencias';
 type ModalKind = 'organismo' | 'info';
 type ModalMode = 'nueva' | 'editar';
 
@@ -37,7 +37,6 @@ const m = (val: any, q: string) => !q || norm(val).includes(q.toLowerCase());
     <div class="tabs">
       <a class="tab" [class.active]="tab()==='todos'"        (click)="setTab('todos')">Todos los Organismos</a>
       <a class="tab" [class.active]="tab()==='info'"         (click)="setTab('info')">Info de la Organización</a>
-      <a class="tab" [class.active]="tab()==='integrantes'"  (click)="setTab('integrantes')">Integrantes</a>
       <a class="tab" [class.active]="tab()==='referencias'"  (click)="setTab('referencias')">Ref. Partidarias</a>
     </div>
 
@@ -84,8 +83,8 @@ const m = (val: any, q: string) => !q || norm(val).includes(q.toLowerCase());
           </thead>
           <tbody>
             @for (o of organismosFiltrados(); track $index) {
-              <tr>
-                <td>{{ o.id }}</td>
+              <tr class="clickable" [class.selected]="isExpanded(o)" (click)="toggleOrg(o)">
+                <td>{{ isExpanded(o) ? '▾' : '▸' }} {{ o.id }}</td>
                 <td><span class="badge" [class.amb-est]="o.ambito==='Estatal'" [class.amb-part]="o.ambito==='Partidario'">{{ o.ambito }}</span></td>
                 <td><strong>{{ o.nombre }}</strong></td>
                 <td>{{ o.descripcion }}</td>
@@ -96,7 +95,7 @@ const m = (val: any, q: string) => !q || norm(val).includes(q.toLowerCase());
                 <td>{{ o.art44 ? '☑' : '☐' }}</td>
                 <td>{{ o.ordenDpto }}</td>
                 <td>{{ o.observaciones || '—' }}</td>
-                <td>
+                <td (click)="$event.stopPropagation()">
                   <button class="btn-pencil" (click)="abrirEditarOrganismo(o)" title="Editar">
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                       <path d="M12 20h9"/>
@@ -105,6 +104,49 @@ const m = (val: any, q: string) => !q || norm(val).includes(q.toLowerCase());
                   </button>
                 </td>
               </tr>
+              @if (isExpanded(o)) {
+                <tr class="detalle-row">
+                  <td colspan="12">
+                    <div class="detalle-wrap">
+                      <div class="detalle-section">
+                        <div class="detalle-section-title">Integrantes de {{ o.nombre }}</div>
+                        @if (orgLoading()[orgKey(o)]) {
+                          <div class="empty-state" style="padding:24px"><div class="empty-state-text">Cargando integrantes…</div></div>
+                        } @else if (orgError()[orgKey(o)]) {
+                          <div class="empty-state" style="padding:24px">
+                            <div class="empty-state-text">{{ orgError()[orgKey(o)] }}</div>
+                            <button class="btn btn-secondary" style="margin-top:10px" (click)="loadIntegrantes(o)">Reintentar</button>
+                          </div>
+                        } @else if (integrantesDe(o).length === 0) {
+                          <div class="empty-state" style="padding:24px"><div class="empty-state-text">Este organismo no tiene integrantes</div></div>
+                        } @else {
+                          <table class="table inner-table">
+                            <thead>
+                              <tr>
+                                <th>Cred. Cívica</th><th>Apellidos</th><th>Nombres</th>
+                                <th>Celular</th><th>Mail</th><th>Posición</th><th>Depto.</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              @for (i of integrantesDe(o); track i.idContacto) {
+                                <tr>
+                                  <td>{{ i.credCivica }}</td>
+                                  <td><strong>{{ i.apellidos }}</strong></td>
+                                  <td>{{ i.nombres }}</td>
+                                  <td>{{ i.celular }}</td>
+                                  <td>{{ i.mail }}</td>
+                                  <td>{{ i.posicion }}</td>
+                                  <td><span class="badge dept">{{ i.departamento }}</span></td>
+                                </tr>
+                              }
+                            </tbody>
+                          </table>
+                        }
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              }
             } @empty {
               <tr><td colspan="12"><div class="empty-state"><div class="empty-state-text">Sin resultados</div></div></td></tr>
             }
@@ -160,53 +202,6 @@ const m = (val: any, q: string) => !q || norm(val).includes(q.toLowerCase());
           </tbody>
         </table>
         <div class="footer">Mostrando {{ infoFiltrados().length }} de {{ info().length }}</div>
-      </div></div>
-    }
-
-    @if (tab()==='integrantes') {
-      <div class="card"><div class="card-body" style="padding:0;overflow-x:auto">
-        <table class="table">
-          <thead>
-            <tr class="filter-row">
-              <th><input class="column-filter" [ngModel]="fIntId()"   (ngModelChange)="fIntId.set($event)"   placeholder="Filtrar..."></th>
-              <th></th>
-              <th><input class="column-filter" [ngModel]="fIntApe()"  (ngModelChange)="fIntApe.set($event)"  placeholder="Filtrar..."></th>
-              <th><input class="column-filter" [ngModel]="fIntNom()"  (ngModelChange)="fIntNom.set($event)"  placeholder="Filtrar..."></th>
-              <th></th>
-              <th></th>
-              <th></th>
-              <th><input class="column-filter" [ngModel]="fIntOrg()"  (ngModelChange)="fIntOrg.set($event)"  placeholder="Filtrar..."></th>
-              <th>
-                <select class="column-filter" [ngModel]="fIntDep()" (ngModelChange)="fIntDep.set($event)">
-                  <option value="">Todos</option>
-                  @for (d of intDeptos(); track d) { <option [ngValue]="d">{{ d }}</option> }
-                </select>
-              </th>
-            </tr>
-            <tr>
-              <th>ID Contacto</th><th>Cred. Cívica</th><th>Apellidos</th><th>Nombres</th>
-              <th>Celular</th><th>Mail</th><th>Posición</th><th>Organismo</th><th>Depto.</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (i of integrantesFiltrados(); track i.idContacto) {
-              <tr>
-                <td>{{ i.idContacto }}</td>
-                <td>{{ i.credCivica }}</td>
-                <td><strong>{{ i.apellidos }}</strong></td>
-                <td>{{ i.nombres }}</td>
-                <td>{{ i.celular }}</td>
-                <td>{{ i.mail }}</td>
-                <td>{{ i.posicion }}</td>
-                <td>{{ i.organismo }}</td>
-                <td><span class="badge dept">{{ i.departamento }}</span></td>
-              </tr>
-            } @empty {
-              <tr><td colspan="9"><div class="empty-state"><div class="empty-state-text">Sin resultados</div></div></td></tr>
-            }
-          </tbody>
-        </table>
-        <div class="footer">Mostrando {{ integrantesFiltrados().length }} de {{ integrantes().length }}</div>
       </div></div>
     }
 
@@ -301,6 +296,19 @@ const m = (val: any, q: string) => !q || norm(val).includes(q.toLowerCase());
     .footer { padding:12px 18px; font-size:13px; color:#666; border-top:1px solid #eef1f5; }
     .badge.amb-est { background:#e6f0ff; color:#1a4f8a; }
     .badge.amb-part { background:#fdeede; color:#8a5a1a; }
+    tr.clickable { cursor:pointer; }
+    tr.clickable:hover { background:#f5f8ff; }
+    tr.selected { background:#e6efff !important; }
+    tr.detalle-row > td { padding:0; background:#fafbfd; }
+    .detalle-wrap { padding:16px 20px; border-top:1px solid #d6dde6; }
+    .detalle-section { background:#fff; border:1px solid #e6eaf0; border-radius:6px; padding:12px 16px; }
+    .detalle-section-title {
+      font-size:13px; font-weight:600; color:#4a5568; text-transform:uppercase;
+      letter-spacing:.5px; margin-bottom:10px; padding-bottom:6px;
+      border-bottom:1px solid #eef1f5;
+    }
+    .inner-table { min-width:720px; }
+    .inner-table th { font-size:12px; }
   `]
 })
 export class OrganismosComponent {
@@ -312,8 +320,13 @@ export class OrganismosComponent {
   organismos = signal<OrganismoTodosDto[]>([]);
   info = signal<InfoOrganizacionDto[]>([]);
   tipos = signal<TipoOrganismoDto[]>([]);
-  integrantes = signal<IntegranteOrg[]>([]);
   referencias = signal<RefPart[]>([]);
+
+  // ── Integrantes inline por organismo (acordeón + caché) ───
+  expandedOrgKey = signal<string | null>(null);
+  integrantesPorOrg = signal<Record<string, IntegranteOrg[]>>({});
+  orgLoading = signal<Record<string, boolean>>({});
+  orgError = signal<Record<string, string>>({});
 
   departamentos = [
     'Artigas','Canelones','Cerro Largo','Colonia','Durazno','Flores','Florida',
@@ -345,19 +358,6 @@ export class OrganismosComponent {
     m(i.email, this.fInfMail())
   ));
 
-  // ── filtros: Integrantes (reducidos)
-  fIntId = signal(''); fIntApe = signal(''); fIntNom = signal('');
-  fIntOrg = signal(''); fIntDep = signal('');
-
-  intDeptos = computed(() => Array.from(new Set(this.integrantes().map(i => i.departamento).filter(Boolean))).sort());
-
-  integrantesFiltrados = computed(() => this.integrantes().filter(i =>
-    m(i.idContacto, this.fIntId()) &&
-    m(i.apellidos, this.fIntApe()) && m(i.nombres, this.fIntNom()) &&
-    m(i.organismo, this.fIntOrg()) &&
-    (!this.fIntDep() || i.departamento === this.fIntDep())
-  ));
-
   // ── filtros: Referencias (reducidos)
   fRefNom = signal(''); fRefCar = signal('');
 
@@ -387,10 +387,37 @@ export class OrganismosComponent {
   setTab(t: Tab) {
     this.tab.set(t);
     if (t === 'info' && this.info().length === 0) this.loadInfo();
-    if (t === 'integrantes' && this.integrantes().length === 0)
-      this.http.get<IntegranteOrg[]>(`${environment.apiUrl}/organismos/integrantes`).subscribe(x => this.integrantes.set(x));
     if (t === 'referencias' && this.referencias().length === 0)
       this.http.get<RefPart[]>(`${environment.apiUrl}/organismos/referencias`).subscribe(x => this.referencias.set(x));
+  }
+
+  // ── Integrantes inline: acordeón + carga lazy con caché ───
+  orgKey(o: OrganismoTodosDto): string { return `${o.ambito}:${o.id}`; }
+  isExpanded(o: OrganismoTodosDto): boolean { return this.expandedOrgKey() === this.orgKey(o); }
+  integrantesDe(o: OrganismoTodosDto): IntegranteOrg[] { return this.integrantesPorOrg()[this.orgKey(o)] ?? []; }
+
+  toggleOrg(o: OrganismoTodosDto) {
+    const key = this.orgKey(o);
+    if (this.expandedOrgKey() === key) { this.expandedOrgKey.set(null); return; }
+    this.expandedOrgKey.set(key);
+    // Carga sólo si no hay caché para este organismo (evita refetch al re-expandir).
+    if (!(key in this.integrantesPorOrg())) this.loadIntegrantes(o);
+  }
+
+  loadIntegrantes(o: OrganismoTodosDto) {
+    const key = this.orgKey(o);
+    this.orgLoading.update(mp => ({ ...mp, [key]: true }));
+    this.orgError.update(mp => { const { [key]: _drop, ...rest } = mp; return rest; });
+    this.svc.getIntegrantes(o.ambito, o.id).subscribe({
+      next: (list) => {
+        this.integrantesPorOrg.update(mp => ({ ...mp, [key]: list }));
+        this.orgLoading.update(mp => ({ ...mp, [key]: false }));
+      },
+      error: (err) => {
+        this.orgLoading.update(mp => ({ ...mp, [key]: false }));
+        this.orgError.update(mp => ({ ...mp, [key]: this.extractError(err, 'No se pudieron cargar los integrantes.') }));
+      },
+    });
   }
 
   private loadTodos() { this.svc.getTodos().subscribe(x => this.organismos.set(x)); }
@@ -539,19 +566,6 @@ export class OrganismosComponent {
         { get: 'observaciones', label: 'Observaciones' }
       ];
       exportarCSV(this.infoFiltrados(), cols, `info-organismos-${stamp}.csv`);
-    } else if (t === 'integrantes') {
-      const cols: CsvColumn<IntegranteOrg>[] = [
-        { get: 'idContacto', label: 'ID Contacto' },
-        { get: 'credCivica', label: 'Cred. Cívica' },
-        { get: 'apellidos', label: 'Apellidos' },
-        { get: 'nombres', label: 'Nombres' },
-        { get: 'celular', label: 'Celular' },
-        { get: 'mail', label: 'Mail' },
-        { get: 'posicion', label: 'Posición' },
-        { get: 'organismo', label: 'Organismo' },
-        { get: 'departamento', label: 'Departamento' }
-      ];
-      exportarCSV(this.integrantesFiltrados(), cols, `integrantes-organismo-${stamp}.csv`);
     } else if (t === 'referencias') {
       const cols: CsvColumn<RefPart>[] = [
         { get: 'nombre', label: 'Nombre' },

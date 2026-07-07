@@ -51,6 +51,24 @@ export interface TipoOrganismoDto {
   nombre: string;
 }
 
+/**
+ * Integrante de un organismo (solo lectura), tal cual lo devuelve
+ * GET /organismos/{estatales|partidarios}/{id}/integrantes.
+ * `organismo` (nombre) se conserva por compatibilidad de shape con el backend,
+ * aunque la grilla inline no lo muestra (es redundante en ese contexto).
+ */
+export interface IntegranteOrg {
+  idContacto: number;
+  credCivica: string;
+  apellidos: string;
+  nombres: string;
+  celular: string;
+  mail: string;
+  posicion: string;
+  organismo: string;
+  departamento: string;
+}
+
 /** Info de organización tal cual la devuelve el backend. */
 export interface InfoOrganizacionDto {
   id: number;
