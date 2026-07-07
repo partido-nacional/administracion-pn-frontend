@@ -55,13 +55,6 @@ type Tab = 'gestion' | 'listar' | 'ventas' | 'donaciones' | 'form';
         <div class="card-body" style="padding:0; overflow-x:auto">
           <table class="table">
             <thead>
-              <tr>
-                <th class="sortable" (click)="sortMov('fecha')">Fecha {{ arrowMov('fecha') }}</th>
-                <th class="sortable" (click)="sortMov('producto')">Producto {{ arrowMov('producto') }}</th>
-                <th class="sortable" (click)="sortMov('tipo')">Tipo {{ arrowMov('tipo') }}</th>
-                <th class="sortable" (click)="sortMov('cantidad')">Cantidad {{ arrowMov('cantidad') }}</th>
-                <th>Motivo</th><th>Observaciones</th>
-              </tr>
               <tr class="filter-row">
                 <th><input type="text" class="column-filter" placeholder="dd/mm/aaaa" [ngModel]="fmFecha()"    (ngModelChange)="fmFecha.set($event); onFilterMov()"></th>
                 <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fmProducto()" (ngModelChange)="fmProducto.set($event); onFilterMov()"></th>
@@ -77,6 +70,13 @@ type Tab = 'gestion' | 'listar' | 'ventas' | 'donaciones' | 'form';
                   </select>
                 </th>
                 <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fmObs()" (ngModelChange)="fmObs.set($event); onFilterMov()"></th>
+              </tr>
+              <tr>
+                <th class="sortable" (click)="sortMov('fecha')">Fecha {{ arrowMov('fecha') }}</th>
+                <th class="sortable" (click)="sortMov('producto')">Producto {{ arrowMov('producto') }}</th>
+                <th class="sortable" (click)="sortMov('tipo')">Tipo {{ arrowMov('tipo') }}</th>
+                <th class="sortable" (click)="sortMov('cantidad')">Cantidad {{ arrowMov('cantidad') }}</th>
+                <th>Motivo</th><th>Observaciones</th>
               </tr>
             </thead>
             <tbody>
@@ -109,14 +109,6 @@ type Tab = 'gestion' | 'listar' | 'ventas' | 'donaciones' | 'form';
         <div class="card-body" style="padding:0; overflow-x:auto">
           <table class="table">
             <thead>
-              <tr>
-                <th class="sortable" (click)="sortProd('id')">Id {{ arrowProd('id') }}</th>
-                <th class="sortable" (click)="sortProd('nombre')">Producto {{ arrowProd('nombre') }}</th>
-                <th>Descripcion</th>
-                <th class="sortable" (click)="sortProd('precio')">Precio Unitario {{ arrowProd('precio') }}</th>
-                <th class="sortable" (click)="sortProd('stock')">Stock {{ arrowProd('stock') }}</th>
-                <th>Estado</th><th></th>
-              </tr>
               <tr class="filter-row">
                 <th></th>
                 <th><input type="text" class="column-filter" placeholder="Filtrar..." [ngModel]="fpNombre()" (ngModelChange)="fpNombre.set($event); onFilterProd()"></th>
@@ -129,6 +121,14 @@ type Tab = 'gestion' | 'listar' | 'ventas' | 'donaciones' | 'form';
                   </select>
                 </th>
                 <th></th>
+              </tr>
+              <tr>
+                <th class="sortable" (click)="sortProd('id')">Id {{ arrowProd('id') }}</th>
+                <th class="sortable" (click)="sortProd('nombre')">Producto {{ arrowProd('nombre') }}</th>
+                <th>Descripcion</th>
+                <th class="sortable" (click)="sortProd('precio')">Precio Unitario {{ arrowProd('precio') }}</th>
+                <th class="sortable" (click)="sortProd('stock')">Stock {{ arrowProd('stock') }}</th>
+                <th>Estado</th><th></th>
               </tr>
             </thead>
             <tbody>

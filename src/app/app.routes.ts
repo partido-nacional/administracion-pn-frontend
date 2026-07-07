@@ -20,7 +20,7 @@ export const routes: Routes = [
       { path: 'agenda/:id', loadComponent: () => import('./features/agenda/agenda-nuevo.component').then(m => m.AgendaNuevoComponent) },
       { path: 'adhesiones', canActivate: [rolesGuard('Hacienda','IT')], loadComponent: () => import('./features/adhesiones/adhesiones-listado.component').then(m => m.AdhesionesListadoComponent) },
       { path: 'productos', canActivate: [rolesGuard('Secretaria','Hacienda','IT')], loadComponent: () => import('./features/productos/productos.component').then(m => m.ProductosComponent) },
-      { path: 'listados', canActivate: [rolesGuard('Secretaria','Hacienda','IT')], pathMatch: 'full', redirectTo: 'listados/movimientos' },
+      { path: 'listados', pathMatch: 'full', redirectTo: 'listados/movimientos' },
       { path: 'listados/movimientos', canActivate: [rolesGuard('Secretaria','Hacienda','IT')], loadComponent: () => import('./features/listados/movimientos.component').then(m => m.MovimientosComponent) },
       { path: 'listados/parlamentarias', canActivate: [rolesGuard('Secretaria','Hacienda','IT')], loadComponent: () => import('./features/listados/parlamentarias.component').then(m => m.ParlamentariasComponent) },
       { path: 'listados/gobierno', canActivate: [rolesGuard('Secretaria','Hacienda','IT')], loadComponent: () => import('./features/listados/gobierno.component').then(m => m.GobiernoComponent) },

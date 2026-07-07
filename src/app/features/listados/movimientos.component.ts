@@ -17,13 +17,6 @@ import { exportarCSV } from '../../core/exportar-csv';
       <div class="card-body" style="padding:0">
         <table class="table">
           <thead>
-            <tr>
-              <th class="sortable" (click)="sortBy('fecha')">Fecha/Hora {{ arrow('fecha') }}</th>
-              <th class="sortable" (click)="sortBy('usuario')">Usuario {{ arrow('usuario') }}</th>
-              <th class="sortable" (click)="sortBy('accion')">Accion {{ arrow('accion') }}</th>
-              <th class="sortable" (click)="sortBy('modulo')">Modulo {{ arrow('modulo') }}</th>
-              <th class="sortable" (click)="sortBy('detalle')">Detalle {{ arrow('detalle') }}</th>
-            </tr>
             <tr class="filter-row">
               <th><input type="text" class="column-filter" placeholder="dd/mm/aaaa" [(ngModel)]="fFecha" (ngModelChange)="onFilter()"></th>
               <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fUsuario" (ngModelChange)="onFilter()"></th>
@@ -40,6 +33,13 @@ import { exportarCSV } from '../../core/exportar-csv';
                 </select>
               </th>
               <th></th>
+            </tr>
+            <tr>
+              <th class="sortable" (click)="sortBy('fecha')">Fecha/Hora {{ arrow('fecha') }}</th>
+              <th class="sortable" (click)="sortBy('usuario')">Usuario {{ arrow('usuario') }}</th>
+              <th class="sortable" (click)="sortBy('accion')">Accion {{ arrow('accion') }}</th>
+              <th class="sortable" (click)="sortBy('modulo')">Modulo {{ arrow('modulo') }}</th>
+              <th class="sortable" (click)="sortBy('detalle')">Detalle {{ arrow('detalle') }}</th>
             </tr>
           </thead>
           <tbody>

@@ -17,15 +17,6 @@ import { exportarCSV } from '../../core/exportar-csv';
       <div class="card-body" style="padding:0; overflow-x:auto">
         <table class="table">
           <thead>
-            <tr>
-              <th style="width:60px">Cortesia</th>
-              <th style="min-width:110px" class="sortable" (click)="sortBy('apellidos')">Apellidos {{ arrow('apellidos') }}</th>
-              <th style="min-width:90px" class="sortable" (click)="sortBy('nombre')">Nombre {{ arrow('nombre') }}</th>
-              <th style="min-width:95px">Tel. Trabajo</th>
-              <th style="min-width:130px">Posicion Organismo</th>
-              <th style="min-width:140px">Nombre Organismo</th>
-              <th style="min-width:100px">Departamento</th>
-            </tr>
             <tr class="filter-row">
               <th></th>
               <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fApellidos" (ngModelChange)="onFilter()"></th>
@@ -39,6 +30,15 @@ import { exportarCSV } from '../../core/exportar-csv';
                   @for (d of departamentos; track d) { <option [value]="d">{{ d }}</option> }
                 </select>
               </th>
+            </tr>
+            <tr>
+              <th style="width:60px">Cortesia</th>
+              <th style="min-width:110px" class="sortable" (click)="sortBy('apellidos')">Apellidos {{ arrow('apellidos') }}</th>
+              <th style="min-width:90px" class="sortable" (click)="sortBy('nombre')">Nombre {{ arrow('nombre') }}</th>
+              <th style="min-width:95px">Tel. Trabajo</th>
+              <th style="min-width:130px">Posicion Organismo</th>
+              <th style="min-width:140px">Nombre Organismo</th>
+              <th style="min-width:100px">Departamento</th>
             </tr>
           </thead>
           <tbody>
