@@ -48,7 +48,9 @@ export interface IntegranteOrganismo {
   nombres: string;
   nombreCompania?: string;
   nombreOrganismo?: string;
-  partidoSector?: string;
+  partidoSectorId?: number;
+  partidoSectorCodigo?: string;
+  partidoSectorDescripcion?: string;
   posicionOrganismo?: string;
   orden?: number;
   orden2?: number;

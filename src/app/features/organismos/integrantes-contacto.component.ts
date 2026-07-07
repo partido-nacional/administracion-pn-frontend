@@ -43,7 +43,7 @@ import { PageTitleService } from '../../core/page-title.service';
                   <td>{{ i.contactoId }}</td>
                   <td>{{ i.nombreCompania || '—' }}</td>
                   <td>{{ i.nombres }}</td>
-                  <td>{{ i.partidoSector || '—' }}</td>
+                  <td>{{ i.partidoSectorDescripcion || i.partidoSectorCodigo || '—' }}</td>
                   <td>{{ i.posicionOrganismo || '—' }}</td>
                   <td>{{ i.orden ?? '—' }}</td>
                   <td>{{ i.nombreOrganismo || '—' }}</td>
@@ -63,7 +63,7 @@ import { PageTitleService } from '../../core/page-title.service';
                             <div class="kv"><span class="k">Contacto</span><span class="v">{{ i.nombres }} (#{{ i.contactoId }})</span></div>
                             <div class="kv"><span class="k">Nombre Compañía</span><span class="v">{{ i.nombreCompania || '—' }}</span></div>
                             <div class="kv"><span class="k">Nombre Organismo</span><span class="v">{{ i.nombreOrganismo || '—' }}</span></div>
-                            <div class="kv"><span class="k">Partido-Sector</span><span class="v">{{ i.partidoSector || '—' }}</span></div>
+                            <div class="kv"><span class="k">Partido-Sector</span><span class="v">{{ i.partidoSectorDescripcion || i.partidoSectorCodigo || '—' }}</span></div>
                             <div class="kv full"><span class="k">Posición</span><span class="v">{{ i.posicionOrganismo || '—' }}</span></div>
                             <div class="kv"><span class="k">Orden</span><span class="v">{{ i.orden ?? '—' }}</span></div>
                             <div class="kv"><span class="k">Orden 2</span><span class="v">{{ i.orden2 ?? '—' }}</span></div>
