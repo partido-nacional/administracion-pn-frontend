@@ -5,6 +5,7 @@ import { environment } from '../../../environments/environment';
 import {
   Ambito, OrganismoTodosDto, OrganismoInput,
   TipoOrganismoDto, InfoOrganizacionDto, InfoOrganizacionInput,
+  IntegranteOrg,
 } from '../models/organismos';
 
 /**
@@ -33,6 +34,11 @@ export class OrganismosService {
 
   getTipos(): Observable<TipoOrganismoDto[]> {
     return this.http.get<TipoOrganismoDto[]>(`${this.base}/tipos`);
+  }
+
+  /** Integrantes de un organismo puntual, por ámbito + id (contrato por FK, no por nombre). */
+  getIntegrantes(ambito: Ambito, id: number): Observable<IntegranteOrg[]> {
+    return this.http.get<IntegranteOrg[]>(`${this.base}/${this.ambitoPath(ambito)}/${id}/integrantes`);
   }
 
   // ── Organismo: alta / edición (según ámbito) ──────────────
