@@ -6,14 +6,14 @@
   },
   "stats": {
     "total": 9,
-    "done": 6,
+    "done": 9,
     "by_layer": {
       "1": 6,
       "2": 3
     },
     "by_layer_done": {
       "1": 6,
-      "2": 0
+      "2": 3
     }
   },
   "execution_strategy": "batched",
@@ -172,7 +172,7 @@
       "id": "TASK-007",
       "title": "Code review",
       "description": "Revisar el diff completo de la feature: diseno, codigo muerto, naming, coherencia con el patron existente y las reglas objetivo de arquitectura (service/model). Reportar y corregir hallazgos.",
-      "status": "pending",
+      "status": "done",
       "layer": 2,
       "depends_on": [
         "TASK-001",
@@ -202,7 +202,7 @@
       "id": "TASK-008",
       "title": "Performance review",
       "description": "Verificar carga lazy por organismo, cache efectiva (sin refetch) y ausencia de recomputos/peticiones innecesarias al expandir/colapsar o filtrar.",
-      "status": "pending",
+      "status": "done",
       "layer": 2,
       "depends_on": [
         "TASK-001",
@@ -230,7 +230,7 @@
       "id": "TASK-009",
       "title": "Security review",
       "description": "Confirmar que la vista es solo lectura, que las peticiones pasan por el auth interceptor (JWT) y que no se exponen ni logean datos sensibles de integrantes.",
-      "status": "pending",
+      "status": "done",
       "layer": 2,
       "depends_on": [
         "TASK-001",
