@@ -2,12 +2,15 @@ import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { OrganismosService } from './organismos.service';
-import { OrganismoInput, InfoOrganizacionInput } from '../models/organismos';
+import { OrganismoInput, OrganismoUpdateInput, InfoOrganizacionInput } from '../models/organismos';
 
 const BASE = 'http://localhost:5000/api/organismos';
 
 const organismo = (): OrganismoInput => ({
-  nombre: 'Org 1', tipoOrganismoId: 3, art44: false, ordenDpto: 0,
+  ambito: 'Estatal', nombre: 'Org 1', tipoOrganizacionId: 3, art44: false, ordenDpto: 0,
+});
+const organismoUpd = (): OrganismoUpdateInput => ({
+  nombre: 'Org 1', tipoOrganizacionId: 3, art44: false, ordenDpto: 0,
 });
 
 describe('OrganismosService', () => {
@@ -24,9 +27,17 @@ describe('OrganismosService', () => {
 
   afterEach(() => http.verify());
 
-  it('getTodos() → GET /todos', () => {
-    svc.getTodos().subscribe();
-    const req = http.expectOne(`${BASE}/todos`);
+  it('getOrganismos() → GET /organismos (sin ámbito)', () => {
+    svc.getOrganismos().subscribe();
+    const req = http.expectOne(BASE);
+    expect(req.request.method).toBe('GET');
+    expect(req.request.params.has('ambito')).toBeFalse();
+    req.flush([]);
+  });
+
+  it('getOrganismos("Partidario") → GET /organismos?ambito=Partidario', () => {
+    svc.getOrganismos('Partidario').subscribe();
+    const req = http.expectOne((r) => r.url === BASE && r.params.get('ambito') === 'Partidario');
     expect(req.request.method).toBe('GET');
     req.flush([]);
   });
@@ -41,24 +52,17 @@ describe('OrganismosService', () => {
     expect(http.expectOne(`${BASE}/tipos`).request.method).toBe('GET');
   });
 
-  it('getIntegrantes("Estatal", id) → GET /estatales/{id}/integrantes', () => {
-    svc.getIntegrantes('Estatal', 7).subscribe();
-    const req = http.expectOne(`${BASE}/estatales/7/integrantes`);
-    expect(req.request.method).toBe('GET');
-    req.flush([]);
-  });
-
-  it('getIntegrantes("Partidario", id) → GET /partidarios/{id}/integrantes (ruta por ámbito)', () => {
-    svc.getIntegrantes('Partidario', 12).subscribe();
-    const req = http.expectOne(`${BASE}/partidarios/12/integrantes`);
+  it('getIntegrantes(id) → GET /organismos/{id}/integrantes (id global, sin ámbito)', () => {
+    svc.getIntegrantes(7).subscribe();
+    const req = http.expectOne(`${BASE}/7/integrantes`);
     expect(req.request.method).toBe('GET');
     req.flush([]);
   });
 
   it('getIntegrantes() emite el array de integrantes recibido', () => {
     let recibidos: any[] = [];
-    svc.getIntegrantes('Estatal', 1).subscribe((x) => (recibidos = x));
-    http.expectOne(`${BASE}/estatales/1/integrantes`).flush([
+    svc.getIntegrantes(1).subscribe((x) => (recibidos = x));
+    http.expectOne(`${BASE}/1/integrantes`).flush([
       { idContacto: 99, credCivica: 'ABC12345', apellidos: 'Pérez', nombres: 'Juan',
         celular: '099', mail: 'j@x.com', posicion: 'Titular', organismo: 'Org 1', departamento: 'Montevideo' },
     ]);
@@ -66,29 +70,24 @@ describe('OrganismosService', () => {
     expect(recibidos[0].idContacto).toBe(99);
   });
 
-  it('createOrganismo("Estatal") → POST /estatales', () => {
-    svc.createOrganismo('Estatal', organismo()).subscribe();
-    const req = http.expectOne(`${BASE}/estatales`);
+  it('createOrganismo() → POST /organismos (ámbito en el body)', () => {
+    svc.createOrganismo(organismo()).subscribe();
+    const req = http.expectOne(BASE);
     expect(req.request.method).toBe('POST');
-    req.flush({ id: 1, ambito: 'Estatal', ...organismo() });
+    expect(req.request.body.ambito).toBe('Estatal');
+    req.flush({ id: 1, ...organismo() });
   });
 
-  it('createOrganismo("Partidario") → POST /partidarios (ruta por ámbito)', () => {
-    svc.createOrganismo('Partidario', organismo()).subscribe();
-    const req = http.expectOne(`${BASE}/partidarios`);
-    expect(req.request.method).toBe('POST');
-    req.flush({ id: 1, ambito: 'Partidario', ...organismo() });
-  });
-
-  it('updateOrganismo("Estatal", id) → PUT /estatales/{id}', () => {
-    svc.updateOrganismo('Estatal', 5, organismo()).subscribe();
-    const req = http.expectOne(`${BASE}/estatales/5`);
+  it('updateOrganismo(id) → PUT /organismos/{id} (sin ámbito)', () => {
+    svc.updateOrganismo(5, organismoUpd()).subscribe();
+    const req = http.expectOne(`${BASE}/5`);
     expect(req.request.method).toBe('PUT');
-    req.flush({ id: 5, ambito: 'Estatal', ...organismo() });
+    expect(req.request.body.ambito).toBeUndefined();
+    req.flush({ id: 5, ambito: 'Estatal', ...organismoUpd() });
   });
 
   it('createInfo() → POST /info', () => {
-    const input: InfoOrganizacionInput = { tipoOrganismoId: 1, direccion: 'x' };
+    const input: InfoOrganizacionInput = { tipoOrganizacionId: 1, organismoId: 4, direccion: 'x' };
     svc.createInfo(input).subscribe();
     const req = http.expectOne(`${BASE}/info`);
     expect(req.request.method).toBe('POST');
@@ -102,17 +101,17 @@ describe('OrganismosService', () => {
     expect(http.expectOne(`${BASE}/info/8`).request.method).toBe('PUT');
   });
 
-  it('propaga el error 400 FK_INVALID (tipoOrganismoId inexistente)', () => {
+  it('propaga el error 400 FK_INVALID (tipoOrganizacionId inexistente)', () => {
     let status = 0;
-    svc.createOrganismo('Estatal', organismo()).subscribe({ error: (e) => (status = e.status) });
-    http.expectOne(`${BASE}/estatales`).flush({ errorCode: 'FK_INVALID' }, { status: 400, statusText: 'Bad Request' });
+    svc.createOrganismo(organismo()).subscribe({ error: (e) => (status = e.status) });
+    http.expectOne(BASE).flush({ errorCode: 'FK_INVALID' }, { status: 400, statusText: 'Bad Request' });
     expect(status).toBe(400);
   });
 
   it('propaga el error 404 (update inexistente)', () => {
     let status = 0;
-    svc.updateOrganismo('Partidario', 999, organismo()).subscribe({ error: (e) => (status = e.status) });
-    http.expectOne(`${BASE}/partidarios/999`).flush({ errorCode: 'NOT_FOUND' }, { status: 404, statusText: 'Not Found' });
+    svc.updateOrganismo(999, organismoUpd()).subscribe({ error: (e) => (status = e.status) });
+    http.expectOne(`${BASE}/999`).flush({ errorCode: 'NOT_FOUND' }, { status: 404, statusText: 'Not Found' });
     expect(status).toBe(404);
   });
 });

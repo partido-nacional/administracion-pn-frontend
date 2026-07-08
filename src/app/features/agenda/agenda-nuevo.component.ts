@@ -93,14 +93,6 @@ function describeError(label: string, errors: any): string {
                      placeholder="Solo numeros, sin espacios">
             </div>
             <div class="form-group">
-              <label class="form-label">Teléfono 2</label>
-              <input class="form-input" name="tel2" [(ngModel)]="c.telefono2"
-                     (input)="onlyDigits($event, 'telefono2')"
-                     (keypress)="blockNonDigit($event)"
-                     inputmode="numeric"
-                     placeholder="Solo numeros, sin espacios">
-            </div>
-            <div class="form-group">
               <label class="form-label">Celular</label>
               <input class="form-input" name="cel" [(ngModel)]="c.celular"
                      (input)="onlyDigits($event, 'celular')"
@@ -132,7 +124,7 @@ function describeError(label: string, errors: any): string {
                 <option value="">—</option>
                 @for (d of departamentos; track d) { <option>{{ d }}</option> }
               </select></div>
-            <div class="form-group"><label class="form-label">Localidad</label><input class="form-input" name="loc" [(ngModel)]="c.localidad"></div>
+            <div class="form-group"><label class="form-label">Ciudad</label><input class="form-input" name="ciudad" [(ngModel)]="c.ciudad"></div>
             <div class="form-group full-width"><label class="form-label">Dirección</label><input class="form-input" name="dir" [(ngModel)]="c.direccion"></div>
           </div>
 
@@ -146,14 +138,6 @@ function describeError(label: string, errors: any): string {
               <label class="form-label">Teléfono</label>
               <input class="form-input" name="telTrab" [(ngModel)]="c.telefonoTrabajo"
                      (input)="onlyDigits($event, 'telefonoTrabajo')"
-                     (keypress)="blockNonDigit($event)"
-                     inputmode="numeric"
-                     placeholder="Solo numeros, sin espacios">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Teléfono 2</label>
-              <input class="form-input" name="telTrab2" [(ngModel)]="c.telefonoTrabajo2"
-                     (input)="onlyDigits($event, 'telefonoTrabajo2')"
                      (keypress)="blockNonDigit($event)"
                      inputmode="numeric"
                      placeholder="Solo numeros, sin espacios">

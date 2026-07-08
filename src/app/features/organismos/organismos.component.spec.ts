@@ -4,24 +4,24 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { of, throwError } from 'rxjs';
 import { OrganismosComponent } from './organismos.component';
 import { OrganismosService } from '../../core/services/organismos.service';
-import { OrganismoTodosDto, InfoOrganizacionDto, IntegranteOrg } from '../../core/models/organismos';
+import { OrganismoDto, InfoOrganizacionDto, IntegranteOrg } from '../../core/models/organismos';
 
 describe('OrganismosComponent', () => {
   let fixture: ComponentFixture<OrganismosComponent>;
   let cmp: OrganismosComponent;
   let svc: jasmine.SpyObj<OrganismosService>;
 
-  const orgEstatal: OrganismoTodosDto = { id: 3, ambito: 'Estatal', nombre: 'Min. X', tipoOrganismoId: 2, art44: false, ordenDpto: 1 };
-  const orgPart: OrganismoTodosDto = { id: 4, ambito: 'Partidario', nombre: 'Comité Y', tipoOrganismoId: 5, art44: true, ordenDpto: 0 };
-  const info: InfoOrganizacionDto = { id: 8, tipoOrganismoId: 2, organismoEstatalId: 3, organismoPartidarioId: null, direccion: 'Calle 1', telefono: '099', email: 'a@b.com', observaciones: null };
+  const orgEstatal: OrganismoDto = { id: 3, ambito: 'Estatal', nombre: 'Min. X', tipoOrganizacionId: 2, art44: false, ordenDpto: 1 };
+  const orgPart: OrganismoDto = { id: 4, ambito: 'Partidario', nombre: 'Comité Y', tipoOrganizacionId: 5, art44: true, ordenDpto: 0 };
+  const info: InfoOrganizacionDto = { id: 8, tipoOrganizacionId: 2, organismoId: 3, direccion: 'Calle 1', telefono: '099', email: 'a@b.com', observaciones: null };
   const integrante: IntegranteOrg = { idContacto: 99, credCivica: 'ABC12345', apellidos: 'Pérez', nombres: 'Juan', celular: '099', mail: 'j@x.com', posicion: 'Titular', organismo: 'Min. X', departamento: 'Montevideo' };
 
   beforeEach(() => {
     svc = jasmine.createSpyObj('OrganismosService', [
-      'getTodos', 'getInfo', 'getTipos', 'getIntegrantes',
+      'getOrganismos', 'getInfo', 'getTipos', 'getIntegrantes',
       'createOrganismo', 'updateOrganismo', 'createInfo', 'updateInfo',
     ]);
-    svc.getTodos.and.returnValue(of([orgEstatal, orgPart]));
+    svc.getOrganismos.and.returnValue(of([orgEstatal, orgPart]));
     svc.getInfo.and.returnValue(of([info]));
     svc.getTipos.and.returnValue(of([{ id: 2, nombre: 'Ministerio' }, { id: 5, nombre: 'Comité' }]));
     svc.getIntegrantes.and.returnValue(of([integrante]));
@@ -64,26 +64,28 @@ describe('OrganismosComponent', () => {
     expect(cmp.editId()).toBe(4);
   });
 
-  it('alta de organismo usa el ámbito elegido (Partidario → update/createOrganismo con "Partidario")', () => {
+  it('alta de organismo manda el ámbito elegido en el body (Partidario)', () => {
     cmp.abrirNuevoOrganismo();
     cmp.form.ambito = 'Partidario';
     cmp.form.nombre = 'Nuevo';
-    cmp.form.tipoOrganismoId = 5;
+    cmp.form.tipoOrganizacionId = 5;
     cmp.guardar();
-    expect(svc.createOrganismo).toHaveBeenCalledWith('Partidario', jasmine.objectContaining({ nombre: 'Nuevo', tipoOrganismoId: 5 }));
+    expect(svc.createOrganismo).toHaveBeenCalledWith(jasmine.objectContaining({ ambito: 'Partidario', nombre: 'Nuevo', tipoOrganizacionId: 5 }));
     expect(cmp.modalKind()).toBeNull();
   });
 
-  it('edición de organismo llama updateOrganismo con ámbito + id', () => {
+  it('edición de organismo llama updateOrganismo con id (sin ámbito)', () => {
     cmp.abrirEditarOrganismo(orgEstatal);
     cmp.guardar();
-    expect(svc.updateOrganismo).toHaveBeenCalledWith('Estatal', 3, jasmine.objectContaining({ nombre: 'Min. X' }));
+    expect(svc.updateOrganismo).toHaveBeenCalledWith(3, jasmine.objectContaining({ nombre: 'Min. X' }));
+    const arg = svc.updateOrganismo.calls.mostRecent().args[1] as any;
+    expect(arg.ambito).toBeUndefined();
   });
 
-  it('valida tipoOrganismoId obligatorio', () => {
+  it('valida tipoOrganizacionId obligatorio', () => {
     cmp.abrirNuevoOrganismo();
     cmp.form.nombre = 'Sin tipo';
-    cmp.form.tipoOrganismoId = null;
+    cmp.form.tipoOrganizacionId = null;
     cmp.guardar();
     expect(svc.createOrganismo).not.toHaveBeenCalled();
     expect(cmp.modalError()).toContain('tipo');
@@ -94,7 +96,7 @@ describe('OrganismosComponent', () => {
     svc.createOrganismo.and.returnValue(throwError(() => new HttpErrorResponse({ status: 400, error: { message: 'Tipo inválido' } })));
     cmp.abrirNuevoOrganismo();
     cmp.form.nombre = 'X';
-    cmp.form.tipoOrganismoId = 99;
+    cmp.form.tipoOrganizacionId = 99;
     cmp.guardar();
     expect(cmp.modalKind()).toBe('organismo');
     expect(cmp.modalError()).toBe('Tipo inválido');
@@ -118,10 +120,10 @@ describe('OrganismosComponent', () => {
     expect(tabs).toContain('Ref. Partidarias');
   });
 
-  it('toggleOrg() expande y carga integrantes por ámbito + id', () => {
+  it('toggleOrg() expande y carga integrantes por id (global)', () => {
     cmp.toggleOrg(orgEstatal);
     expect(cmp.isExpanded(orgEstatal)).toBeTrue();
-    expect(svc.getIntegrantes).toHaveBeenCalledWith('Estatal', 3);
+    expect(svc.getIntegrantes).toHaveBeenCalledWith(3);
     expect(cmp.integrantesDe(orgEstatal)).toEqual([integrante]);
   });
 
@@ -136,7 +138,7 @@ describe('OrganismosComponent', () => {
     cmp.toggleOrg(orgPart);
     expect(cmp.isExpanded(orgEstatal)).toBeFalse();
     expect(cmp.isExpanded(orgPart)).toBeTrue();
-    expect(svc.getIntegrantes).toHaveBeenCalledWith('Partidario', 4);
+    expect(svc.getIntegrantes).toHaveBeenCalledWith(4);
   });
 
   it('caché: colapsar y re-expandir no dispara una nueva petición', () => {
