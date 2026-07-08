@@ -68,7 +68,14 @@ npm run build -- --configuration production
 
 ## Tests
 
-⚠️ **No hay tests todavía** (sin Karma/Jasmine ni `*.spec.ts`). Montar el runner y escribir tests es **DEBT-001** (alta prioridad). El CI corre build + secrets scan; cuando haya tests, agregar el step `ng test`.
+El runner **ya está montado**: Karma/Jasmine + `tsconfig.spec.json` + target `test` en `angular.json`, con `*.spec.ts` distribuidos por el proyecto (models, services, componentes y utils). El CI corre los tests además de build + secrets scan.
+
+```bash
+npm test                                                  # ng test (watch, navegador local)
+npm test -- --watch=false --browsers=ChromeHeadless       # una corrida (lo que usa el CI/gate)
+```
+
+Ampliar la cobertura al resto de las features sigue siendo deuda técnica → **DEBT-001** (ya `partially-resolved`: el runner lo montó la feature 002).
 
 ---
 
