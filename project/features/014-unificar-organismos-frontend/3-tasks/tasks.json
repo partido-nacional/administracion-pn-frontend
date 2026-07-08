@@ -1,0 +1,242 @@
+{
+  "feature": "unificar-organismos-frontend",
+  "local_config": {
+    "database": null,
+    "notes": "Angular 17 standalone + signals. Sin runner de tests (DEBT-001): gate = ng build producción."
+  },
+  "stats": {
+    "total": 8,
+    "done": 8,
+    "by_layer": {
+      "1": 5,
+      "2": 3
+    }
+  },
+  "execution_strategy": "batched",
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "Modelos: organismos.ts al contrato unificado",
+      "description": "OrganismoDto con ambito + tipoOrganizacionId (funde OrganismoTodosDto). OrganismoInput con ambito; nuevo OrganismoUpdateInput sin ambito. TipoOrganismoDto→TipoOrganizacionDto. InfoOrganizacion{Dto,Input}: organismoEstatalId/organismoPartidarioId→organismoId, tipoOrganizacionId. IntegranteOrg sin cambios.",
+      "status": "done",
+      "layer": 1,
+      "depends_on": [],
+      "files": [
+        "src/app/core/models/organismos.ts"
+      ],
+      "acceptance_criteria": [
+        "AC-1/AC-7: OrganismoDto/Input con ambito y tipoOrganizacionId; OrganismoUpdateInput sin ambito",
+        "AC-3: TipoOrganizacionDto",
+        "AC-10/AC-12: Info con organismoId + tipoOrganizacionId",
+        "GATE: ng build pasa"
+      ],
+      "references": [
+        "US-1",
+        "US-3",
+        "US-4"
+      ]
+    },
+    {
+      "id": "TASK-002",
+      "title": "Service: organismos.service.ts a /organismos con ámbito",
+      "description": "Quitar ambitoPath. getTodos→getOrganismos(ambito?) sobre GET /organismos. getTipos:TipoOrganizacionDto[]. getIntegrantes(ambito,id)→getIntegrantes(id) sobre /organismos/{id}/integrantes. createOrganismo(input) POST /organismos (ambito en body); updateOrganismo(id,input) PUT /organismos/{id}. create/updateInfo con organismoId.",
+      "status": "done",
+      "layer": 1,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "files": [
+        "src/app/core/services/organismos.service.ts"
+      ],
+      "acceptance_criteria": [
+        "AC-1: getOrganismos con params ?ambito opcional",
+        "AC-4: getIntegrantes(id) a /organismos/{id}/integrantes",
+        "AC-7/AC-8: create POST con ambito, update PUT sin ambito",
+        "GATE: ng build pasa"
+      ],
+      "references": [
+        "US-1",
+        "US-2",
+        "US-3"
+      ]
+    },
+    {
+      "id": "TASK-003",
+      "title": "OrganismosComponent: grilla unificada + tab Info + modales + CSV",
+      "description": "Usar OrganismoDto/TipoOrganizacionDto; getOrganismos(); tipoOrganizacionId en form/template/CSV/guardarOrganismo. orgKey por id; loadIntegrantes(o.id). Alta OrganismoInput con ambito; edición OrganismoUpdateInput sin ambito. Tab Info: columna única Id Organismo (organismoId), tipoOrganizacionId; modal Info con un input organismoId; CSV Info idem.",
+      "status": "done",
+      "layer": 1,
+      "depends_on": [
+        "TASK-002"
+      ],
+      "files": [
+        "src/app/features/organismos/organismos.component.ts"
+      ],
+      "acceptance_criteria": [
+        "AC-1/AC-2/AC-3: grilla desde getOrganismos, badge+filtro ámbito, tipos poblados",
+        "AC-4/AC-5/AC-6: integrantes inline por id, vacío y error manejados con caché",
+        "AC-8: ámbito deshabilitado en edición",
+        "AC-10/AC-11: tab+modal Info con organismoId único",
+        "GATE: ng build pasa"
+      ],
+      "references": [
+        "US-1",
+        "US-2",
+        "US-3",
+        "US-4"
+      ]
+    },
+    {
+      "id": "TASK-004",
+      "title": "Contacto + Agenda: quitar teléfonos 2 y Localidad→Ciudad",
+      "description": "contactos.service.ts: interface Contacto sin telefono2/telefonoTrabajo2, localidad→ciudad. agenda-nuevo: quitar inputs telefono2 y telefonoTrabajo2; localidad→ciudad label 'Ciudad'. agenda-listado: quitar filas Teléfono 2 (personal y laboral); localidad→ciudad label 'Ciudad'. duplicados-contactos: quitar campos telefono2/telefonoTrabajo2, localidad→ciudad label 'Ciudad'.",
+      "status": "done",
+      "layer": 1,
+      "depends_on": [],
+      "files": [
+        "src/app/features/agenda/contactos.service.ts",
+        "src/app/features/agenda/agenda-nuevo.component.ts",
+        "src/app/features/agenda/agenda-listado.component.ts",
+        "src/app/features/agenda/duplicados-contactos.component.ts"
+      ],
+      "acceptance_criteria": [
+        "AC-13: sin inputs telefono2/telefonoTrabajo2 en alta",
+        "AC-14/AC-15: label 'Ciudad' bindeando ciudad en alta y detalle",
+        "AC-16: duplicados sin telefono2/telefonoTrabajo2 y con ciudad",
+        "GATE: ng build pasa"
+      ],
+      "references": [
+        "US-5"
+      ]
+    },
+    {
+      "id": "TASK-005",
+      "title": "Verificación de build (gate) + smoke de contrato",
+      "description": "Correr ng build producción y verificar 0 errores de tipos (que no queden referencias a tipoOrganismoId/organismoEstatalId/organismoPartidarioId/telefono2/localidad en el dominio Organismos y Contacto). Grep de residuos. Sin runner de tests (DEBT-001), este es el gate objetivo.",
+      "status": "done",
+      "layer": 1,
+      "depends_on": [
+        "TASK-003",
+        "TASK-004"
+      ],
+      "files": [
+        "src/app"
+      ],
+      "acceptance_criteria": [
+        "npm run build -- --configuration production sin errores",
+        "grep sin residuos del contrato viejo en organismos/agenda (excepto FichaAgrupacion e integrantes-contacto)",
+        "GATE: build verde"
+      ],
+      "references": [
+        "US-1",
+        "US-5"
+      ]
+    },
+    {
+      "id": "TASK-006",
+      "title": "Code review",
+      "description": "Revisar el diff: naming consistente (tipoOrganizacionId/ambito/organismoId/ciudad), sin código muerto del contrato viejo, sin restos de OrganismoTodosDto/ambitoPath, coherencia con la estructura core/services + core/models.",
+      "status": "done",
+      "layer": 2,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002",
+        "TASK-003",
+        "TASK-004",
+        "TASK-005"
+      ],
+      "files": [
+        "src/app"
+      ],
+      "acceptance_criteria": [
+        "Sin residuos del contrato viejo",
+        "Naming consistente",
+        "Sin código muerto"
+      ],
+      "references": [
+        "US-1",
+        "US-4",
+        "US-5"
+      ]
+    },
+    {
+      "id": "TASK-007",
+      "title": "Performance review",
+      "description": "Confirmar que la carga lazy con caché de integrantes por organismo se mantiene (sin refetch al re-expandir), que getOrganismos hace un solo request y que el filtro de ámbito es client-side sobre la lista ya cargada (sin round-trips extra).",
+      "status": "done",
+      "layer": 2,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002",
+        "TASK-003",
+        "TASK-004",
+        "TASK-005"
+      ],
+      "files": [
+        "src/app/features/organismos/organismos.component.ts",
+        "src/app/core/services/organismos.service.ts"
+      ],
+      "acceptance_criteria": [
+        "Caché de integrantes preservada",
+        "Sin requests redundantes",
+        "Filtro ámbito sin round-trip"
+      ],
+      "references": [
+        "US-1",
+        "US-2"
+      ]
+    },
+    {
+      "id": "TASK-008",
+      "title": "Security review",
+      "description": "Confirmar que los rolesGuard de la ruta /organismos y de agenda no cambian, que no se exponen ids/campos sensibles nuevos, y que el manejo de error del modal no filtra detalles internos.",
+      "status": "done",
+      "layer": 2,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002",
+        "TASK-003",
+        "TASK-004",
+        "TASK-005"
+      ],
+      "files": [
+        "src/app/app.routes.ts",
+        "src/app/features/organismos/organismos.component.ts"
+      ],
+      "acceptance_criteria": [
+        "rolesGuard intactos",
+        "Sin exposición de datos nuevos",
+        "Manejo de error sin fuga"
+      ],
+      "references": [
+        "US-3"
+      ]
+    }
+  ],
+  "dependency_graph": {
+    "by_layer": {
+      "1": {
+        "level_0": [
+          "TASK-001",
+          "TASK-004"
+        ],
+        "level_1": [
+          "TASK-002"
+        ],
+        "level_2": [
+          "TASK-003"
+        ],
+        "level_3": [
+          "TASK-005"
+        ]
+      },
+      "2": {
+        "level_0": [
+          "TASK-006",
+          "TASK-007",
+          "TASK-008"
+        ]
+      }
+    }
+  }
+}
