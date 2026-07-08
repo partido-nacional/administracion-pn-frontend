@@ -4,36 +4,16 @@
  * Los GET devuelven la entidad cruda (Dto); los POST/PUT reciben el Input (sin id).
  */
 
-/** Ámbito de un organismo: determina la ruta estatales|partidarios. */
+/** Ámbito de un organismo (tabla unificada, feature 006). */
 export type Ambito = 'Estatal' | 'Partidario';
 
-/** Organismo (estatal o partidario) tal cual lo devuelve el backend. */
+/** Organismo unificado tal cual lo devuelve GET /organismos (incluye ámbito). */
 export interface OrganismoDto {
   id: number;
-  nombre: string;
-  nombreCompania?: string | null;
-  tipoOrganismoId: number;
-  categoria?: string | null;
-  descripcion?: string | null;
-  direccion?: string | null;
-  ciudad?: string | null;
-  departamento?: string | null;
-  pais?: string | null;
-  art44: boolean;
-  ordenDpto: number;
-  observaciones?: string | null;
-}
-
-/** Item de GET /organismos/todos: Organismo + ámbito (unión estatales+partidarios). */
-export interface OrganismoTodosDto extends OrganismoDto {
   ambito: Ambito;
-}
-
-/** Payload de alta/edición de un Organismo (mismo shape estatal/partidario). */
-export interface OrganismoInput {
   nombre: string;
   nombreCompania?: string | null;
-  tipoOrganismoId: number;
+  tipoOrganizacionId: number;
   categoria?: string | null;
   descripcion?: string | null;
   direccion?: string | null;
@@ -45,15 +25,35 @@ export interface OrganismoInput {
   observaciones?: string | null;
 }
 
-/** Tipo de organismo (para poblar el select del form). */
-export interface TipoOrganismoDto {
+/** Payload de ALTA de un Organismo (POST /organismos): el ámbito va en el body. */
+export interface OrganismoInput {
+  ambito: Ambito;
+  nombre: string;
+  nombreCompania?: string | null;
+  tipoOrganizacionId: number;
+  categoria?: string | null;
+  descripcion?: string | null;
+  direccion?: string | null;
+  ciudad?: string | null;
+  departamento?: string | null;
+  pais?: string | null;
+  art44: boolean;
+  ordenDpto: number;
+  observaciones?: string | null;
+}
+
+/** Payload de EDICIÓN (PUT /organismos/{id}): sin ámbito (inmutable tras el alta). */
+export type OrganismoUpdateInput = Omit<OrganismoInput, 'ambito'>;
+
+/** Tipo de organización (ex TipoOrganismo) para poblar el select del form. */
+export interface TipoOrganizacionDto {
   id: number;
   nombre: string;
 }
 
 /**
  * Integrante de un organismo (solo lectura), tal cual lo devuelve
- * GET /organismos/{estatales|partidarios}/{id}/integrantes.
+ * GET /organismos/{id}/integrantes.
  * `organismo` (nombre) se conserva por compatibilidad de shape con el backend,
  * aunque la grilla inline no lo muestra (es redundante en ese contexto).
  */
@@ -69,12 +69,11 @@ export interface IntegranteOrg {
   departamento: string;
 }
 
-/** Info de organización tal cual la devuelve el backend. */
+/** Info de organización tal cual la devuelve el backend (FK única organismoId). */
 export interface InfoOrganizacionDto {
   id: number;
-  tipoOrganismoId?: number | null;
-  organismoEstatalId?: number | null;
-  organismoPartidarioId?: number | null;
+  tipoOrganizacionId?: number | null;
+  organismoId?: number | null;
   direccion?: string | null;
   telefono?: string | null;
   email?: string | null;
@@ -83,9 +82,8 @@ export interface InfoOrganizacionDto {
 
 /** Payload de alta/edición de InfoOrganización. */
 export interface InfoOrganizacionInput {
-  tipoOrganismoId?: number | null;
-  organismoEstatalId?: number | null;
-  organismoPartidarioId?: number | null;
+  tipoOrganizacionId?: number | null;
+  organismoId?: number | null;
   direccion?: string | null;
   telefono?: string | null;
   email?: string | null;

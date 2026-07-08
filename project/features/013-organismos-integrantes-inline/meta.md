@@ -9,7 +9,13 @@ project_type:
   type: production        # prototype | mvp | production
 vision_prompt_shown: false
 
-Current Stage: complete
+Current Stage: finished
+
+released:
+  merged_to_develop: 2026-07-07   # PRs front #68 / back #40
+  released_to_main: 2026-07-07    # PRs front #69 / back #41
+  deployed: 2026-07-07            # Vercel producción SUCCESS (main)
+  cross_repo: administracion-pn-backend feature/organismos-integrantes-por-organismo
 
 stages:
   functional:

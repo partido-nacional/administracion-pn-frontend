@@ -16,13 +16,12 @@ export interface Contacto {
   sexo?: string;
   estadoCivil?: string;
   telefono?: string;
-  telefono2?: string;
   celular?: string;
   celular2?: string;
   email?: string;
   departamento?: string;
   departamentoCredencial?: string;
-  localidad?: string;
+  ciudad?: string;
   direccion?: string;
   situacion?: string;
   ocupacion?: string;
@@ -30,7 +29,6 @@ export interface Contacto {
   organismo?: string;
   cargoLaboral?: string;
   telefonoTrabajo?: string;
-  telefonoTrabajo2?: string;
   interno?: string;
   datosSecretaria?: string;
   departamentoLaboral?: string;
