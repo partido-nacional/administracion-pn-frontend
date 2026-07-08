@@ -6,7 +6,7 @@
   },
   "stats": {
     "total": 8,
-    "done": 5,
+    "done": 8,
     "by_layer": {
       "1": 5,
       "2": 3
@@ -136,7 +136,7 @@
       "id": "TASK-006",
       "title": "Code review",
       "description": "Revisar el diff: naming consistente (tipoOrganizacionId/ambito/organismoId/ciudad), sin código muerto del contrato viejo, sin restos de OrganismoTodosDto/ambitoPath, coherencia con la estructura core/services + core/models.",
-      "status": "pending",
+      "status": "done",
       "layer": 2,
       "depends_on": [
         "TASK-001",
@@ -163,7 +163,7 @@
       "id": "TASK-007",
       "title": "Performance review",
       "description": "Confirmar que la carga lazy con caché de integrantes por organismo se mantiene (sin refetch al re-expandir), que getOrganismos hace un solo request y que el filtro de ámbito es client-side sobre la lista ya cargada (sin round-trips extra).",
-      "status": "pending",
+      "status": "done",
       "layer": 2,
       "depends_on": [
         "TASK-001",
@@ -190,7 +190,7 @@
       "id": "TASK-008",
       "title": "Security review",
       "description": "Confirmar que los rolesGuard de la ruta /organismos y de agenda no cambian, que no se exponen ids/campos sensibles nuevos, y que el manejo de error del modal no filtra detalles internos.",
-      "status": "pending",
+      "status": "done",
       "layer": 2,
       "depends_on": [
         "TASK-001",

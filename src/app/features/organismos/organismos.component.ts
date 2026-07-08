@@ -8,7 +8,7 @@ import { exportarCSV, CsvColumn } from '../../core/exportar-csv';
 import { OrganismosService } from '../../core/services/organismos.service';
 import { ModalFormComponent } from '../../shared/components/modal-form/modal-form.component';
 import {
-  Ambito, OrganismoDto, OrganismoInput, OrganismoUpdateInput,
+  Ambito, OrganismoDto, OrganismoUpdateInput,
   TipoOrganizacionDto, InfoOrganizacionDto, InfoOrganizacionInput,
   IntegranteOrg,
 } from '../../core/models/organismos';
