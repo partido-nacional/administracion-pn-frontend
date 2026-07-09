@@ -11,11 +11,10 @@ import {
   ListaDto, ListaInput, ListaTipo,
 } from '../../core/models/convencionales';
 
-/** Display-only de las tabs fuera de alcance (Departamentales / Integrantes): shape heredado. */
+/** Display-only de la tab Departamentales: shape heredado. */
 interface ConvDisplay { id: number; nombre: string; lista: string; codigoLrf: string; departamento: string; cargoLista: string; contacto: string; }
-interface IntegranteLista { nombre: string; cedula: string; lista: string; codigoLrf: string; tipo: string; departamento: string; cargoLista: string; orden: number; contacto: string; }
 
-type Tab = 'nacionales' | 'departamentales' | 'odn' | 'odd' | 'integrantes';
+type Tab = 'nacionales' | 'departamentales' | 'odn';
 type ModalKind = 'convencional' | 'lista';
 type ModalMode = 'nueva' | 'editar';
 
@@ -28,8 +27,6 @@ type ModalMode = 'nueva' | 'editar';
       <a class="tab" [class.active]="tab()==='nacionales'"      (click)="setTab('nacionales')">Nacionales</a>
       <a class="tab" [class.active]="tab()==='departamentales'" (click)="setTab('departamentales')">Departamentales</a>
       <a class="tab" [class.active]="tab()==='odn'"             (click)="setTab('odn')">Listas ODN</a>
-      <a class="tab" [class.active]="tab()==='odd'"             (click)="setTab('odd')">Listas ODD</a>
-      <a class="tab" [class.active]="tab()==='integrantes'"     (click)="setTab('integrantes')">Integrantes de Lista</a>
     </div>
 
     @if (tab()==='nacionales') {
@@ -37,7 +34,6 @@ type ModalMode = 'nueva' | 'editar';
         <div class="stat-card"><div class="stat-value">{{ stats().nacionales }}</div><div class="stat-label">Conv. Nacionales</div></div>
         <div class="stat-card"><div class="stat-value">{{ stats().departamentales }}</div><div class="stat-label">Conv. Departamentales</div></div>
         <div class="stat-card"><div class="stat-value">{{ stats().listasOdn }}</div><div class="stat-label">Listas ODN</div></div>
-        <div class="stat-card"><div class="stat-value">{{ stats().listasOdd }}</div><div class="stat-label">Listas ODD</div></div>
       </div>
 
       <div class="toolbar">
@@ -107,7 +103,7 @@ type ModalMode = 'nueva' | 'editar';
       </div></div>
     }
 
-    @if (tab()==='odn' || tab()==='odd') {
+    @if (tab()==='odn') {
       <div class="toolbar">
         <div class="toolbar-left">
           <div class="search-box">
@@ -115,7 +111,7 @@ type ModalMode = 'nueva' | 'editar';
             <input class="search-input" placeholder="Buscar por nombre de lista…" [(ngModel)]="q">
           </div>
         </div>
-        <button class="btn btn-primary" (click)="abrirNuevaLista()">+ Nueva Lista {{ tab()==='odn' ? 'ODN' : 'ODD' }}</button>
+        <button class="btn btn-primary" (click)="abrirNuevaLista()">+ Nueva Lista ODN</button>
       </div>
       <div class="card"><div class="card-body" style="padding:0;overflow-x:auto">
         <table class="table">
@@ -139,43 +135,7 @@ type ModalMode = 'nueva' | 'editar';
                 </td>
               </tr>
             } @empty {
-              <tr><td colspan="5"><div class="empty-state"><div class="empty-state-text">Sin listas {{ tab()==='odn' ? 'ODN' : 'ODD' }}</div></div></td></tr>
-            }
-          </tbody>
-        </table>
-      </div></div>
-    }
-
-    @if (tab()==='integrantes') {
-      <div class="toolbar">
-        <div class="toolbar-left">
-          <select class="form-select" [(ngModel)]="filtroTipo" style="min-width:160px">
-            <option value="">— Tipo —</option><option>ODN</option><option>ODD</option>
-          </select>
-          <div class="search-box">
-            <span class="search-icon">🔍</span>
-            <input class="search-input" placeholder="Buscar integrante…" [(ngModel)]="q">
-          </div>
-        </div>
-      </div>
-      <div class="card"><div class="card-body" style="padding:0;overflow-x:auto">
-        <table class="table">
-          <thead>
-            <tr><th>Nombre</th><th>Cédula</th><th>Lista</th><th>Código LRF</th><th>Tipo</th><th>Depto.</th><th>Cargo</th><th>Orden</th><th>Contacto</th></tr>
-          </thead>
-          <tbody>
-            @for (i of filtrarInteg(); track $index) {
-              <tr>
-                <td><strong>{{ i.nombre }}</strong></td>
-                <td>{{ i.cedula }}</td>
-                <td>{{ i.lista }}</td>
-                <td>{{ i.codigoLrf }}</td>
-                <td>{{ i.tipo }}</td>
-                <td><span class="badge dept">{{ i.departamento }}</span></td>
-                <td>{{ i.cargoLista }}</td>
-                <td>{{ i.orden }}</td>
-                <td><a class="action-link">{{ i.contacto }}</a></td>
-              </tr>
+              <tr><td colspan="5"><div class="empty-state"><div class="empty-state-text">Sin listas ODN</div></div></td></tr>
             }
           </tbody>
         </table>
@@ -217,7 +177,6 @@ type ModalMode = 'nueva' | 'editar';
                 <div class="fg"><label>Tipo</label>
                   <select [(ngModel)]="form.tipo" name="l-tipo">
                     <option value="ODN">ODN</option>
-                    <option value="ODD">ODD</option>
                   </select>
                 </div>
                 <div class="fg"><label>Agrupación ID</label><input type="number" [(ngModel)]="form.agrupacionId" name="l-agr"></div>
@@ -234,7 +193,6 @@ export class ConvencionalesComponent {
 
   tab = signal<Tab>('nacionales');
   q = '';
-  filtroTipo = '';
 
   departamentos = [
     'Artigas','Canelones','Cerro Largo','Colonia','Durazno','Flores','Florida',
@@ -245,9 +203,7 @@ export class ConvencionalesComponent {
   nacionales = signal<ConvencionalDto[]>([]);
   departamentales = signal<ConvDisplay[]>([]);
   odn = signal<ListaDto[]>([]);
-  odd = signal<ListaDto[]>([]);
-  integ = signal<IntegranteLista[]>([]);
-  stats = signal<ConvencionalStats>({ nacionales: 0, departamentales: 0, listasOdn: 0, listasOdd: 0 });
+  stats = signal<ConvencionalStats>({ nacionales: 0, departamentales: 0, listasOdn: 0 });
 
   // ── modal (alta/edición de Convencional o Lista) ──────────
   modalKind = signal<ModalKind | null>(null);
@@ -275,14 +231,11 @@ export class ConvencionalesComponent {
     if (t === 'departamentales' && this.departamentales().length === 0)
       this.http.get<ConvDisplay[]>(`${environment.apiUrl}/convencionales/departamentales`).subscribe(x => this.departamentales.set(x));
     if (t === 'odn' && this.odn().length === 0) this.loadListas('ODN');
-    if (t === 'odd' && this.odd().length === 0) this.loadListas('ODD');
-    if (t === 'integrantes' && this.integ().length === 0)
-      this.http.get<IntegranteLista[]>(`${environment.apiUrl}/convencionales/integrantes`).subscribe(x => this.integ.set(x));
   }
 
   private loadNacionales() { this.svc.getNacionales().subscribe(x => this.nacionales.set(x)); }
   private loadListas(tipo: ListaTipo) {
-    this.svc.getListas(tipo).subscribe(x => (tipo === 'ODN' ? this.odn : this.odd).set(x));
+    this.svc.getListas(tipo).subscribe(x => this.odn.set(x));
   }
   private refreshStats() { this.svc.getStats().subscribe(s => this.stats.set(s)); }
 
@@ -298,20 +251,10 @@ export class ConvencionalesComponent {
   }
 
   filtrarListas() {
-    const arr = this.tab() === 'odn' ? this.odn() : this.odd();
+    const arr = this.odn();
     if (!this.q) return arr;
     const q = this.q.toLowerCase();
     return arr.filter(l => l.nombre.toLowerCase().includes(q));
-  }
-
-  filtrarInteg() {
-    let arr = this.integ();
-    if (this.filtroTipo) arr = arr.filter(i => i.tipo === this.filtroTipo);
-    if (this.q) {
-      const q = this.q.toLowerCase();
-      arr = arr.filter(i => i.nombre.toLowerCase().includes(q) || i.lista.toLowerCase().includes(q));
-    }
-    return arr;
   }
 
   // ── helpers de fecha ──────────────────────────────────────
@@ -357,7 +300,7 @@ export class ConvencionalesComponent {
 
   // ── Lista ─────────────────────────────────────────────────
   abrirNuevaLista() {
-    this.form = { nombre: '', tipo: this.tab() === 'odd' ? 'ODD' : 'ODN', agrupacionId: null };
+    this.form = { nombre: '', tipo: 'ODN', agrupacionId: null };
     this.modalError.set(''); this.editId.set(null);
     this.modalMode.set('nueva'); this.modalKind.set('lista');
   }

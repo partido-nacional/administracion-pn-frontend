@@ -59,7 +59,7 @@ import { exportarCSV } from '../../core/exportar-csv';
   `,
   styles: [`.sortable { cursor: pointer; user-select: none; }`]
 })
-export class IntendenciasPnComponent implements OnInit {
+export class IntendentesPnComponent implements OnInit {
   private svc = inject(ListadosService);
   private titleSvc = inject(PageTitleService);
 
@@ -73,7 +73,7 @@ export class IntendenciasPnComponent implements OnInit {
   exporting = signal(false);
 
   constructor() {
-    this.titleSvc.set('Listados — Intendencias PN');
+    this.titleSvc.set('Listados — Intendentes PN');
   }
 
   ngOnInit() { this.load(); }
@@ -87,7 +87,7 @@ export class IntendenciasPnComponent implements OnInit {
 
   private load() {
     this.loading.set(true);
-    this.svc.intendenciasPn(this.query()).subscribe({
+    this.svc.intendentesPn(this.query()).subscribe({
       next: r => { this.items.set(r.items); this.total.set(r.total); this.loading.set(false); },
       error: () => this.loading.set(false),
     });
@@ -106,14 +106,14 @@ export class IntendenciasPnComponent implements OnInit {
 
   exportar() {
     this.exporting.set(true);
-    this.svc.intendenciasPn(this.query(true)).subscribe({
+    this.svc.intendentesPn(this.query(true)).subscribe({
       next: r => {
         exportarCSV(r.items, [
           { get: 'apellidos', label: 'Apellidos' }, { get: 'nombres', label: 'Nombres' },
           { get: 'telTrabajo1', label: 'Tel. Trabajo 1' }, { get: 'telTrabajo2', label: 'Tel. Trabajo 2' },
           { get: 'telMovil', label: 'Tel. Movil' }, { get: 'departamento', label: 'Departamento' },
           { get: 'mailParticular', label: 'Mail Particular' }, { get: 'mailTrabajo', label: 'Mail Trabajo' },
-        ], 'intendencias-pn.csv');
+        ], 'intendentes-pn.csv');
         this.exporting.set(false);
       },
       error: () => this.exporting.set(false),

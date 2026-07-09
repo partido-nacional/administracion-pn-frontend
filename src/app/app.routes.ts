@@ -26,7 +26,7 @@ export const routes: Routes = [
       { path: 'listados/gobierno', canActivate: [rolesGuard('Secretaria','Hacienda','IT')], loadComponent: () => import('./features/listados/gobierno.component').then(m => m.GobiernoComponent) },
       { path: 'listados/departamentales', canActivate: [rolesGuard('Secretaria','Hacienda','IT')], loadComponent: () => import('./features/listados/departamentales.component').then(m => m.DepartamentalesComponent) },
       { path: 'listados/intendencias-nacionalistas', canActivate: [rolesGuard('Secretaria','Hacienda','IT')], loadComponent: () => import('./features/listados/intendencias-nac.component').then(m => m.IntendenciasNacComponent) },
-      { path: 'listados/intendencias-pn', canActivate: [rolesGuard('Secretaria','Hacienda','IT')], loadComponent: () => import('./features/listados/intendencias-pn.component').then(m => m.IntendenciasPnComponent) },
+      { path: 'listados/intendentes-pn', canActivate: [rolesGuard('Secretaria','Hacienda','IT')], loadComponent: () => import('./features/listados/intendentes-pn.component').then(m => m.IntendentesPnComponent) },
       { path: 'listados/alcaldes', canActivate: [rolesGuard('Secretaria','Hacienda','IT')], loadComponent: () => import('./features/listados/alcaldes.component').then(m => m.AlcaldesComponent) },
       { path: 'listados/jovenes', canActivate: [rolesGuard('Secretaria','Hacienda','IT')], loadComponent: () => import('./features/listados/jovenes.component').then(m => m.JovenesComponent) },
       { path: 'listados/convencionales', canActivate: [rolesGuard('Secretaria','Hacienda','IT')], loadComponent: () => import('./features/listados/convencionales-listado.component').then(m => m.ConvencionalesListadoComponent) },
