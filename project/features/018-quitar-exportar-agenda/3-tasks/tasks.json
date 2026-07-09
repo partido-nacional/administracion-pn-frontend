@@ -1,0 +1,15 @@
+{
+  "feature": "quitar-exportar-agenda",
+  "local_config": { "database": null, "notes": "Cambio trivial de UI. Gate: ng build + karma." },
+  "stats": { "total": 1, "done": 1, "by_layer": { "1": 1 } },
+  "execution_strategy": "batched",
+  "tasks": [
+    { "id": "TASK-001", "title": "Quitar la tab Exportar de Agenda",
+      "description": "En agenda-listado.component.ts: quitar 'exportar' del type Tab, el link de la tab y el bloque placeholder. Conservar el botón CSV superior y exportarCsv().",
+      "status": "done", "layer": 1, "depends_on": [],
+      "files": ["src/app/features/agenda/agenda-listado.component.ts"],
+      "acceptance_criteria": ["AC-1: sin tab Exportar", "AC-3: botón CSV intacto", "GATE: build+tests verdes"],
+      "references": ["US-1"] }
+  ],
+  "dependency_graph": { "by_layer": { "1": { "level_0": ["TASK-001"] } } }
+}
