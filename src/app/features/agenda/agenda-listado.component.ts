@@ -10,7 +10,7 @@ import { PaginatorComponent } from '../../shared/components/paginator/paginator.
 import { GridQuery, SortOrder, DEFAULT_PAGE_SIZE } from '../../core/models/paged';
 import { exportarCSV } from '../../core/exportar-csv';
 
-type Tab = 'todos' | 'duplicados' | 'exportar';
+type Tab = 'todos' | 'duplicados';
 
 @Component({
   selector: 'app-agenda-listado',
@@ -25,7 +25,6 @@ type Tab = 'todos' | 'duplicados' | 'exportar';
     <div class="tabs">
       <a class="tab" [class.active]="tab()==='todos'"      (click)="tab.set('todos')">Todos los contactos</a>
       <a class="tab" [class.active]="tab()==='duplicados'" (click)="tab.set('duplicados')">Duplicados</a>
-      <a class="tab" [class.active]="tab()==='exportar'"   (click)="tab.set('exportar')">Exportar</a>
     </div>
 
     @if (tab() === 'todos') {
@@ -209,9 +208,6 @@ type Tab = 'todos' | 'duplicados' | 'exportar';
 
     @if (tab() === 'duplicados') {
       <app-duplicados-contactos></app-duplicados-contactos>
-    }
-    @if (tab() === 'exportar') {
-      <div class="card"><div class="card-body"><div class="empty-state"><div class="empty-state-text">Exportar — proximamente</div></div></div></div>
     }
 
     @if (waChoice()) {
