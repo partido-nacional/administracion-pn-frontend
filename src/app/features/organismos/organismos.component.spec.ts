@@ -5,6 +5,9 @@ import { of, throwError } from 'rxjs';
 import { OrganismosComponent } from './organismos.component';
 import { OrganismosService } from '../../core/services/organismos.service';
 import { OrganismoDto, InfoOrganizacionDto, IntegranteOrg } from '../../core/models/organismos';
+import { PagedResult } from '../../core/models/paged';
+
+const paged = <T>(items: T[]): PagedResult<T> => ({ items, total: items.length, page: 1, pageSize: 25 });
 
 describe('OrganismosComponent', () => {
   let fixture: ComponentFixture<OrganismosComponent>;
@@ -18,13 +21,14 @@ describe('OrganismosComponent', () => {
 
   beforeEach(() => {
     svc = jasmine.createSpyObj('OrganismosService', [
-      'getOrganismos', 'getInfo', 'getTipos', 'getIntegrantes',
+      'getOrganismos', 'getInfo', 'getReferencias', 'getTipos', 'getIntegrantes',
       'createOrganismo', 'updateOrganismo', 'createInfo', 'updateInfo',
     ]);
-    svc.getOrganismos.and.returnValue(of([orgEstatal, orgPart]));
-    svc.getInfo.and.returnValue(of([info]));
+    svc.getOrganismos.and.returnValue(of(paged([orgEstatal, orgPart])));
+    svc.getInfo.and.returnValue(of(paged([info])));
+    svc.getReferencias.and.returnValue(of(paged([])));
     svc.getTipos.and.returnValue(of([{ id: 2, nombre: 'Ministerio' }, { id: 5, nombre: 'Comité' }]));
-    svc.getIntegrantes.and.returnValue(of([integrante]));
+    svc.getIntegrantes.and.returnValue(of(paged([integrante])));
     svc.createOrganismo.and.returnValue(of(orgEstatal));
     svc.updateOrganismo.and.returnValue(of(orgPart));
     svc.createInfo.and.returnValue(of(info));
@@ -42,8 +46,10 @@ describe('OrganismosComponent', () => {
     fixture.detectChanges();
   });
 
-  it('no renderiza botones "no implementado"', () => {
-    expect(fixture.nativeElement.innerHTML).not.toContain('no implementado');
+  it('carga la primera página de organismos en el constructor', () => {
+    expect(svc.getOrganismos).toHaveBeenCalled();
+    expect(cmp.organismos().length).toBe(2);
+    expect(cmp.orgTotal()).toBe(2);
   });
 
   it('carga tipos para el select en el constructor', () => {
@@ -112,6 +118,32 @@ describe('OrganismosComponent', () => {
     expect(svc.getInfo).toHaveBeenCalled();
   });
 
+  // ── Paginación ────────────────────────────────────────────
+  it('onOrgPage() recarga con la página pedida y refleja el echo del server', () => {
+    svc.getOrganismos.calls.reset();
+    svc.getOrganismos.and.returnValue(of({ items: [orgEstatal], total: 30, page: 2, pageSize: 25 }));
+    cmp.onOrgPage(2);
+    expect(svc.getOrganismos).toHaveBeenCalledWith(jasmine.objectContaining({ page: 2 }));
+    expect(cmp.orgPage()).toBe(2); // el componente adopta el page devuelto por el backend
+  });
+
+  it('cambiar filtro resetea a page 1 y recarga (debounced)', (done) => {
+    cmp.onOrgPage(3);
+    svc.getOrganismos.calls.reset();
+    cmp.setOrgFilter(cmp.fOrgNom, 'min');
+    expect(cmp.orgPage()).toBe(1); // reset inmediato
+    setTimeout(() => {
+      expect(svc.getOrganismos).toHaveBeenCalledWith(jasmine.objectContaining({ page: 1, filters: jasmine.objectContaining({ nombre: 'min' }) }));
+      done();
+    }, 350);
+  });
+
+  it('export CSV pide el dataset completo (all=true)', () => {
+    svc.getOrganismos.calls.reset();
+    cmp.exportarCsvTab();
+    expect(svc.getOrganismos).toHaveBeenCalledWith(jasmine.objectContaining({ all: true }));
+  });
+
   // ── Integrantes inline (por organismo) ────────────────────
   it('ya no existe la pestaña "Integrantes" en la barra de tabs', () => {
     const tabs = Array.from(fixture.nativeElement.querySelectorAll('.tabs .tab')).map((t: any) => t.textContent.trim());
@@ -120,10 +152,10 @@ describe('OrganismosComponent', () => {
     expect(tabs).toContain('Ref. Partidarias');
   });
 
-  it('toggleOrg() expande y carga integrantes por id (global)', () => {
+  it('toggleOrg() expande y carga integrantes por id (PagedResult.items)', () => {
     cmp.toggleOrg(orgEstatal);
     expect(cmp.isExpanded(orgEstatal)).toBeTrue();
-    expect(svc.getIntegrantes).toHaveBeenCalledWith(3);
+    expect(svc.getIntegrantes).toHaveBeenCalledWith(3, jasmine.anything());
     expect(cmp.integrantesDe(orgEstatal)).toEqual([integrante]);
   });
 
@@ -138,7 +170,7 @@ describe('OrganismosComponent', () => {
     cmp.toggleOrg(orgPart);
     expect(cmp.isExpanded(orgEstatal)).toBeFalse();
     expect(cmp.isExpanded(orgPart)).toBeTrue();
-    expect(svc.getIntegrantes).toHaveBeenCalledWith(4);
+    expect(svc.getIntegrantes).toHaveBeenCalledWith(4, jasmine.anything());
   });
 
   it('caché: colapsar y re-expandir no dispara una nueva petición', () => {
@@ -149,25 +181,25 @@ describe('OrganismosComponent', () => {
   });
 
   it('estado vacío: organismo sin integrantes', () => {
-    svc.getIntegrantes.and.returnValue(of([]));
+    svc.getIntegrantes.and.returnValue(of(paged([])));
     cmp.toggleOrg(orgPart);
     expect(cmp.integrantesDe(orgPart)).toEqual([]);
-    expect(cmp.orgError()[cmp.orgKey(orgPart)]).toBeUndefined();
+    expect(cmp.orgError()[orgPart.id]).toBeUndefined();
   });
 
   it('estado de error: fallo al cargar integrantes setea el mensaje de error', () => {
     svc.getIntegrantes.and.returnValue(throwError(() => new HttpErrorResponse({ status: 500, error: { message: 'Boom' } })));
     cmp.toggleOrg(orgPart);
-    expect(cmp.orgError()[cmp.orgKey(orgPart)]).toBe('Boom');
-    expect(cmp.orgLoading()[cmp.orgKey(orgPart)]).toBeFalse();
+    expect(cmp.orgError()[orgPart.id]).toBe('Boom');
+    expect(cmp.orgLoading()[orgPart.id]).toBeFalse();
   });
 
   it('reintento tras error vuelve a llamar getIntegrantes', () => {
     svc.getIntegrantes.and.returnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
     cmp.toggleOrg(orgPart);
-    svc.getIntegrantes.and.returnValue(of([integrante]));
+    svc.getIntegrantes.and.returnValue(of(paged([integrante])));
     cmp.loadIntegrantes(orgPart);
     expect(cmp.integrantesDe(orgPart)).toEqual([integrante]);
-    expect(cmp.orgError()[cmp.orgKey(orgPart)]).toBeUndefined();
+    expect(cmp.orgError()[orgPart.id]).toBeUndefined();
   });
 });
