@@ -6,7 +6,7 @@
   },
   "stats": {
     "total": 6,
-    "done": 3,
+    "done": 6,
     "by_layer": {
       "1": 3,
       "2": 3
@@ -92,7 +92,7 @@
       "id": "TASK-004",
       "title": "Code review",
       "description": "Revisar el diff: uso consistente de GridQuery/buildPagedParams/<app-paginator> (como las otras grillas), sin filtrado client-side residual, sin código muerto (RefPart local, computed viejos), GridQuery por tab independiente.",
-      "status": "pending",
+      "status": "done",
       "layer": 2,
       "depends_on": [
         "TASK-001",
@@ -116,7 +116,7 @@
       "id": "TASK-005",
       "title": "Performance review",
       "description": "Confirmar una request por cambio de página/filtro/orden (con debounce en filtros), sin traer datasets completos para filtrar en memoria, y que la caché de integrantes inline por id se mantiene (sin refetch al re-expandir).",
-      "status": "pending",
+      "status": "done",
       "layer": 2,
       "depends_on": [
         "TASK-001",
@@ -140,7 +140,7 @@
       "id": "TASK-006",
       "title": "Security review",
       "description": "Confirmar rolesGuard de la ruta intactos, sin exposición de datos nuevos, y manejo de error de grilla sin fuga de detalles internos.",
-      "status": "pending",
+      "status": "done",
       "layer": 2,
       "depends_on": [
         "TASK-001",
