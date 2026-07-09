@@ -10,7 +10,7 @@ import { PaginatorComponent } from '../../shared/components/paginator/paginator.
 import { GridQuery, SortOrder, DEFAULT_PAGE_SIZE } from '../../core/models/paged';
 import { exportarCSV } from '../../core/exportar-csv';
 
-type Tab = 'todos' | 'padron' | 'duplicados' | 'exportar';
+type Tab = 'todos' | 'duplicados' | 'exportar';
 
 @Component({
   selector: 'app-agenda-listado',
@@ -25,7 +25,6 @@ type Tab = 'todos' | 'padron' | 'duplicados' | 'exportar';
     <div class="tabs">
       <a class="tab" [class.active]="tab()==='todos'"      (click)="tab.set('todos')">Todos los contactos</a>
       <a class="tab" [class.active]="tab()==='duplicados'" (click)="tab.set('duplicados')">Duplicados</a>
-      <a class="tab" [class.active]="tab()==='padron'"     (click)="tab.set('padron')">Padron Electoral</a>
       <a class="tab" [class.active]="tab()==='exportar'"   (click)="tab.set('exportar')">Exportar</a>
     </div>
 
@@ -208,9 +207,6 @@ type Tab = 'todos' | 'padron' | 'duplicados' | 'exportar';
       </div>
     }
 
-    @if (tab() === 'padron') {
-      <div class="card"><div class="card-body"><div class="empty-state"><div class="empty-state-text">Padron Electoral — proximamente</div></div></div></div>
-    }
     @if (tab() === 'duplicados') {
       <app-duplicados-contactos></app-duplicados-contactos>
     }
