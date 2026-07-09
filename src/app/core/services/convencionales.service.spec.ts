@@ -62,7 +62,7 @@ describe('ConvencionalesService', () => {
   });
 
   it('updateLista() → PUT /listas/{id}', () => {
-    const input: ListaInput = { nombre: 'Lista 1', tipo: 'ODD' };
+    const input: ListaInput = { nombre: 'Lista 1', tipo: 'ODN' };
     svc.updateLista(9, input).subscribe();
     const req = http.expectOne(`${BASE}/listas/9`);
     expect(req.request.method).toBe('PUT');

@@ -20,7 +20,7 @@ describe('ConvencionalesComponent', () => {
       'getStats', 'getNacionales', 'getListas',
       'createConvencional', 'updateConvencional', 'createLista', 'updateLista',
     ]);
-    svc.getStats.and.returnValue(of({ nacionales: 1, departamentales: 0, listasOdn: 0, listasOdd: 0 }));
+    svc.getStats.and.returnValue(of({ nacionales: 1, departamentales: 0, listasOdn: 0 }));
     svc.getNacionales.and.returnValue(of([conv]));
     svc.getListas.and.returnValue(of([lista]));
     svc.createConvencional.and.returnValue(of(conv));
@@ -97,12 +97,12 @@ describe('ConvencionalesComponent', () => {
     expect(cmp.modalBusy()).toBeFalse();
   });
 
-  it('alta de lista respeta el tipo de la tab activa y llama createLista', () => {
-    cmp.setTab('odd');
+  it('alta de lista ODN llama createLista', () => {
+    cmp.setTab('odn');
     cmp.abrirNuevaLista();
-    expect(cmp.form.tipo).toBe('ODD');
+    expect(cmp.form.tipo).toBe('ODN');
     cmp.form.nombre = 'Nueva';
     cmp.guardar();
-    expect(svc.createLista).toHaveBeenCalledWith(jasmine.objectContaining({ nombre: 'Nueva', tipo: 'ODD' }));
+    expect(svc.createLista).toHaveBeenCalledWith(jasmine.objectContaining({ nombre: 'Nueva', tipo: 'ODN' }));
   });
 });
