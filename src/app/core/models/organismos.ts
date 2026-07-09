@@ -69,6 +69,14 @@ export interface IntegranteOrg {
   departamento: string;
 }
 
+/** Fila de la grilla de Referencias Partidarias (joineada; solo lectura). `periodo` sin fuente aún. */
+export interface ReferenteResumenDto {
+  nombre: string;
+  cargo: string | null;
+  organismo: string | null;
+  periodo: string | null;
+}
+
 /** Info de organización tal cual la devuelve el backend (FK única organismoId). */
 export interface InfoOrganizacionDto {
   id: number;

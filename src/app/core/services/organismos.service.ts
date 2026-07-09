@@ -1,41 +1,46 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { GridQuery, PagedResult } from '../models/paged';
+import { buildPagedParams } from './paged';
 import {
-  Ambito, OrganismoDto, OrganismoInput, OrganismoUpdateInput,
+  OrganismoDto, OrganismoInput, OrganismoUpdateInput,
   TipoOrganizacionDto, InfoOrganizacionDto, InfoOrganizacionInput,
-  IntegranteOrg,
+  ReferenteResumenDto, IntegranteOrg,
 } from '../models/organismos';
 
 /**
- * Service por dominio para Organismos. Contrato unificado (backend feature 006):
- * recurso único /organismos con ámbito. Encapsula las llamadas HTTP tipadas; no
- * transforma errores (los propaga para que el componente/interceptor los maneje).
+ * Service por dominio para Organismos. Contrato unificado + paginado server-side
+ * (backend features 006/007): las grillas devuelven PagedResult<T> y reciben GridQuery.
+ * No transforma errores (los propaga para el componente/interceptor).
  */
 @Injectable({ providedIn: 'root' })
 export class OrganismosService {
   private http = inject(HttpClient);
   private base = `${environment.apiUrl}/organismos`;
 
-  // ── Lecturas ──────────────────────────────────────────────
-  /** Lista organismos; filtro opcional por ámbito (sin ámbito = todos). */
-  getOrganismos(ambito?: Ambito): Observable<OrganismoDto[]> {
-    const params = ambito ? new HttpParams().set('ambito', ambito) : undefined;
-    return this.http.get<OrganismoDto[]>(this.base, { params });
+  // ── Grillas paginadas ─────────────────────────────────────
+  /** Lista paginada; el ámbito (si aplica) viaja como filtro dentro del GridQuery. */
+  getOrganismos(query: GridQuery): Observable<PagedResult<OrganismoDto>> {
+    return this.http.get<PagedResult<OrganismoDto>>(this.base, { params: buildPagedParams(query) });
   }
 
-  getInfo(): Observable<InfoOrganizacionDto[]> {
-    return this.http.get<InfoOrganizacionDto[]>(`${this.base}/info`);
+  getInfo(query: GridQuery): Observable<PagedResult<InfoOrganizacionDto>> {
+    return this.http.get<PagedResult<InfoOrganizacionDto>>(`${this.base}/info`, { params: buildPagedParams(query) });
+  }
+
+  getReferencias(query: GridQuery): Observable<PagedResult<ReferenteResumenDto>> {
+    return this.http.get<PagedResult<ReferenteResumenDto>>(`${this.base}/referencias`, { params: buildPagedParams(query) });
+  }
+
+  /** Integrantes de un organismo puntual, por id (paginado; el inline pide una página grande). */
+  getIntegrantes(id: number, query: GridQuery): Observable<PagedResult<IntegranteOrg>> {
+    return this.http.get<PagedResult<IntegranteOrg>>(`${this.base}/${id}/integrantes`, { params: buildPagedParams(query) });
   }
 
   getTipos(): Observable<TipoOrganizacionDto[]> {
     return this.http.get<TipoOrganizacionDto[]>(`${this.base}/tipos`);
-  }
-
-  /** Integrantes de un organismo puntual, por id (contrato por FK unificada). */
-  getIntegrantes(id: number): Observable<IntegranteOrg[]> {
-    return this.http.get<IntegranteOrg[]>(`${this.base}/${id}/integrantes`);
   }
 
   // ── Organismo: alta / edición ─────────────────────────────
