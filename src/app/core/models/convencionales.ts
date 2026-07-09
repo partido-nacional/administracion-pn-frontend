@@ -54,5 +54,4 @@ export interface ConvencionalStats {
   nacionales: number;
   departamentales: number;
   listasOdn: number;
-  listasOdd: number;
 }

@@ -1,0 +1,171 @@
+{
+  "feature": "limpiar-convencionales-intendentes",
+  "local_config": {
+    "database": null,
+    "notes": "Angular 17. Gates: ng build prod + karma. Cross-repo: backend feature 008 primero."
+  },
+  "stats": {
+    "total": 6,
+    "done": 6,
+    "by_layer": {
+      "1": 3,
+      "2": 3
+    }
+  },
+  "execution_strategy": "batched",
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "Convencionales: quitar tabs Listas ODD e Integrantes de Lista",
+      "description": "En convencionales.component.ts: quitar 'odd' e 'integrantes' del type Tab, sus tab links, la stat-card Listas ODD, la opción ODD del modal, y el bloque Integrantes. Lógica: quitar signals odd/integ, ramas de setTab (incluida la llamada http a /convencionales/integrantes), loadListas ODD; el bloque odn/odd pasa a solo ODN. Quitar imports sin uso (HttpClient/environment/IntegranteLista). Mantener Nacionales, Departamentales, Listas ODN y la columna Lista ODD de Departamentales.",
+      "status": "done",
+      "layer": 1,
+      "depends_on": [],
+      "files": [
+        "src/app/features/convencionales/convencionales.component.ts"
+      ],
+      "acceptance_criteria": [
+        "AC-1/AC-2/AC-3/AC-4: sin tabs ODD/Integrantes ni stat ODD ni opción ODD; ODN y demás intactas",
+        "AC-5: sin llamadas a /convencionales/listas/odd ni /convencionales/integrantes",
+        "GATE: ng build pasa"
+      ],
+      "references": [
+        "US-1"
+      ]
+    },
+    {
+      "id": "TASK-002",
+      "title": "Rename Intendencias PN → Intendentes PN (front completo)",
+      "description": "Renombrar componente (archivo+clase IntendenciasPnComponent→IntendentesPnComponent, título, CSV), listados.service (intendenciasPn→intendentesPn, endpoint intendentes-pn), ruta app.routes (listados/intendentes-pn + loadComponent), y el label+routerLink del shell nav.",
+      "status": "done",
+      "layer": 1,
+      "depends_on": [],
+      "files": [
+        "src/app/features/listados/intendencias-pn.component.ts",
+        "src/app/core/services/listados.service.ts",
+        "src/app/app.routes.ts",
+        "src/app/layout/shell.component.html"
+      ],
+      "acceptance_criteria": [
+        "AC-6/AC-7: label del menú y título 'Intendentes PN'",
+        "AC-8: ruta /listados/intendentes-pn",
+        "AC-9/AC-10: CSV intendentes-pn.csv; service llama endpoint intendentes-pn",
+        "GATE: ng build pasa"
+      ],
+      "references": [
+        "US-2"
+      ]
+    },
+    {
+      "id": "TASK-003",
+      "title": "Adaptar specs + gate build/test",
+      "description": "Adaptar convencionales.component.spec.ts (sin ODD/Integrantes), listados.service.spec.ts (intendentesPn/endpoint), y el spec de intendencias-pn si existe (rename). ng build prod + karma verdes. Grep sin residuos.",
+      "status": "done",
+      "layer": 1,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002"
+      ],
+      "files": [
+        "src/app"
+      ],
+      "acceptance_criteria": [
+        "Specs adaptados y verdes",
+        "build prod sin errores",
+        "grep sin residuos de ODD/Integrantes/intendencias-pn"
+      ],
+      "references": [
+        "US-1",
+        "US-2"
+      ]
+    },
+    {
+      "id": "TASK-004",
+      "title": "Code review",
+      "description": "Sin código muerto de las secciones eliminadas (signals, imports, interfaces), rename consistente Intendentes en todo el front, sin referencias colgadas a intendencias-pn.",
+      "status": "done",
+      "layer": 2,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002",
+        "TASK-003"
+      ],
+      "files": [
+        "src/app"
+      ],
+      "acceptance_criteria": [
+        "Sin código muerto",
+        "Rename consistente",
+        "Sin referencias colgadas"
+      ],
+      "references": [
+        "US-1",
+        "US-2"
+      ]
+    },
+    {
+      "id": "TASK-005",
+      "title": "Performance review",
+      "description": "Confirmar que quitar las secciones no dejó cargas/llamadas colgadas y que las tabs restantes cargan igual (sin requests muertos).",
+      "status": "done",
+      "layer": 2,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002",
+        "TASK-003"
+      ],
+      "files": [
+        "src/app/features/convencionales/convencionales.component.ts"
+      ],
+      "acceptance_criteria": [
+        "Sin llamadas muertas",
+        "Tabs restantes cargan igual"
+      ],
+      "references": [
+        "US-1"
+      ]
+    },
+    {
+      "id": "TASK-006",
+      "title": "Security review",
+      "description": "Confirmar rolesGuard de la ruta renombrada intacto (mismos roles) y que no se expone nada nuevo.",
+      "status": "done",
+      "layer": 2,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002",
+        "TASK-003"
+      ],
+      "files": [
+        "src/app/app.routes.ts"
+      ],
+      "acceptance_criteria": [
+        "rolesGuard intacto en /listados/intendentes-pn",
+        "Sin exposición nueva"
+      ],
+      "references": [
+        "US-2"
+      ]
+    }
+  ],
+  "dependency_graph": {
+    "by_layer": {
+      "1": {
+        "level_0": [
+          "TASK-001",
+          "TASK-002"
+        ],
+        "level_1": [
+          "TASK-003"
+        ]
+      },
+      "2": {
+        "level_0": [
+          "TASK-004",
+          "TASK-005",
+          "TASK-006"
+        ]
+      }
+    }
+  }
+}

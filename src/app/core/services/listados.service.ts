@@ -78,7 +78,7 @@ export class ListadosService {
   }
 
   parlamentarias(query: GridQuery) { return this.paged<Parlamentario>('parlamentarias', query); }
-  intendenciasPn(query: GridQuery) { return this.paged<IntPN>('intendencias-pn', query); }
+  intendentesPn(query: GridQuery)  { return this.paged<IntPN>('intendentes-pn', query); }
   jovenes(query: GridQuery)        { return this.paged<Joven>('jovenes', query); }
   gobierno(query: GridQuery)       { return this.paged<Gobierno>('gobierno', query); }
   comDepartamentales(query: GridQuery) { return this.paged<ComDep>('com-departamentales', query); }
