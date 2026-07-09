@@ -1,0 +1,186 @@
+{
+  "feature": "paginacion-organismos-frontend",
+  "local_config": {
+    "database": null,
+    "notes": "Angular 17 standalone + signals. Gates: ng build prod + karma (ChromeHeadless). Reutiliza GridQuery/buildPagedParams/PagedResult/<app-paginator> (feature 002)."
+  },
+  "stats": {
+    "total": 6,
+    "done": 6,
+    "by_layer": {
+      "1": 3,
+      "2": 3
+    }
+  },
+  "execution_strategy": "batched",
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "Models + service: GridQuery/PagedResult en Organismos",
+      "description": "core/models/organismos.ts: agregar ReferenteResumenDto. organismos.service.ts: getOrganismos(query)/getInfo(query) → PagedResult; nuevo getReferencias(query); getIntegrantes(id, query) → PagedResult. Usar buildPagedParams; ambito pasa como filtro del GridQuery.",
+      "status": "done",
+      "layer": 1,
+      "depends_on": [],
+      "files": [
+        "src/app/core/models/organismos.ts",
+        "src/app/core/services/organismos.service.ts"
+      ],
+      "acceptance_criteria": [
+        "getOrganismos/getInfo/getReferencias/getIntegrantes reciben GridQuery y devuelven PagedResult<T>",
+        "ReferenteResumenDto en models; buildPagedParams usado",
+        "GATE: ng build pasa"
+      ],
+      "references": [
+        "US-1",
+        "US-2",
+        "US-3"
+      ]
+    },
+    {
+      "id": "TASK-002",
+      "title": "OrganismosComponent: paginación server-side por tab + integrantes inline",
+      "description": "Por tab (Todos/Info/Referencias): GridQuery + total signals, loadX() vía service, <app-paginator> al pie, onPage/onPageSize/onSort/filtros (debounce 300ms, reset page 1). Reemplazar los computed de filtrado client-side. Integrantes inline: getIntegrantes(o.id, query pageSize alto) → .items, manteniendo caché/loading/error. Export CSV con all=true.",
+      "status": "done",
+      "layer": 1,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "files": [
+        "src/app/features/organismos/organismos.component.ts"
+      ],
+      "acceptance_criteria": [
+        "AC-1..AC-4: tab Todos paginada (paginator + filtros server-side + sort + page/pageSize)",
+        "AC-5/AC-6: tabs Info y Referencias paginadas (Referencias vía service)",
+        "AC-7/AC-8: integrantes inline sobre PagedResult.items; vacío/error/caché OK",
+        "AC-9: export CSV con all=true",
+        "GATE: ng build pasa"
+      ],
+      "references": [
+        "US-1",
+        "US-2",
+        "US-3",
+        "US-4",
+        "BR-1",
+        "BR-2"
+      ]
+    },
+    {
+      "id": "TASK-003",
+      "title": "Adaptar specs + gate build/test",
+      "description": "Adaptar organismos.service.spec.ts (firmas GridQuery/PagedResult, nuevo getReferencias) y organismos.component.spec.ts (mocks devuelven PagedResult, paginator, filtros server-side). ng build prod + karma verdes. Grep sin residuos de consumo de listas planas en organismos.",
+      "status": "done",
+      "layer": 1,
+      "depends_on": [
+        "TASK-002"
+      ],
+      "files": [
+        "src/app/core/services/organismos.service.spec.ts",
+        "src/app/features/organismos/organismos.component.spec.ts"
+      ],
+      "acceptance_criteria": [
+        "Specs adaptados y verdes (ChromeHeadless)",
+        "npm run build -- --configuration production sin errores",
+        "GATE: build + tests verdes"
+      ],
+      "references": [
+        "US-1",
+        "US-2",
+        "US-3"
+      ]
+    },
+    {
+      "id": "TASK-004",
+      "title": "Code review",
+      "description": "Revisar el diff: uso consistente de GridQuery/buildPagedParams/<app-paginator> (como las otras grillas), sin filtrado client-side residual, sin código muerto (RefPart local, computed viejos), GridQuery por tab independiente.",
+      "status": "done",
+      "layer": 2,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002",
+        "TASK-003"
+      ],
+      "files": [
+        "src/app/features/organismos",
+        "src/app/core/services/organismos.service.ts"
+      ],
+      "acceptance_criteria": [
+        "Consistente con el patrón del proyecto",
+        "Sin filtrado client-side residual",
+        "Sin código muerto"
+      ],
+      "references": [
+        "US-1"
+      ]
+    },
+    {
+      "id": "TASK-005",
+      "title": "Performance review",
+      "description": "Confirmar una request por cambio de página/filtro/orden (con debounce en filtros), sin traer datasets completos para filtrar en memoria, y que la caché de integrantes inline por id se mantiene (sin refetch al re-expandir).",
+      "status": "done",
+      "layer": 2,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002",
+        "TASK-003"
+      ],
+      "files": [
+        "src/app/features/organismos/organismos.component.ts"
+      ],
+      "acceptance_criteria": [
+        "Una request por cambio; debounce en filtros",
+        "Sin filtrado client-side de todo el dataset",
+        "Caché de integrantes preservada"
+      ],
+      "references": [
+        "US-1",
+        "US-3"
+      ]
+    },
+    {
+      "id": "TASK-006",
+      "title": "Security review",
+      "description": "Confirmar rolesGuard de la ruta intactos, sin exposición de datos nuevos, y manejo de error de grilla sin fuga de detalles internos.",
+      "status": "done",
+      "layer": 2,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002",
+        "TASK-003"
+      ],
+      "files": [
+        "src/app/app.routes.ts",
+        "src/app/features/organismos/organismos.component.ts"
+      ],
+      "acceptance_criteria": [
+        "rolesGuard intactos",
+        "Sin exposición de datos nuevos",
+        "Error sin fuga"
+      ],
+      "references": [
+        "US-1"
+      ]
+    }
+  ],
+  "dependency_graph": {
+    "by_layer": {
+      "1": {
+        "level_0": [
+          "TASK-001"
+        ],
+        "level_1": [
+          "TASK-002"
+        ],
+        "level_2": [
+          "TASK-003"
+        ]
+      },
+      "2": {
+        "level_0": [
+          "TASK-004",
+          "TASK-005",
+          "TASK-006"
+        ]
+      }
+    }
+  }
+}
