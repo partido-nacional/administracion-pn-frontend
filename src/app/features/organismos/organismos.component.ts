@@ -1,32 +1,27 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, WritableSignal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
-import { environment } from '../../../environments/environment';
 import { PageTitleService } from '../../core/page-title.service';
 import { exportarCSV, CsvColumn } from '../../core/exportar-csv';
 import { OrganismosService } from '../../core/services/organismos.service';
 import { ModalFormComponent } from '../../shared/components/modal-form/modal-form.component';
+import { PaginatorComponent } from '../../shared/components/paginator/paginator.component';
+import { GridQuery, SortOrder, DEFAULT_PAGE_SIZE } from '../../core/models/paged';
+import { toggleSort, sortArrow } from '../../shared/grid/grid-sort';
 import {
   Ambito, OrganismoDto, OrganismoUpdateInput,
   TipoOrganizacionDto, InfoOrganizacionDto, InfoOrganizacionInput,
-  IntegranteOrg,
+  ReferenteResumenDto, IntegranteOrg,
 } from '../../core/models/organismos';
-
-/** Display-only de la tab Referencias (fuera de alcance): shape heredado. */
-interface RefPart { nombre: string; cargo: string; organismo: string; periodo: string; }
 
 type Tab = 'todos' | 'info' | 'referencias';
 type ModalKind = 'organismo' | 'info';
 type ModalMode = 'nueva' | 'editar';
 
-const norm = (s: any) => (s ?? '').toString().toLowerCase();
-const m = (val: any, q: string) => !q || norm(val).includes(q.toLowerCase());
-
 @Component({
   selector: 'app-organismos',
   standalone: true,
-  imports: [CommonModule, FormsModule, ModalFormComponent],
+  imports: [CommonModule, FormsModule, ModalFormComponent, PaginatorComponent],
   template: `
     <div class="topbar-inline">
       @if (tab()==='todos') { <button class="btn btn-primary" (click)="abrirNuevoOrganismo()">+ Nuevo Organismo</button> }
@@ -45,44 +40,50 @@ const m = (val: any, q: string) => !q || norm(val).includes(q.toLowerCase());
         <table class="table" style="min-width:1400px">
           <thead>
             <tr class="filter-row">
-              <th><input class="column-filter" [ngModel]="fOrgId()"     (ngModelChange)="fOrgId.set($event)"     placeholder="Filtrar..."></th>
+              <th></th>
               <th>
-                <select class="column-filter" [ngModel]="fOrgAmb()" (ngModelChange)="fOrgAmb.set($event)">
+                <select class="column-filter" [ngModel]="fOrgAmb()" (ngModelChange)="setOrgFilter(fOrgAmb, $event)">
                   <option value="">Todos</option>
                   <option value="Estatal">Estatal</option>
                   <option value="Partidario">Partidario</option>
                 </select>
               </th>
-              <th><input class="column-filter" [ngModel]="fOrgNom()"    (ngModelChange)="fOrgNom.set($event)"    placeholder="Filtrar..."></th>
+              <th><input class="column-filter" [ngModel]="fOrgNom()" (ngModelChange)="setOrgFilter(fOrgNom, $event)" placeholder="Filtrar..."></th>
               <th></th>
               <th></th>
               <th></th>
               <th>
-                <select class="column-filter" [ngModel]="fOrgDep()" (ngModelChange)="fOrgDep.set($event)">
+                <select class="column-filter" [ngModel]="fOrgDep()" (ngModelChange)="setOrgFilter(fOrgDep, $event)">
                   <option value="">Todos</option>
-                  @for (d of orgDeptos(); track d) { <option [ngValue]="d">{{ d }}</option> }
+                  @for (d of departamentos; track d) { <option [ngValue]="d">{{ d }}</option> }
                 </select>
               </th>
               <th></th>
               <th>
-                <select class="column-filter" [ngModel]="fOrgArt()" (ngModelChange)="fOrgArt.set($event)">
+                <select class="column-filter" [ngModel]="fOrgArt()" (ngModelChange)="setOrgFilter(fOrgArt, $event)">
                   <option value="">Todos</option>
                   <option value="si">Sí</option>
                   <option value="no">No</option>
                 </select>
               </th>
-              <th><input class="column-filter" [ngModel]="fOrgOrd()"    (ngModelChange)="fOrgOrd.set($event)"    placeholder="Filtrar..."></th>
+              <th></th>
               <th></th>
               <th></th>
             </tr>
             <tr>
-              <th>Id</th><th>Ámbito</th><th>Nombre</th><th>Descripción</th><th>Dirección</th>
-              <th>Ciudad</th><th>Departamento</th><th>País</th><th>Art. 44</th>
-              <th>Orden Dpto.</th><th>Observaciones</th><th></th>
+              <th class="sortable" (click)="sortTodos('id')">Id {{ arrowTodos('id') }}</th>
+              <th class="sortable" (click)="sortTodos('ambito')">Ámbito {{ arrowTodos('ambito') }}</th>
+              <th class="sortable" (click)="sortTodos('nombre')">Nombre {{ arrowTodos('nombre') }}</th>
+              <th>Descripción</th><th>Dirección</th>
+              <th>Ciudad</th>
+              <th class="sortable" (click)="sortTodos('departamento')">Departamento {{ arrowTodos('departamento') }}</th>
+              <th>País</th><th>Art. 44</th>
+              <th class="sortable" (click)="sortTodos('ordenDpto')">Orden Dpto. {{ arrowTodos('ordenDpto') }}</th>
+              <th>Observaciones</th><th></th>
             </tr>
           </thead>
           <tbody>
-            @for (o of organismosFiltrados(); track $index) {
+            @for (o of organismos(); track o.id) {
               <tr class="clickable" [class.selected]="isExpanded(o)" (click)="toggleOrg(o)">
                 <td>{{ isExpanded(o) ? '▾' : '▸' }} {{ o.id }}</td>
                 <td><span class="badge" [class.amb-est]="o.ambito==='Estatal'" [class.amb-part]="o.ambito==='Partidario'">{{ o.ambito }}</span></td>
@@ -110,11 +111,11 @@ const m = (val: any, q: string) => !q || norm(val).includes(q.toLowerCase());
                     <div class="detalle-wrap">
                       <div class="detalle-section">
                         <div class="detalle-section-title">Integrantes de {{ o.nombre }}</div>
-                        @if (orgLoading()[orgKey(o)]) {
+                        @if (orgLoading()[o.id]) {
                           <div class="empty-state" style="padding:24px"><div class="empty-state-text">Cargando integrantes…</div></div>
-                        } @else if (orgError()[orgKey(o)]) {
+                        } @else if (orgError()[o.id]) {
                           <div class="empty-state" style="padding:24px">
-                            <div class="empty-state-text">{{ orgError()[orgKey(o)] }}</div>
+                            <div class="empty-state-text">{{ orgError()[o.id] }}</div>
                             <button class="btn btn-secondary" style="margin-top:10px" (click)="loadIntegrantes(o)">Reintentar</button>
                           </div>
                         } @else if (integrantesDe(o).length === 0) {
@@ -152,7 +153,8 @@ const m = (val: any, q: string) => !q || norm(val).includes(q.toLowerCase());
             }
           </tbody>
         </table>
-        <div class="footer">Mostrando {{ organismosFiltrados().length }} de {{ organismos().length }}</div>
+        <app-paginator [total]="orgTotal()" [page]="orgPage()" [pageSize]="orgPageSize()"
+                       (pageChange)="onOrgPage($event)" (pageSizeChange)="onOrgPageSize($event)" />
       </div></div>
     }
 
@@ -161,12 +163,11 @@ const m = (val: any, q: string) => !q || norm(val).includes(q.toLowerCase());
         <table class="table" style="min-width:1100px">
           <thead>
             <tr class="filter-row">
-              <th><input class="column-filter" [ngModel]="fInfId()"    (ngModelChange)="fInfId.set($event)"    placeholder="Filtrar..."></th>
               <th></th>
               <th></th>
-              <th><input class="column-filter" [ngModel]="fInfDir()"   (ngModelChange)="fInfDir.set($event)"   placeholder="Filtrar..."></th>
+              <th><input class="column-filter" [ngModel]="fInfDir()" (ngModelChange)="setInfoFilter(fInfDir, $event)" placeholder="Filtrar..."></th>
               <th></th>
-              <th><input class="column-filter" [ngModel]="fInfMail()"  (ngModelChange)="fInfMail.set($event)"  placeholder="Filtrar..."></th>
+              <th><input class="column-filter" [ngModel]="fInfMail()" (ngModelChange)="setInfoFilter(fInfMail, $event)" placeholder="Filtrar..."></th>
               <th></th>
               <th></th>
             </tr>
@@ -176,7 +177,7 @@ const m = (val: any, q: string) => !q || norm(val).includes(q.toLowerCase());
             </tr>
           </thead>
           <tbody>
-            @for (i of infoFiltrados(); track i.id) {
+            @for (i of info(); track i.id) {
               <tr>
                 <td>{{ i.id }}</td>
                 <td>{{ i.tipoOrganizacionId ?? '—' }}</td>
@@ -199,7 +200,8 @@ const m = (val: any, q: string) => !q || norm(val).includes(q.toLowerCase());
             }
           </tbody>
         </table>
-        <div class="footer">Mostrando {{ infoFiltrados().length }} de {{ info().length }}</div>
+        <app-paginator [total]="infoTotal()" [page]="infoPage()" [pageSize]="infoPageSize()"
+                       (pageChange)="onInfoPage($event)" (pageSizeChange)="onInfoPageSize($event)" />
       </div></div>
     }
 
@@ -208,15 +210,15 @@ const m = (val: any, q: string) => !q || norm(val).includes(q.toLowerCase());
         <table class="table">
           <thead>
             <tr class="filter-row">
-              <th><input class="column-filter" [ngModel]="fRefNom()" (ngModelChange)="fRefNom.set($event)" placeholder="Filtrar..."></th>
-              <th><input class="column-filter" [ngModel]="fRefCar()" (ngModelChange)="fRefCar.set($event)" placeholder="Filtrar..."></th>
+              <th><input class="column-filter" [ngModel]="fRefNom()" (ngModelChange)="setRefFilter(fRefNom, $event)" placeholder="Filtrar..."></th>
+              <th><input class="column-filter" [ngModel]="fRefCar()" (ngModelChange)="setRefFilter(fRefCar, $event)" placeholder="Filtrar..."></th>
               <th></th>
               <th></th>
             </tr>
             <tr><th>Nombre</th><th>Cargo</th><th>Organismo</th><th>Período</th></tr>
           </thead>
           <tbody>
-            @for (r of referenciasFiltradas(); track $index) {
+            @for (r of referencias(); track $index) {
               <tr>
                 <td><strong>{{ r.nombre }}</strong></td>
                 <td>{{ r.cargo }}</td>
@@ -228,7 +230,8 @@ const m = (val: any, q: string) => !q || norm(val).includes(q.toLowerCase());
             }
           </tbody>
         </table>
-        <div class="footer">Mostrando {{ referenciasFiltradas().length }} de {{ referencias().length }}</div>
+        <app-paginator [total]="refTotal()" [page]="refPage()" [pageSize]="refPageSize()"
+                       (pageChange)="onRefPage($event)" (pageSizeChange)="onRefPageSize($event)" />
       </div></div>
     }
 
@@ -290,9 +293,10 @@ const m = (val: any, q: string) => !q || norm(val).includes(q.toLowerCase());
   `,
   styles: [`
     .topbar-inline { display:flex; justify-content:flex-end; gap:8px; margin-bottom:16px; }
-    .footer { padding:12px 18px; font-size:13px; color:#666; border-top:1px solid #eef1f5; }
     .badge.amb-est { background:#e6f0ff; color:#1a4f8a; }
     .badge.amb-part { background:#fdeede; color:#8a5a1a; }
+    th.sortable { cursor:pointer; user-select:none; white-space:nowrap; }
+    th.sortable:hover { color:var(--primary, #1a4f8a); }
     tr.clickable { cursor:pointer; }
     tr.clickable:hover { background:#f5f8ff; }
     tr.selected { background:#e6efff !important; }
@@ -309,21 +313,11 @@ const m = (val: any, q: string) => !q || norm(val).includes(q.toLowerCase());
   `]
 })
 export class OrganismosComponent {
-  private http = inject(HttpClient);
   private titleSvc = inject(PageTitleService);
   private svc = inject(OrganismosService);
 
   tab = signal<Tab>('todos');
-  organismos = signal<OrganismoDto[]>([]);
-  info = signal<InfoOrganizacionDto[]>([]);
   tipos = signal<TipoOrganizacionDto[]>([]);
-  referencias = signal<RefPart[]>([]);
-
-  // ── Integrantes inline por organismo (acordeón + caché) ───
-  expandedOrgKey = signal<string | null>(null);
-  integrantesPorOrg = signal<Record<string, IntegranteOrg[]>>({});
-  orgLoading = signal<Record<string, boolean>>({});
-  orgError = signal<Record<string, string>>({});
 
   departamentos = [
     'Artigas','Canelones','Cerro Largo','Colonia','Durazno','Flores','Florida',
@@ -331,44 +325,49 @@ export class OrganismosComponent {
     'Salto','San José','Soriano','Tacuarembó','Treinta y Tres','Nacional'
   ];
 
-  // ── filtros: Todos (reducidos — chore reducir-filtros de develop)
-  fOrgId = signal(''); fOrgAmb = signal(''); fOrgNom = signal('');
-  fOrgDep = signal(''); fOrgArt = signal(''); fOrgOrd = signal('');
+  // Tamaño de página "grande" para la sublista inline (sin paginador propio).
+  private static readonly INLINE_PAGE_SIZE = 100;
 
-  orgDeptos = computed(() => Array.from(new Set(this.organismos().map(o => o.departamento).filter(Boolean))).sort() as string[]);
+  // ── Grilla Todos ─────────────────────────────────────────
+  organismos = signal<OrganismoDto[]>([]);
+  orgTotal = signal(0);
+  orgPage = signal(1);
+  orgPageSize = signal(DEFAULT_PAGE_SIZE);
+  orgSort = signal<string | undefined>(undefined);
+  orgOrder = signal<SortOrder>('asc');
+  fOrgAmb = signal(''); fOrgNom = signal(''); fOrgDep = signal(''); fOrgArt = signal('');
 
-  organismosFiltrados = computed(() => this.organismos().filter(o =>
-    m(o.id, this.fOrgId()) &&
-    (!this.fOrgAmb() || o.ambito === this.fOrgAmb()) &&
-    m(o.nombre, this.fOrgNom()) &&
-    (!this.fOrgDep() || o.departamento === this.fOrgDep()) &&
-    (!this.fOrgArt() || (this.fOrgArt() === 'si' ? o.art44 : !o.art44)) &&
-    m(o.ordenDpto, this.fOrgOrd())
-  ));
+  // ── Grilla Info ──────────────────────────────────────────
+  info = signal<InfoOrganizacionDto[]>([]);
+  infoTotal = signal(0);
+  infoPage = signal(1);
+  infoPageSize = signal(DEFAULT_PAGE_SIZE);
+  fInfDir = signal(''); fInfMail = signal('');
+  private infoLoaded = false;
 
-  // ── filtros: Info (reducidos)
-  fInfId = signal(''); fInfDir = signal(''); fInfMail = signal('');
-
-  infoFiltrados = computed(() => this.info().filter(i =>
-    m(i.id, this.fInfId()) &&
-    m(i.direccion, this.fInfDir()) &&
-    m(i.email, this.fInfMail())
-  ));
-
-  // ── filtros: Referencias (reducidos)
+  // ── Grilla Referencias ───────────────────────────────────
+  referencias = signal<ReferenteResumenDto[]>([]);
+  refTotal = signal(0);
+  refPage = signal(1);
+  refPageSize = signal(DEFAULT_PAGE_SIZE);
   fRefNom = signal(''); fRefCar = signal('');
+  private refLoaded = false;
 
-  referenciasFiltradas = computed(() => this.referencias().filter(r =>
-    m(r.nombre, this.fRefNom()) && m(r.cargo, this.fRefCar())
-  ));
+  // ── Integrantes inline (acordeón + caché por id) ─────────
+  expandedOrgId = signal<number | null>(null);
+  integrantesPorOrg = signal<Record<number, IntegranteOrg[]>>({});
+  orgLoading = signal<Record<number, boolean>>({});
+  orgError = signal<Record<number, string>>({});
 
-  // ── modal (alta/edición de Organismo o Info) ──────────────
+  // ── Modal ────────────────────────────────────────────────
   modalKind = signal<ModalKind | null>(null);
   modalMode = signal<ModalMode>('nueva');
   editId = signal<number | null>(null);
   modalBusy = signal(false);
   modalError = signal('');
   form: any = {};
+
+  private timers: Record<string, any> = {};
 
   tituloModal = computed(() => {
     if (this.modalKind() === 'info') return this.modalMode() === 'editar' ? 'Editar Info de Organización' : 'Nueva Info de Organización';
@@ -377,55 +376,127 @@ export class OrganismosComponent {
 
   constructor() {
     this.titleSvc.set('Organismos');
-    this.svc.getOrganismos().subscribe(x => this.organismos.set(x));
     this.svc.getTipos().subscribe(x => this.tipos.set(x));
+    this.loadTodos();
   }
 
   setTab(t: Tab) {
     this.tab.set(t);
-    if (t === 'info' && this.info().length === 0) this.loadInfo();
-    if (t === 'referencias' && this.referencias().length === 0)
-      this.http.get<RefPart[]>(`${environment.apiUrl}/organismos/referencias`).subscribe(x => this.referencias.set(x));
+    if (t === 'info' && !this.infoLoaded) { this.infoLoaded = true; this.loadInfo(); }
+    if (t === 'referencias' && !this.refLoaded) { this.refLoaded = true; this.loadReferencias(); }
   }
 
-  // ── Integrantes inline: acordeón + carga lazy con caché ───
-  // Id global (tabla unificada, feature 006): alcanza para clavear la caché.
-  orgKey(o: OrganismoDto): string { return String(o.id); }
-  isExpanded(o: OrganismoDto): boolean { return this.expandedOrgKey() === this.orgKey(o); }
-  integrantesDe(o: OrganismoDto): IntegranteOrg[] { return this.integrantesPorOrg()[this.orgKey(o)] ?? []; }
-
-  toggleOrg(o: OrganismoDto) {
-    const key = this.orgKey(o);
-    if (this.expandedOrgKey() === key) { this.expandedOrgKey.set(null); return; }
-    this.expandedOrgKey.set(key);
-    // Carga sólo si no hay caché para este organismo (evita refetch al re-expandir).
-    if (!(key in this.integrantesPorOrg())) this.loadIntegrantes(o);
+  // ── Debounce util ────────────────────────────────────────
+  private debounced(key: string, fn: () => void, ms = 300) {
+    clearTimeout(this.timers[key]);
+    this.timers[key] = setTimeout(fn, ms);
   }
-
-  loadIntegrantes(o: OrganismoDto) {
-    const key = this.orgKey(o);
-    this.orgLoading.update(mp => ({ ...mp, [key]: true }));
-    this.orgError.update(mp => { const { [key]: _drop, ...rest } = mp; return rest; });
-    this.svc.getIntegrantes(o.id).subscribe({
-      next: (list) => {
-        this.integrantesPorOrg.update(mp => ({ ...mp, [key]: list }));
-        this.orgLoading.update(mp => ({ ...mp, [key]: false }));
-      },
-      error: (err) => {
-        this.orgLoading.update(mp => ({ ...mp, [key]: false }));
-        this.orgError.update(mp => ({ ...mp, [key]: this.extractError(err, 'No se pudieron cargar los integrantes.') }));
-      },
-    });
-  }
-
-  private loadTodos() { this.svc.getOrganismos().subscribe(x => this.organismos.set(x)); }
-  private loadInfo() { this.svc.getInfo().subscribe(x => this.info.set(x)); }
 
   private extractError(err: any, fallback: string): string {
     return err?.error?.message || err?.error?.errorCode || err?.message || fallback;
   }
 
-  // ── Organismo ─────────────────────────────────────────────
+  private clean(v: string): string | undefined { return v.trim() === '' ? undefined : v; }
+
+  // ── Todos ────────────────────────────────────────────────
+  private orgQuery(all = false): GridQuery {
+    return {
+      page: this.orgPage(), pageSize: this.orgPageSize(),
+      sort: this.orgSort(), order: this.orgOrder(),
+      filters: {
+        ambito: this.clean(this.fOrgAmb()), nombre: this.clean(this.fOrgNom()),
+        departamento: this.clean(this.fOrgDep()), art44: this.clean(this.fOrgArt()),
+      },
+      all,
+    };
+  }
+
+  private loadTodos() {
+    this.svc.getOrganismos(this.orgQuery()).subscribe(r => {
+      this.organismos.set(r.items); this.orgTotal.set(r.total);
+      this.orgPage.set(r.page); this.orgPageSize.set(r.pageSize);
+    });
+  }
+
+  setOrgFilter(sig: WritableSignal<string>, value: string) {
+    sig.set(value); this.orgPage.set(1);
+    this.debounced('todos', () => this.loadTodos());
+  }
+  onOrgPage(p: number) { this.orgPage.set(p); this.loadTodos(); }
+  onOrgPageSize(s: number) { this.orgPageSize.set(s); this.orgPage.set(1); this.loadTodos(); }
+  sortTodos(field: string) { toggleSort(this.orgSort, this.orgOrder, field); this.orgPage.set(1); this.loadTodos(); }
+  arrowTodos(field: string) { return sortArrow(this.orgSort(), this.orgOrder(), field); }
+
+  // ── Info ─────────────────────────────────────────────────
+  private infoQuery(all = false): GridQuery {
+    return {
+      page: this.infoPage(), pageSize: this.infoPageSize(),
+      filters: { direccion: this.clean(this.fInfDir()), email: this.clean(this.fInfMail()) },
+      all,
+    };
+  }
+  private loadInfo() {
+    this.svc.getInfo(this.infoQuery()).subscribe(r => {
+      this.info.set(r.items); this.infoTotal.set(r.total);
+      this.infoPage.set(r.page); this.infoPageSize.set(r.pageSize);
+    });
+  }
+  setInfoFilter(sig: WritableSignal<string>, value: string) {
+    sig.set(value); this.infoPage.set(1);
+    this.debounced('info', () => this.loadInfo());
+  }
+  onInfoPage(p: number) { this.infoPage.set(p); this.loadInfo(); }
+  onInfoPageSize(s: number) { this.infoPageSize.set(s); this.infoPage.set(1); this.loadInfo(); }
+
+  // ── Referencias ──────────────────────────────────────────
+  private refQuery(all = false): GridQuery {
+    return {
+      page: this.refPage(), pageSize: this.refPageSize(),
+      filters: { nombre: this.clean(this.fRefNom()), cargo: this.clean(this.fRefCar()) },
+      all,
+    };
+  }
+  private loadReferencias() {
+    this.svc.getReferencias(this.refQuery()).subscribe(r => {
+      this.referencias.set(r.items); this.refTotal.set(r.total);
+      this.refPage.set(r.page); this.refPageSize.set(r.pageSize);
+    });
+  }
+  setRefFilter(sig: WritableSignal<string>, value: string) {
+    sig.set(value); this.refPage.set(1);
+    this.debounced('ref', () => this.loadReferencias());
+  }
+  onRefPage(p: number) { this.refPage.set(p); this.loadReferencias(); }
+  onRefPageSize(s: number) { this.refPageSize.set(s); this.refPage.set(1); this.loadReferencias(); }
+
+  // ── Integrantes inline (caché por id) ────────────────────
+  isExpanded(o: OrganismoDto): boolean { return this.expandedOrgId() === o.id; }
+  integrantesDe(o: OrganismoDto): IntegranteOrg[] { return this.integrantesPorOrg()[o.id] ?? []; }
+
+  toggleOrg(o: OrganismoDto) {
+    if (this.expandedOrgId() === o.id) { this.expandedOrgId.set(null); return; }
+    this.expandedOrgId.set(o.id);
+    if (!(o.id in this.integrantesPorOrg())) this.loadIntegrantes(o);
+  }
+
+  loadIntegrantes(o: OrganismoDto) {
+    const id = o.id;
+    this.orgLoading.update(mp => ({ ...mp, [id]: true }));
+    this.orgError.update(mp => { const { [id]: _drop, ...rest } = mp; return rest; });
+    // Sublista inline: una página grande, sin paginador propio (decisión UX).
+    this.svc.getIntegrantes(id, { page: 1, pageSize: OrganismosComponent.INLINE_PAGE_SIZE }).subscribe({
+      next: (r) => {
+        this.integrantesPorOrg.update(mp => ({ ...mp, [id]: r.items }));
+        this.orgLoading.update(mp => ({ ...mp, [id]: false }));
+      },
+      error: (err) => {
+        this.orgLoading.update(mp => ({ ...mp, [id]: false }));
+        this.orgError.update(mp => ({ ...mp, [id]: this.extractError(err, 'No se pudieron cargar los integrantes.') }));
+      },
+    });
+  }
+
+  // ── Organismo (alta/edición) ─────────────────────────────
   abrirNuevoOrganismo() {
     this.form = { ambito: 'Estatal', tipoOrganizacionId: null, nombre: '', nombreCompania: '', categoria: '', descripcion: '', direccion: '', ciudad: '', departamento: '', pais: '', ordenDpto: 0, observaciones: '', art44: false };
     this.modalError.set(''); this.editId.set(null);
@@ -452,7 +523,7 @@ export class OrganismosComponent {
     this.modalMode.set('editar'); this.modalKind.set('organismo');
   }
 
-  // ── Info ──────────────────────────────────────────────────
+  // ── Info (alta/edición) ──────────────────────────────────
   abrirNuevaInfo() {
     this.form = { tipoOrganizacionId: null, organismoId: null, direccion: '', telefono: '', email: '', observaciones: '' };
     this.modalError.set(''); this.editId.set(null);
@@ -486,7 +557,6 @@ export class OrganismosComponent {
   private guardarOrganismo() {
     if (!this.form.nombre?.trim()) { this.modalError.set('El nombre es obligatorio.'); return; }
     if (this.form.tipoOrganizacionId == null) { this.modalError.set('El tipo de organización es obligatorio.'); return; }
-    // Campos comunes a alta y edición (el ámbito solo va en el alta).
     const comun: OrganismoUpdateInput = {
       nombre: this.form.nombre.trim(),
       nombreCompania: this.form.nombreCompania || null,
@@ -532,43 +602,33 @@ export class OrganismosComponent {
     });
   }
 
+  // ── Export CSV: dataset completo filtrado/ordenado (all=true) ─
   exportarCsvTab() {
     const stamp = new Date().toISOString().slice(0, 10);
     const t = this.tab();
     if (t === 'todos') {
       const cols: CsvColumn<OrganismoDto>[] = [
-        { get: 'id', label: 'ID' },
-        { get: 'ambito', label: 'Ámbito' },
-        { get: 'nombre', label: 'Nombre' },
-        { get: 'descripcion', label: 'Descripción' },
-        { get: 'direccion', label: 'Dirección' },
-        { get: 'ciudad', label: 'Ciudad' },
-        { get: 'departamento', label: 'Departamento' },
-        { get: 'pais', label: 'País' },
-        { get: 'art44', label: 'Art. 44' },
-        { get: 'ordenDpto', label: 'Orden Dpto.' },
-        { get: 'observaciones', label: 'Observaciones' }
+        { get: 'id', label: 'ID' }, { get: 'ambito', label: 'Ámbito' }, { get: 'nombre', label: 'Nombre' },
+        { get: 'descripcion', label: 'Descripción' }, { get: 'direccion', label: 'Dirección' },
+        { get: 'ciudad', label: 'Ciudad' }, { get: 'departamento', label: 'Departamento' },
+        { get: 'pais', label: 'País' }, { get: 'art44', label: 'Art. 44' },
+        { get: 'ordenDpto', label: 'Orden Dpto.' }, { get: 'observaciones', label: 'Observaciones' }
       ];
-      exportarCSV(this.organismosFiltrados(), cols, `organismos-${stamp}.csv`);
+      this.svc.getOrganismos(this.orgQuery(true)).subscribe(r => exportarCSV(r.items, cols, `organismos-${stamp}.csv`));
     } else if (t === 'info') {
       const cols: CsvColumn<InfoOrganizacionDto>[] = [
-        { get: 'id', label: 'Id Info.' },
-        { get: 'tipoOrganizacionId', label: 'Id Tipo' },
-        { get: 'organismoId', label: 'Id Organismo' },
-        { get: 'direccion', label: 'Dirección' },
-        { get: 'telefono', label: 'Teléfono' },
-        { get: 'email', label: 'Email' },
+        { get: 'id', label: 'Id Info.' }, { get: 'tipoOrganizacionId', label: 'Id Tipo' },
+        { get: 'organismoId', label: 'Id Organismo' }, { get: 'direccion', label: 'Dirección' },
+        { get: 'telefono', label: 'Teléfono' }, { get: 'email', label: 'Email' },
         { get: 'observaciones', label: 'Observaciones' }
       ];
-      exportarCSV(this.infoFiltrados(), cols, `info-organismos-${stamp}.csv`);
+      this.svc.getInfo(this.infoQuery(true)).subscribe(r => exportarCSV(r.items, cols, `info-organismos-${stamp}.csv`));
     } else if (t === 'referencias') {
-      const cols: CsvColumn<RefPart>[] = [
-        { get: 'nombre', label: 'Nombre' },
-        { get: 'cargo', label: 'Cargo' },
-        { get: 'organismo', label: 'Organismo' },
-        { get: 'periodo', label: 'Período' }
+      const cols: CsvColumn<ReferenteResumenDto>[] = [
+        { get: 'nombre', label: 'Nombre' }, { get: 'cargo', label: 'Cargo' },
+        { get: 'organismo', label: 'Organismo' }, { get: 'periodo', label: 'Período' }
       ];
-      exportarCSV(this.referenciasFiltradas(), cols, `referencias-partidarias-${stamp}.csv`);
+      this.svc.getReferencias(this.refQuery(true)).subscribe(r => exportarCSV(r.items, cols, `referencias-partidarias-${stamp}.csv`));
     }
   }
 }

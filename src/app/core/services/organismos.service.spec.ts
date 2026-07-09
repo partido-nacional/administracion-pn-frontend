@@ -3,6 +3,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { OrganismosService } from './organismos.service';
 import { OrganismoInput, OrganismoUpdateInput, InfoOrganizacionInput } from '../models/organismos';
+import { GridQuery, PagedResult } from '../models/paged';
 
 const BASE = 'http://localhost:5000/api/organismos';
 
@@ -12,6 +13,8 @@ const organismo = (): OrganismoInput => ({
 const organismoUpd = (): OrganismoUpdateInput => ({
   nombre: 'Org 1', tipoOrganizacionId: 3, art44: false, ordenDpto: 0,
 });
+const q = (filters?: GridQuery['filters']): GridQuery => ({ page: 1, pageSize: 25, filters });
+const paged = <T>(items: T[]): PagedResult<T> => ({ items, total: items.length, page: 1, pageSize: 25 });
 
 describe('OrganismosService', () => {
   let svc: OrganismosService;
@@ -27,24 +30,28 @@ describe('OrganismosService', () => {
 
   afterEach(() => http.verify());
 
-  it('getOrganismos() → GET /organismos (sin ámbito)', () => {
-    svc.getOrganismos().subscribe();
-    const req = http.expectOne(BASE);
+  it('getOrganismos(query) → GET /organismos con page/pageSize', () => {
+    svc.getOrganismos(q()).subscribe();
+    const req = http.expectOne((r) => r.url === BASE && r.params.get('page') === '1' && r.params.get('pageSize') === '25');
     expect(req.request.method).toBe('GET');
-    expect(req.request.params.has('ambito')).toBeFalse();
-    req.flush([]);
+    req.flush(paged([]));
   });
 
-  it('getOrganismos("Partidario") → GET /organismos?ambito=Partidario', () => {
-    svc.getOrganismos('Partidario').subscribe();
+  it('getOrganismos con filtro ámbito → ?ambito=Partidario', () => {
+    svc.getOrganismos(q({ ambito: 'Partidario' })).subscribe();
     const req = http.expectOne((r) => r.url === BASE && r.params.get('ambito') === 'Partidario');
     expect(req.request.method).toBe('GET');
-    req.flush([]);
+    req.flush(paged([]));
   });
 
-  it('getInfo() → GET /info', () => {
-    svc.getInfo().subscribe();
-    expect(http.expectOne(`${BASE}/info`).request.method).toBe('GET');
+  it('getInfo(query) → GET /info', () => {
+    svc.getInfo(q()).subscribe();
+    expect(http.expectOne((r) => r.url === `${BASE}/info`).request.method).toBe('GET');
+  });
+
+  it('getReferencias(query) → GET /referencias', () => {
+    svc.getReferencias(q()).subscribe();
+    expect(http.expectOne((r) => r.url === `${BASE}/referencias`).request.method).toBe('GET');
   });
 
   it('getTipos() → GET /tipos', () => {
@@ -52,22 +59,22 @@ describe('OrganismosService', () => {
     expect(http.expectOne(`${BASE}/tipos`).request.method).toBe('GET');
   });
 
-  it('getIntegrantes(id) → GET /organismos/{id}/integrantes (id global, sin ámbito)', () => {
-    svc.getIntegrantes(7).subscribe();
-    const req = http.expectOne(`${BASE}/7/integrantes`);
+  it('getIntegrantes(id, query) → GET /organismos/{id}/integrantes', () => {
+    svc.getIntegrantes(7, q()).subscribe();
+    const req = http.expectOne((r) => r.url === `${BASE}/7/integrantes`);
     expect(req.request.method).toBe('GET');
-    req.flush([]);
+    req.flush(paged([]));
   });
 
-  it('getIntegrantes() emite el array de integrantes recibido', () => {
-    let recibidos: any[] = [];
-    svc.getIntegrantes(1).subscribe((x) => (recibidos = x));
-    http.expectOne(`${BASE}/1/integrantes`).flush([
+  it('getIntegrantes() emite el PagedResult recibido', () => {
+    let recibido: PagedResult<any> | undefined;
+    svc.getIntegrantes(1, q()).subscribe((x) => (recibido = x));
+    http.expectOne((r) => r.url === `${BASE}/1/integrantes`).flush(paged([
       { idContacto: 99, credCivica: 'ABC12345', apellidos: 'Pérez', nombres: 'Juan',
         celular: '099', mail: 'j@x.com', posicion: 'Titular', organismo: 'Org 1', departamento: 'Montevideo' },
-    ]);
-    expect(recibidos.length).toBe(1);
-    expect(recibidos[0].idContacto).toBe(99);
+    ]));
+    expect(recibido!.items.length).toBe(1);
+    expect(recibido!.items[0].idContacto).toBe(99);
   });
 
   it('createOrganismo() → POST /organismos (ámbito en el body)', () => {
