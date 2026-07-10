@@ -1,5 +1,5 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { Router } from '@angular/router';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 import { LoginComponent } from './login.component';
@@ -10,17 +10,24 @@ describe('LoginComponent', () => {
   let cmp: LoginComponent;
   let authSpy: jasmine.SpyObj<AuthService>;
   let routerSpy: jasmine.SpyObj<Router>;
+  let resetValue: string | null;
 
-  const ok: LoginResponse = { token: 't', usuario: 'admin', rol: 'Administrador' };
+  const ok: LoginResponse = { token: 't', usuario: 'admin', rol: 'IT' };
+  const msgOk = { message: 'listo' };
 
   beforeEach(() => {
-    authSpy = jasmine.createSpyObj('AuthService', ['login']);
+    resetValue = null;
+    authSpy = jasmine.createSpyObj('AuthService',
+      ['login', 'register', 'verificarEmail', 'reenviarCodigo', 'recuperar', 'resetear']);
     routerSpy = jasmine.createSpyObj('Router', ['navigate']);
+    const route = { snapshot: { queryParamMap: { get: (_: string) => resetValue } } };
+
     TestBed.configureTestingModule({
       imports: [LoginComponent],
       providers: [
         { provide: AuthService, useValue: authSpy },
         { provide: Router, useValue: routerSpy },
+        { provide: ActivatedRoute, useValue: route },
       ],
     });
     fixture = TestBed.createComponent(LoginComponent);
@@ -28,74 +35,74 @@ describe('LoginComponent', () => {
     fixture.detectChanges();
   });
 
-  it('éxito: navega a /inicio y resetea loading', () => {
+  // ── Login ──────────────────────────────────────────────────
+  it('login OK navega a /inicio', () => {
     authSpy.login.and.returnValue(of(ok));
-    cmp.submit();
+    cmp.usuario = 'admin'; cmp.clave = 'x';
+    cmp.doLogin();
     expect(routerSpy.navigate).toHaveBeenCalledOnceWith(['/inicio']);
     expect(cmp.loading()).toBeFalse();
-    expect(cmp.error()).toBeNull();
   });
 
-  // AC-4/5/6/7 + AC-3: cada status produce su mensaje y deja loading en false
-  function errorCase(status: number, expected: string) {
-    authSpy.login.and.returnValue(throwError(() => new HttpErrorResponse({ status })));
-    cmp.submit();
-    expect(cmp.error()).toBe(expected);
-    expect(cmp.loading()).toBeFalse();
-    expect(routerSpy.navigate).not.toHaveBeenCalled();
-  }
-
-  it('401 → "Usuario o clave inválidos"', () =>
-    errorCase(401, 'Usuario o clave inválidos'));
-
-  it('status 0 → mensaje de sin conexión', () =>
-    errorCase(0, 'No hay conexión con el servidor. Verificá tu conexión e intentá de nuevo.'));
-
-  it('status 500 → mensaje de error de servidor', () =>
-    errorCase(500, 'Ocurrió un error en el servidor. Intentá de nuevo más tarde.'));
-
-  it('otro status (404) → fallback genérico', () =>
-    errorCase(404, 'No se pudo iniciar sesión. Intentá de nuevo.'));
-
-  // AC-8: el error viejo se limpia al reintentar
-  it('limpia el error previo al reintentar el submit', () => {
+  it('login 401 genérico → mensaje inválido', () => {
     authSpy.login.and.returnValue(throwError(() => new HttpErrorResponse({ status: 401 })));
-    cmp.submit();
+    cmp.doLogin();
     expect(cmp.error()).toBe('Usuario o clave inválidos');
-
-    authSpy.login.and.returnValue(of(ok));
-    cmp.submit();
-    expect(cmp.error()).toBeNull();
+    expect(cmp.ofrecerVerificar()).toBeFalse();
   });
 
-  // AC-10: form precargado (admin/admin123) es válido → botón habilitado
-  it('botón habilitado con el form válido', () => {
-    const btn: HTMLButtonElement = fixture.nativeElement.querySelector('button[type="submit"]');
-    expect(btn.disabled).toBeFalse();
+  it('login 401 por email sin verificar → ofrece verificar', () => {
+    authSpy.login.and.returnValue(throwError(() => new HttpErrorResponse({ status: 401, error: { message: 'Verificá tu email antes de ingresar.' } })));
+    cmp.doLogin();
+    expect(cmp.ofrecerVerificar()).toBeTrue();
+    expect(cmp.error()).toContain('Verificá');
   });
 
-  // AC-9: campos vacíos → form inválido → botón deshabilitado
-  it('botón deshabilitado con campos vacíos', fakeAsync(() => {
-    // Fixture fresco con los campos vacíos desde el arranque: los controles se
-    // registran ya inválidos (required), evitando la transición válido→vacío.
+  it('sin credenciales demo precargadas', () => {
+    expect(cmp.usuario).toBe('');
+    expect(cmp.clave).toBe('');
+    expect(fixture.nativeElement.innerHTML).not.toContain('admin123');
+  });
+
+  // ── Registro + verificación ───────────────────────────────
+  it('registro OK pasa al modo verificar', () => {
+    authSpy.register.and.returnValue(of(msgOk));
+    cmp.ir('registro'); cmp.usuario = 'nuevo'; cmp.email = 'n@x.com'; cmp.clave = 'clave123';
+    cmp.doRegistro();
+    expect(authSpy.register).toHaveBeenCalledWith('nuevo', 'clave123', 'n@x.com');
+    expect(cmp.modo()).toBe('verificar');
+  });
+
+  it('verificar OK vuelve al login con mensaje', () => {
+    authSpy.verificarEmail.and.returnValue(of(msgOk));
+    cmp.ir('verificar'); cmp.usuario = 'nuevo'; cmp.codigo = '123456';
+    cmp.doVerificar();
+    expect(authSpy.verificarEmail).toHaveBeenCalledWith('nuevo', '123456');
+    expect(cmp.modo()).toBe('login');
+    expect(cmp.mensaje()).toBe('listo');
+  });
+
+  // ── Recuperación / reseteo ────────────────────────────────
+  it('recuperar muestra mensaje neutro', () => {
+    authSpy.recuperar.and.returnValue(of({ message: 'Si el email existe, te enviamos un enlace.' }));
+    cmp.ir('recuperar'); cmp.email = 'a@b.com';
+    cmp.doRecuperar();
+    expect(authSpy.recuperar).toHaveBeenCalledWith('a@b.com');
+    expect(cmp.mensaje()).toContain('enlace');
+  });
+
+  it('?reset=<token> abre el modo resetear con el token', () => {
+    resetValue = 'tok-123';
     const f = TestBed.createComponent(LoginComponent);
-    f.componentInstance.usuario = '';
-    f.componentInstance.clave = '';
-    f.detectChanges();  // registra los NgModel con valores vacíos
-    tick();             // drena el registro async del NgForm
-    f.detectChanges();  // re-evalúa [disabled] con f.invalid = true
-    const btn: HTMLButtonElement = f.nativeElement.querySelector('button[type="submit"]');
-    expect(btn.disabled).toBeTrue();
-  }));
+    expect(f.componentInstance.modo()).toBe('resetear');
+    expect(f.componentInstance.token).toBe('tok-123');
+  });
 
-  // AC-2: spinner visual visible solo mientras loading está activo
-  it('muestra el spinner mientras loading está activo', () => {
-    expect(fixture.nativeElement.querySelector('.spinner')).toBeNull();
-    cmp.loading.set(true);
-    fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('.spinner')).not.toBeNull();
-    cmp.loading.set(false);
-    fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('.spinner')).toBeNull();
+  it('resetear OK vuelve al login', () => {
+    authSpy.resetear.and.returnValue(of(msgOk));
+    cmp.token = 'tok'; cmp.nuevaClave = 'nueva123'; cmp.modo.set('resetear');
+    cmp.doResetear();
+    expect(authSpy.resetear).toHaveBeenCalledWith('tok', 'nueva123');
+    expect(cmp.modo()).toBe('login');
   });
 });

@@ -23,16 +23,24 @@ type ModalMode = 'nueva' | 'editar';
       <button class="btn btn-primary" (click)="abrirNuevo()">+ Nuevo Usuario</button>
     </div>
 
+    @if (accionError()) {
+      <div style="background:#fee2e2;color:#991b1b;padding:10px 12px;border-radius:4px;font-size:13px;margin-bottom:12px;">{{ accionError() }}</div>
+    }
+
     <div class="card"><div class="card-body" style="padding:0;overflow-x:auto">
       <table class="table">
         <thead>
-          <tr><th>Usuario</th><th>Nombre</th><th>Rol</th><th>Estado</th><th></th></tr>
+          <tr><th>Usuario</th><th>Nombre</th><th>Email</th><th>Rol</th><th>Estado</th><th></th></tr>
         </thead>
         <tbody>
           @for (u of filtrados(); track u.id) {
             <tr>
               <td><strong>{{ u.usuario }}</strong></td>
               <td>{{ u.nombre }}</td>
+              <td>
+                {{ u.email || '—' }}
+                @if (u.email && !u.emailVerificado) { <span class="badge status-rejected" style="margin-left:6px;">sin verificar</span> }
+              </td>
               <td><span class="badge dept">{{ u.rol }}</span></td>
               <td><span class="badge" [class.status-active]="u.activo" [class.status-rejected]="!u.activo">{{ u.activo ? 'Activo' : 'Inactivo' }}</span></td>
               <td style="display:flex;gap:6px;justify-content:flex-end;white-space:nowrap;">
@@ -41,10 +49,11 @@ type ModalMode = 'nueva' | 'editar';
                 <button class="btn btn-sm" [class.btn-danger]="u.activo" [class.btn-success]="!u.activo" (click)="confirmarCambiarEstado(u)">
                   {{ u.activo ? 'Desactivar' : 'Activar' }}
                 </button>
+                <button class="btn btn-sm btn-danger" (click)="confirmarEliminar(u)">Eliminar</button>
               </td>
             </tr>
           } @empty {
-            <tr><td colspan="5"><div class="empty-state"><div class="empty-state-text">Sin usuarios</div></div></td></tr>
+            <tr><td colspan="6"><div class="empty-state"><div class="empty-state-text">Sin usuarios</div></div></td></tr>
           }
         </tbody>
       </table>
@@ -105,6 +114,7 @@ export class UsuariosComponent {
   form: { usuario: string; nombre: string; rol: RolUsuario; clave: string } = this.formVacio();
 
   claveGenerada = signal<string | null>(null);
+  accionError = signal('');
 
   constructor() {
     this.titleSvc.set('Usuarios');
@@ -140,7 +150,9 @@ export class UsuariosComponent {
   }
 
   abrirEditar(u: UsuarioDto) {
-    this.form = { usuario: u.usuario, nombre: u.nombre, rol: u.rol, clave: '' };
+    // 'Pendiente' no es asignable (auto-registro): al editar, se ofrece un rol real por defecto.
+    const rol: RolUsuario = u.rol === 'Pendiente' ? 'Secretaria' : u.rol;
+    this.form = { usuario: u.usuario, nombre: u.nombre, rol, clave: '' };
     this.modalError.set(''); this.editId.set(u.id);
     this.modalMode.set('editar'); this.modalOpen.set(true);
   }
@@ -181,6 +193,15 @@ export class UsuariosComponent {
   confirmarResetearClave(u: UsuarioDto) {
     if (!confirm(`¿Resetear la contraseña de "${u.usuario}"? Se generará una nueva contraseña temporal.`)) return;
     this.svc.resetearClave(u.id).subscribe(r => this.claveGenerada.set(r.claveTemporal));
+  }
+
+  confirmarEliminar(u: UsuarioDto) {
+    this.accionError.set('');
+    if (!confirm(`¿Eliminar definitivamente al usuario "${u.usuario}"? Esta acción no se puede deshacer.`)) return;
+    this.svc.eliminar(u.id).subscribe({
+      next: () => this.cargar(),
+      error: (err) => this.accionError.set(this.extractError(err, 'No se pudo eliminar el usuario.')),
+    });
   }
 
   copiarClave() {
