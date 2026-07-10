@@ -1,8 +1,9 @@
 /**
  * Modelos del dominio Usuarios (gestión de cuentas del sistema).
- * Contrato de backend aún no implementado — ver DEBT cross-repo en `project/backlog.md`.
+ * Contrato espejo del backend (UsuariosController / AuthController, feature 010).
  */
 
+/** Roles asignables por un admin. `Pendiente` (auto-registro) NO es asignable, solo se muestra. */
 export type RolUsuario = 'Secretaria' | 'Comunicaciones' | 'Hacienda' | 'IT';
 
 export const ROLES_USUARIO: RolUsuario[] = ['Secretaria', 'Comunicaciones', 'Hacienda', 'IT'];
@@ -12,8 +13,10 @@ export interface UsuarioDto {
   id: number;
   usuario: string;
   nombre: string;
-  rol: RolUsuario;
+  rol: RolUsuario | 'Pendiente';
   activo: boolean;
+  email?: string | null;
+  emailVerificado?: boolean;
 }
 
 /** Payload de alta/edición de un Usuario. `clave` solo se envía en el alta. */

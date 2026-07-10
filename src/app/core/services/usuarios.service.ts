@@ -32,4 +32,8 @@ export class UsuariosService {
   resetearClave(id: number): Observable<ResetearClaveResponse> {
     return this.http.post<ResetearClaveResponse>(`${this.base}/${id}/resetear-clave`, {});
   }
+
+  eliminar(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.base}/${id}`);
+  }
 }

@@ -27,6 +27,29 @@ export class AuthService {
       }));
   }
 
+  // ── Autoservicio de cuentas (feature 020, sin tocar la sesión) ──
+  private base = `${environment.apiUrl}/auth`;
+
+  register(usuario: string, clave: string, email: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.base}/register`, { usuario, clave, email });
+  }
+
+  verificarEmail(usuario: string, codigo: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.base}/verificar-email`, { usuario, codigo });
+  }
+
+  reenviarCodigo(email: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.base}/reenviar-codigo`, { email });
+  }
+
+  recuperar(email: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.base}/recuperar`, { email });
+  }
+
+  resetear(token: string, nuevaClave: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.base}/resetear`, { token, nuevaClave });
+  }
+
   logout(): void {
     localStorage.removeItem(STORAGE_KEY);
     this._session.set(null);
