@@ -9,7 +9,7 @@ import { AdhesionesService, AdhesionWebDto, AdhesionLocalDto } from './adhesione
 import { PaginatorComponent } from '../../shared/components/paginator/paginator.component';
 import { GridQuery, SortOrder, DEFAULT_PAGE_SIZE } from '../../core/models/paged';
 
-interface StatsDto { locales: number; web: number; total: number; duplicados: number; }
+interface StatsDto { locales: number; web: number; total: number; }
 
 type Tab = 'web' | 'locales' | 'nuevo';
 
@@ -118,11 +118,6 @@ type Tab = 'web' | 'locales' | 'nuevo';
         <div class="stat-card">
           <div class="stat-value">{{ stats().total }}</div>
           <div class="stat-label">Total</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value">{{ stats().duplicados }}</div>
-          <div class="stat-label">Posibles Duplicados</div>
-          <div class="stat-trend down">Requiere revision</div>
         </div>
       </div>
 
@@ -265,7 +260,7 @@ export class AdhesionesListadoComponent {
   tab = signal<Tab>('locales');
   web = signal<AdhesionWebDto[]>([]);
   locales = signal<AdhesionLocalDto[]>([]);
-  stats = signal<StatsDto>({ locales: 0, web: 0, total: 0, duplicados: 0 });
+  stats = signal<StatsDto>({ locales: 0, web: 0, total: 0 });
 
   sincronizando = signal(false);
   syncMensaje = signal('');
