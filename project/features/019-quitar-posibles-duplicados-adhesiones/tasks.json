@@ -1,0 +1,15 @@
+{
+  "feature": "quitar-posibles-duplicados-adhesiones",
+  "local_config": { "database": null, "notes": "Trivial UI. Cross-repo con backend 009 (front primero). Gate: ng build + karma." },
+  "stats": { "total": 1, "done": 1, "by_layer": { "1": 1 } },
+  "execution_strategy": "batched",
+  "tasks": [
+    { "id": "TASK-001", "title": "Quitar stat-card Posibles Duplicados + campo duplicados",
+      "description": "En adhesiones-listado.component.ts: quitar la stat-card 'Posibles Duplicados' y el campo 'duplicados' del StatsDto (interface + valor inicial).",
+      "status": "done", "layer": 1, "depends_on": [],
+      "files": ["src/app/features/adhesiones/adhesiones-listado.component.ts"],
+      "acceptance_criteria": ["AC-1: sin card Posibles Duplicados", "AC-3: StatsDto sin duplicados", "GATE: build+tests verdes"],
+      "references": ["US-1"] }
+  ],
+  "dependency_graph": { "by_layer": { "1": { "level_0": ["TASK-001"] } } }
+}
