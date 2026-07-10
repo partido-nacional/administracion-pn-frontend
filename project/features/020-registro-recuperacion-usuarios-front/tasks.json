@@ -6,7 +6,7 @@
   },
   "stats": {
     "total": 7,
-    "done": 4,
+    "done": 7,
     "by_layer": {
       "1": 4,
       "2": 3
@@ -108,7 +108,7 @@
       "id": "TASK-005",
       "title": "Code review",
       "description": "Sin código muerto, navegación de modos consistente, sin credenciales demo, tipado correcto de los flujos.",
-      "status": "pending",
+      "status": "done",
       "layer": 2,
       "depends_on": [
         "TASK-001",
@@ -132,7 +132,7 @@
       "id": "TASK-006",
       "title": "Performance review",
       "description": "Una request por acción; sin cargas redundantes; refresco de usuarios sólo tras eliminar.",
-      "status": "pending",
+      "status": "done",
       "layer": 2,
       "depends_on": [
         "TASK-001",
@@ -154,7 +154,7 @@
       "id": "TASK-007",
       "title": "Security review",
       "description": "Sin autologin sin verificar; no se guarda sesión en registro/verificar/recuperar/resetear; mensajes neutros de recuperación; credenciales demo removidas; rolesGuard de /usuarios intacto.",
-      "status": "pending",
+      "status": "done",
       "layer": 2,
       "depends_on": [
         "TASK-001",
