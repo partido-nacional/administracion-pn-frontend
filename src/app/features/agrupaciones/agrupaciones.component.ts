@@ -2,6 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { Subject, debounceTime } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { PageTitleService } from '../../core/page-title.service';
 import { FichasAgrupacionComponent } from './fichas-agrupacion.component';
@@ -26,7 +27,7 @@ interface Agrupacion {
   antecedentes?: string; resolucionComision?: string;
   sublema1?: string; sublema2?: string; sublema3?: string; sublema4?: string; sublema5?: string;
 }
-interface PadronItem { serie: string; nro: number; primerNombre: string; segundoNombre: string; primerApellido: string; segundoApellido: string; }
+interface PadronItem { serie: string; nro: string; primerNombre: string; segundoNombre: string; primerApellido: string; segundoApellido: string; }
 
 type Tab = 'todas' | 'pendientes' | 'fichas' | 'periodo' | 'padron';
 
@@ -284,28 +285,31 @@ type Tab = 'todas' | 'pendientes' | 'fichas' | 'periodo' | 'padron';
 
 
     @if (tab()==='padron') {
+      <div class="sort-hint">
+        💡 Padrón departamental (~2,7M registros). Filtrá por prefijo y ordená por columna (server-side).
+      </div>
       <div class="card"><div class="card-body" style="padding:0;overflow-x:auto">
         <table class="table">
           <thead>
             <tr class="filter-row">
-              <th>
-                <select class="column-filter" [ngModel]="fPadSerie()" (ngModelChange)="fPadSerie.set($event)">
-                  <option value="">Todas</option>
-                  @for (s of padronSeries(); track s) { <option [ngValue]="s">{{ s }}</option> }
-                </select>
-              </th>
-              <th><input class="column-filter" [ngModel]="fPadNro()"    (ngModelChange)="fPadNro.set($event)"    placeholder="Filtrar..."></th>
-              <th><input class="column-filter" [ngModel]="fPadPNom()"   (ngModelChange)="fPadPNom.set($event)"   placeholder="Filtrar..."></th>
-              <th><input class="column-filter" [ngModel]="fPadSNom()"   (ngModelChange)="fPadSNom.set($event)"   placeholder="Filtrar..."></th>
-              <th><input class="column-filter" [ngModel]="fPadPApe()"   (ngModelChange)="fPadPApe.set($event)"   placeholder="Filtrar..."></th>
-              <th><input class="column-filter" [ngModel]="fPadSApe()"   (ngModelChange)="fPadSApe.set($event)"   placeholder="Filtrar..."></th>
+              <th><input class="column-filter" [ngModel]="fPadSerie()" (ngModelChange)="fPadSerie.set($event); onFilterPad()" placeholder="Filtrar..."></th>
+              <th><input class="column-filter" [ngModel]="fPadNro()"   (ngModelChange)="fPadNro.set($event); onFilterPad()"   placeholder="Filtrar..."></th>
+              <th><input class="column-filter" [ngModel]="fPadPNom()"  (ngModelChange)="fPadPNom.set($event); onFilterPad()"  placeholder="Filtrar..."></th>
+              <th></th>
+              <th><input class="column-filter" [ngModel]="fPadPApe()"  (ngModelChange)="fPadPApe.set($event); onFilterPad()"  placeholder="Filtrar..."></th>
+              <th></th>
             </tr>
             <tr>
-              <th>Serie</th><th>Nro.</th><th>Primer Nombre</th><th>Segundo Nombre</th><th>Primer Apellido</th><th>Segundo Apellido</th>
+              <th class="sortable" (click)="sortPad('serie')">Serie <span class="ind">{{ arrowPad('serie') }}</span></th>
+              <th class="sortable" (click)="sortPad('numero')">Nro. <span class="ind">{{ arrowPad('numero') }}</span></th>
+              <th class="sortable" (click)="sortPad('nombres')">Primer Nombre <span class="ind">{{ arrowPad('nombres') }}</span></th>
+              <th>Segundo Nombre</th>
+              <th class="sortable" (click)="sortPad('apellidos')">Primer Apellido <span class="ind">{{ arrowPad('apellidos') }}</span></th>
+              <th>Segundo Apellido</th>
             </tr>
           </thead>
           <tbody>
-            @for (p of padronFiltrado(); track $index) {
+            @for (p of padron(); track $index) {
               <tr>
                 <td>{{ p.serie }}</td>
                 <td>{{ p.nro }}</td>
@@ -315,14 +319,18 @@ type Tab = 'todas' | 'pendientes' | 'fichas' | 'periodo' | 'padron';
                 <td>{{ p.segundoApellido }}</td>
               </tr>
             } @empty {
-              <tr><td colspan="6"><div class="empty-state"><div class="empty-state-text">No hay resultados para el filtro.</div></div></td></tr>
+              <tr><td colspan="6"><div class="empty-state"><div class="empty-state-text">
+                {{ padLoading() ? 'Cargando…' : 'No hay resultados para el filtro.' }}
+              </div></div></td></tr>
             }
           </tbody>
         </table>
-        <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 18px; font-size:13px; color:#666; border-top:1px solid #eef1f5">
+        <div style="display:flex; align-items:center; gap:12px; padding:8px 18px; border-top:1px solid #eef1f5">
           <button class="btn btn-secondary btn-sm" (click)="limpiarPadron()">Limpiar Filtro</button>
-          <span>Mostrando {{ padronFiltrado().length }} de {{ padron().length }} entradas</span>
         </div>
+        <app-paginator
+          [total]="padTotal()" [page]="padPage()" [pageSize]="padPageSize()"
+          (pageChange)="onPadPage($event)" (pageSizeChange)="onPadPageSize($event)" />
       </div></div>
     }
   `,
@@ -373,33 +381,49 @@ export class AgrupacionesComponent {
   agrupaciones = signal<Agrupacion[]>([]);
   padron = signal<PadronItem[]>([]);
 
+  // Filtros del padrón (server-side). El backend filtra por prefijo: serie, nro,
+  // nombres (→ primer nombre) y apellidos (→ primer apellido).
   fPadSerie = signal(''); fPadNro = signal('');
-  fPadPNom = signal('');  fPadSNom = signal('');
-  fPadPApe = signal('');  fPadSApe = signal('');
+  fPadPNom = signal('');  fPadPApe = signal('');
 
-  padronSeries = computed(() => Array.from(new Set(this.padron().map(p => p.serie).filter(Boolean))).sort());
+  // Paginación/orden del padrón (independiente de la grilla "Todas").
+  padTotal = signal(0);
+  padPage = signal(1);
+  padPageSize = signal(DEFAULT_PAGE_SIZE);
+  padSort = signal<string | undefined>(undefined); // default backend: apellidos asc
+  padOrder = signal<SortOrder>('asc');
+  padLoading = signal(false);
+  padLoaded = signal(false);
+  private padFilter$ = new Subject<void>();
+
+  private padQuery(): GridQuery {
+    return {
+      page: this.padPage(), pageSize: this.padPageSize(),
+      sort: this.padSort(), order: this.padOrder(),
+      filters: {
+        serie: this.fPadSerie(), nro: this.fPadNro(),
+        nombres: this.fPadPNom(), apellidos: this.fPadPApe(),
+      },
+    };
+  }
 
   limpiarPadron() {
     this.fPadSerie.set(''); this.fPadNro.set('');
-    this.fPadPNom.set('');  this.fPadSNom.set('');
-    this.fPadPApe.set('');  this.fPadSApe.set('');
+    this.fPadPNom.set('');  this.fPadPApe.set('');
+    this.padPage.set(1);
+    this.loadPadron();
   }
 
-  padronFiltrado = computed(() => {
-    const norm = (s: any) => (s ?? '').toString().toLowerCase();
-    const m = (val: any, q: string) => !q || norm(val).includes(q.toLowerCase());
-    const fS = this.fPadSerie(), fN = this.fPadNro(),
-          fPN = this.fPadPNom(), fSN = this.fPadSNom(),
-          fPA = this.fPadPApe(), fSA = this.fPadSApe();
-    return this.padron().filter(p =>
-      (!fS || p.serie === fS) &&
-      m(p.nro, fN) &&
-      m(p.primerNombre, fPN) &&
-      m(p.segundoNombre, fSN) &&
-      m(p.primerApellido, fPA) &&
-      m(p.segundoApellido, fSA)
-    );
-  });
+  onFilterPad() { this.padFilter$.next(); }
+  onPadPage(p: number) { this.padPage.set(p); this.loadPadron(); }
+  onPadPageSize(s: number) { this.padPageSize.set(s); this.padPage.set(1); this.loadPadron(); }
+  sortPad(field: string) {
+    if (this.padSort() === field) this.padOrder.set(this.padOrder() === 'asc' ? 'desc' : 'asc');
+    else { this.padSort.set(field); this.padOrder.set('asc'); }
+    this.padPage.set(1); this.loadPadron();
+  }
+  arrowPad(field: string) { return this.padSort() !== field ? '' : (this.padOrder() === 'asc' ? '▲' : '▼'); }
+
   expandido = signal<number | null>(null);
 
   total = signal(0);
@@ -428,12 +452,13 @@ export class AgrupacionesComponent {
 
   constructor() {
     this.titleSvc.set('Agrupaciones');
+    this.padFilter$.pipe(debounceTime(300)).subscribe(() => { this.padPage.set(1); this.loadPadron(); });
     this.loadTodas();
   }
 
   setTab(t: Tab) {
     this.tab.set(t);
-    if (t === 'padron' && this.padron().length === 0) this.loadPadron();
+    if (t === 'padron' && !this.padLoaded()) { this.padLoaded.set(true); this.loadPadron(); }
     const label =
       t === 'todas' ? 'Agrupaciones' :
       t === 'pendientes' ? 'Agrupaciones — Pendientes' :
@@ -585,5 +610,12 @@ export class AgrupacionesComponent {
         error: () => this.loadingTodas.set(false),
       });
   }
-  loadPadron() { this.http.get<PadronItem[]>(`${environment.apiUrl}/agrupaciones/padron`).subscribe(x => this.padron.set(x)); }
+  loadPadron() {
+    this.padLoading.set(true);
+    this.http.get<PagedResult<PadronItem>>(`${environment.apiUrl}/agrupaciones/padron`, { params: buildPagedParams(this.padQuery()) })
+      .subscribe({
+        next: r => { this.padron.set(r.items); this.padTotal.set(r.total); this.padLoading.set(false); },
+        error: () => this.padLoading.set(false),
+      });
+  }
 }
