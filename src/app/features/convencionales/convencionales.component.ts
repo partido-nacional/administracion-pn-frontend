@@ -107,15 +107,18 @@ type ModalMode = 'nueva' | 'editar';
       <div class="card"><div class="card-body" style="padding:0;overflow-x:auto">
         <table class="table">
           <thead>
-            <tr><th>ID</th><th>Nombre de Lista</th><th>Tipo</th><th>Agrupación</th><th></th></tr>
+            <tr><th>Lista</th><th>Depto.</th><th>Sublema</th><th>Presidente</th><th>Sector</th><th>Votos</th><th>Agrup.</th><th></th></tr>
           </thead>
           <tbody>
             @for (l of filtrarListas(); track l.id) {
               <tr>
-                <td>{{ l.id }}</td>
                 <td><strong>{{ l.nombre }}</strong></td>
-                <td>{{ l.tipo }}</td>
-                <td>{{ l.agrupacionId != null ? '#' + l.agrupacionId : '—' }}</td>
+                <td><span class="badge dept">{{ l.departamento || '—' }}</span></td>
+                <td>{{ l.sublema || '—' }}</td>
+                <td>{{ l.presidente || '—' }}</td>
+                <td>{{ l.sector || '—' }}</td>
+                <td>{{ l.votos != null ? l.votos : '—' }}</td>
+                <td>{{ l.codAgrup != null ? l.codAgrup : (l.agrupacionId != null ? '#' + l.agrupacionId : '—') }}</td>
                 <td>
                   <button class="btn-pencil" (click)="abrirEditarLista(l)" title="Editar">
                     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -126,7 +129,7 @@ type ModalMode = 'nueva' | 'editar';
                 </td>
               </tr>
             } @empty {
-              <tr><td colspan="5"><div class="empty-state"><div class="empty-state-text">Sin listas ODN</div></div></td></tr>
+              <tr><td colspan="8"><div class="empty-state"><div class="empty-state-text">Sin listas ODN</div></div></td></tr>
             }
           </tbody>
         </table>
@@ -141,13 +144,13 @@ type ModalMode = 'nueva' | 'editar';
         [saveLabel]="modalMode()==='editar' ? 'Guardar cambios' : 'Crear'"
         (save)="guardar()" (cancel)="cerrarModal()">
             <div class="nv-grid">
-              <div class="fg full"><label>Nombre de Lista *</label><input [(ngModel)]="form.nombre" name="l-nombre"></div>
-              <div class="fg"><label>Tipo</label>
-                <select [(ngModel)]="form.tipo" name="l-tipo">
-                  <option value="ODN">ODN</option>
-                </select>
-              </div>
-              <div class="fg"><label>Agrupación ID</label><input type="number" [(ngModel)]="form.agrupacionId" name="l-agr"></div>
+              <div class="fg"><label>Lista (nombre) *</label><input [(ngModel)]="form.nombre" name="l-nombre"></div>
+              <div class="fg"><label>Departamento</label><input [(ngModel)]="form.departamento" name="l-depto"></div>
+              <div class="fg full"><label>Sublema</label><input [(ngModel)]="form.sublema" name="l-sublema"></div>
+              <div class="fg"><label>Presidente</label><input [(ngModel)]="form.presidente" name="l-pres"></div>
+              <div class="fg"><label>Sector</label><input [(ngModel)]="form.sector" name="l-sector"></div>
+              <div class="fg"><label>Votos</label><input type="number" [(ngModel)]="form.votos" name="l-votos"></div>
+              <div class="fg"><label>Cod. Agrup.</label><input type="number" [(ngModel)]="form.codAgrup" name="l-codagr"></div>
             </div>
       </app-modal-form>
     }
@@ -210,7 +213,11 @@ export class ConvencionalesComponent {
     const arr = this.odn();
     if (!this.q) return arr;
     const q = this.q.toLowerCase();
-    return arr.filter(l => l.nombre.toLowerCase().includes(q));
+    return arr.filter(l =>
+      l.nombre.toLowerCase().includes(q) ||
+      (l.sublema || '').toLowerCase().includes(q) ||
+      (l.presidente || '').toLowerCase().includes(q) ||
+      (l.departamento || '').toLowerCase().includes(q));
   }
 
   // ── helpers de fecha ──────────────────────────────────────
@@ -226,13 +233,17 @@ export class ConvencionalesComponent {
 
   // ── Lista ─────────────────────────────────────────────────
   abrirNuevaLista() {
-    this.form = { nombre: '', tipo: 'ODN', agrupacionId: null };
+    this.form = { nombre: '', tipo: 'ODN', agrupacionId: null, departamento: '', sublema: '', presidente: '', sector: '', votos: null, codAgrup: null };
     this.modalError.set(''); this.editId.set(null);
     this.modalMode.set('nueva'); this.modalKind.set('lista');
   }
 
   abrirEditarLista(l: ListaDto) {
-    this.form = { nombre: l.nombre, tipo: l.tipo || 'ODN', agrupacionId: l.agrupacionId ?? null };
+    this.form = {
+      nombre: l.nombre, tipo: l.tipo || 'ODN', agrupacionId: l.agrupacionId ?? null,
+      departamento: l.departamento || '', sublema: l.sublema || '', presidente: l.presidente || '',
+      sector: l.sector || '', votos: l.votos ?? null, codAgrup: l.codAgrup ?? null,
+    };
     this.modalError.set(''); this.editId.set(l.id);
     this.modalMode.set('editar'); this.modalKind.set('lista');
   }
@@ -246,10 +257,18 @@ export class ConvencionalesComponent {
   private guardarLista() {
     if (!this.form.nombre?.trim()) { this.modalError.set('El nombre de la lista es obligatorio.'); return; }
     const tipo = (this.form.tipo || 'ODN') as ListaTipo;
+    const num = (v: any) => v == null || v === '' ? null : Number(v);
+    const str = (v: any) => v?.toString().trim() ? v.trim() : null;
     const input: ListaInput = {
       nombre: this.form.nombre.trim(),
       tipo,
-      agrupacionId: this.form.agrupacionId == null || this.form.agrupacionId === '' ? null : Number(this.form.agrupacionId),
+      agrupacionId: num(this.form.agrupacionId),
+      departamento: str(this.form.departamento),
+      sublema: str(this.form.sublema),
+      presidente: str(this.form.presidente),
+      sector: str(this.form.sector),
+      votos: num(this.form.votos),
+      codAgrup: num(this.form.codAgrup),
     };
     this.modalBusy.set(true); this.modalError.set('');
     const id = this.editId();

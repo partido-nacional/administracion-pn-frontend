@@ -40,6 +40,13 @@ export interface ListaDto {
   nombre: string;
   tipo: ListaTipo | string;
   agrupacionId?: number | null;
+  // Datos electorales ODN (feature 021)
+  departamento?: string | null;
+  sublema?: string | null;
+  presidente?: string | null;
+  sector?: string | null;
+  votos?: number | null;
+  codAgrup?: number | null;
 }
 
 /** Payload de alta/edición de una Lista. */
@@ -47,6 +54,12 @@ export interface ListaInput {
   nombre: string;
   tipo: ListaTipo | string;
   agrupacionId?: number | null;
+  departamento?: string | null;
+  sublema?: string | null;
+  presidente?: string | null;
+  sector?: string | null;
+  votos?: number | null;
+  codAgrup?: number | null;
 }
 
 /** Contadores del tablero de Convencionales. */
