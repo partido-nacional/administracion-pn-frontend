@@ -38,7 +38,10 @@ describe('ConvencionalesComponent', () => {
     fixture.detectChanges();
   });
 
-  it('carga nacionales y no renderiza botones "no implementado"', () => {
+  it('arranca en la tab "Todos" y carga Nacionales al abrir esa tab (lazy)', () => {
+    // Tab por defecto = todos (listado embebido). Nacionales se carga on-demand.
+    expect(cmp.tab()).toBe('todos');
+    cmp.setTab('nacionales');
     expect(svc.getNacionales).toHaveBeenCalled();
     expect(cmp.nacionales().length).toBe(1);
     expect(fixture.nativeElement.innerHTML).not.toContain('no implementado');

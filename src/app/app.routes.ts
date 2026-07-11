@@ -29,12 +29,13 @@ export const routes: Routes = [
       { path: 'listados/intendentes-pn', canActivate: [rolesGuard('Secretaria','Hacienda','IT')], loadComponent: () => import('./features/listados/intendentes-pn.component').then(m => m.IntendentesPnComponent) },
       { path: 'listados/alcaldes', canActivate: [rolesGuard('Secretaria','Hacienda','IT')], loadComponent: () => import('./features/listados/alcaldes.component').then(m => m.AlcaldesComponent) },
       { path: 'listados/jovenes', canActivate: [rolesGuard('Secretaria','Hacienda','IT')], loadComponent: () => import('./features/listados/jovenes.component').then(m => m.JovenesComponent) },
-      { path: 'listados/convencionales', canActivate: [rolesGuard('Secretaria','Hacienda','IT')], loadComponent: () => import('./features/listados/convencionales-listado.component').then(m => m.ConvencionalesListadoComponent) },
+      { path: 'listados/convencionales', canActivate: [rolesGuard('Secretaria','Hacienda','IT')], loadComponent: () => import('./features/convencionales/convencionales.component').then(m => m.ConvencionalesComponent) },
       { path: 'listados/directorio', canActivate: [rolesGuard('Secretaria','Hacienda','IT')], loadComponent: () => import('./features/listados/directorio.component').then(m => m.DirectorioComponent) },
       { path: 'debitos', canActivate: [rolesGuard('Hacienda','IT')], loadComponent: () => import('./features/debitos/debitos.component').then(m => m.DebitosComponent) },
       { path: 'organismos', canActivate: [rolesGuard('Secretaria','Hacienda','IT')], loadComponent: () => import('./features/organismos/organismos.component').then(m => m.OrganismosComponent) },
       { path: 'agrupaciones', canActivate: [rolesGuard('Secretaria','Hacienda','IT')], loadComponent: () => import('./features/agrupaciones/agrupaciones.component').then(m => m.AgrupacionesComponent) },
-      { path: 'convencionales', canActivate: [rolesGuard('Secretaria','Hacienda','IT')], loadComponent: () => import('./features/convencionales/convencionales.component').then(m => m.ConvencionalesComponent) },
+      // Convencionales quedó unificado bajo Listados → Convencionales (tabs Todos/Nacionales/Departamentales/Listas ODN).
+      { path: 'convencionales', redirectTo: 'listados/convencionales', pathMatch: 'full' },
       { path: 'usuarios', canActivate: [adminGuard], loadComponent: () => import('./features/usuarios/usuarios.component').then(m => m.UsuariosComponent) }
     ]
   },
