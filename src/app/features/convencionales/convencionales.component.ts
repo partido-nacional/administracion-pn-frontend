@@ -6,6 +6,7 @@ import { environment } from '../../../environments/environment';
 import { PageTitleService } from '../../core/page-title.service';
 import { ConvencionalesService } from '../../core/services/convencionales.service';
 import { ModalFormComponent } from '../../shared/components/modal-form/modal-form.component';
+import { ConvencionalesListadoComponent } from '../listados/convencionales-listado.component';
 import {
   ConvencionalDto, ConvencionalStats,
   ListaDto, ListaInput, ListaTipo,
@@ -14,20 +15,25 @@ import {
 /** Display-only de la tab Departamentales: shape heredado. */
 interface ConvDisplay { id: number; nombre: string; lista: string; codigoLrf: string; departamento: string; cargoLista: string; contacto: string; }
 
-type Tab = 'nacionales' | 'departamentales' | 'odn';
+type Tab = 'todos' | 'nacionales' | 'departamentales' | 'odn';
 type ModalKind = 'lista'; // Convencionales es solo lectura (feature 019); el modal solo edita Listas ODN.
 type ModalMode = 'nueva' | 'editar';
 
 @Component({
   selector: 'app-convencionales',
   standalone: true,
-  imports: [CommonModule, FormsModule, ModalFormComponent],
+  imports: [CommonModule, FormsModule, ModalFormComponent, ConvencionalesListadoComponent],
   template: `
     <div class="tabs">
+      <a class="tab" [class.active]="tab()==='todos'"           (click)="setTab('todos')">Todos</a>
       <a class="tab" [class.active]="tab()==='nacionales'"      (click)="setTab('nacionales')">Nacionales</a>
       <a class="tab" [class.active]="tab()==='departamentales'" (click)="setTab('departamentales')">Departamentales</a>
       <a class="tab" [class.active]="tab()==='odn'"             (click)="setTab('odn')">Listas ODN</a>
     </div>
+
+    @if (tab()==='todos') {
+      <app-listados-convencionales></app-listados-convencionales>
+    }
 
     @if (tab()==='nacionales') {
       <div class="stats-grid" style="margin-top:20px">
@@ -161,7 +167,7 @@ export class ConvencionalesComponent {
   private titleSvc = inject(PageTitleService);
   private svc = inject(ConvencionalesService);
 
-  tab = signal<Tab>('nacionales');
+  tab = signal<Tab>('todos');
   q = '';
 
   nacionales = signal<ConvencionalDto[]>([]);
@@ -182,11 +188,11 @@ export class ConvencionalesComponent {
   constructor() {
     this.titleSvc.set('Convencionales');
     this.svc.getStats().subscribe(s => this.stats.set(s));
-    this.loadNacionales();
   }
 
   setTab(t: Tab) {
     this.tab.set(t);
+    if (t === 'nacionales' && this.nacionales().length === 0) this.loadNacionales();
     if (t === 'departamentales' && this.departamentales().length === 0)
       this.http.get<ConvDisplay[]>(`${environment.apiUrl}/convencionales/departamentales`).subscribe(x => this.departamentales.set(x));
     if (t === 'odn' && this.odn().length === 0) this.loadListas('ODN');
