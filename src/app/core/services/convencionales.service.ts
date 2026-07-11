@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
-  ConvencionalDto, ConvencionalInput, ConvencionalStats,
+  ConvencionalDto, ConvencionalStats,
   ListaDto, ListaInput, ListaTipo,
 } from '../models/convencionales';
 
@@ -30,14 +30,8 @@ export class ConvencionalesService {
     return this.http.get<ListaDto[]>(`${this.base}/listas/${tipo.toLowerCase()}`);
   }
 
-  // ── Convencional: alta / edición ──────────────────────────
-  createConvencional(input: ConvencionalInput): Observable<ConvencionalDto> {
-    return this.http.post<ConvencionalDto>(this.base, input);
-  }
-
-  updateConvencional(id: number, input: ConvencionalInput): Observable<ConvencionalDto> {
-    return this.http.put<ConvencionalDto>(`${this.base}/${id}`, input);
-  }
+  // Convencionales es solo lectura (feature 019): es un join sobre MiembrosOrganismo, ya no
+  // una tabla editable. El alta/edición de convencionales se retiró.
 
   // ── Lista: alta / edición ─────────────────────────────────
   createLista(input: ListaInput): Observable<ListaDto> {
