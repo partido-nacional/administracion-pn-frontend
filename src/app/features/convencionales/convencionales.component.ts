@@ -7,7 +7,7 @@ import { PageTitleService } from '../../core/page-title.service';
 import { ConvencionalesService } from '../../core/services/convencionales.service';
 import { ModalFormComponent } from '../../shared/components/modal-form/modal-form.component';
 import {
-  ConvencionalDto, ConvencionalInput, ConvencionalStats,
+  ConvencionalDto, ConvencionalStats,
   ListaDto, ListaInput, ListaTipo,
 } from '../../core/models/convencionales';
 
@@ -15,7 +15,7 @@ import {
 interface ConvDisplay { id: number; nombre: string; lista: string; codigoLrf: string; departamento: string; cargoLista: string; contacto: string; }
 
 type Tab = 'nacionales' | 'departamentales' | 'odn';
-type ModalKind = 'convencional' | 'lista';
+type ModalKind = 'lista'; // Convencionales es solo lectura (feature 019); el modal solo edita Listas ODN.
 type ModalMode = 'nueva' | 'editar';
 
 @Component({
@@ -43,13 +43,12 @@ type ModalMode = 'nueva' | 'editar';
             <input class="search-input" placeholder="Buscar por organismo, posición, departamento…" [(ngModel)]="q">
           </div>
         </div>
-        <button class="btn btn-primary" (click)="abrirNuevoConvencional()">+ Nuevo Convencional</button>
       </div>
 
       <div class="card"><div class="card-body" style="padding:0;overflow-x:auto">
         <table class="table">
           <thead>
-            <tr><th>ID</th><th>Contacto</th><th>Departamento</th><th>Condición</th><th>Adherente</th><th>Organismo</th><th>Posición</th><th>Fecha Inicio</th><th>Fecha Fin</th><th></th></tr>
+            <tr><th>ID</th><th>Contacto</th><th>Departamento</th><th>Condición</th><th>Adherente</th><th>Organismo</th><th>Posición</th><th>Fecha Inicio</th><th>Fecha Fin</th></tr>
           </thead>
           <tbody>
             @for (c of filtrarNacionales(); track c.id) {
@@ -63,17 +62,9 @@ type ModalMode = 'nueva' | 'editar';
                 <td>{{ c.posicion || '—' }}</td>
                 <td>{{ fmtFecha(c.fechaInicio) }}</td>
                 <td>{{ fmtFecha(c.fechaFin) }}</td>
-                <td>
-                  <button class="btn-pencil" (click)="abrirEditarConvencional(c)" title="Editar">
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                      <path d="M12 20h9"/>
-                      <path d="M16.5 3.5a2.121 2.121 0 113 3L7 19l-4 1 1-4 12.5-12.5z"/>
-                    </svg>
-                  </button>
-                </td>
               </tr>
             } @empty {
-              <tr><td colspan="10"><div class="empty-state"><div class="empty-state-text">Sin convencionales nacionales</div></div></td></tr>
+              <tr><td colspan="9"><div class="empty-state"><div class="empty-state-text">Sin convencionales nacionales</div></div></td></tr>
             }
           </tbody>
         </table>
@@ -149,39 +140,15 @@ type ModalMode = 'nueva' | 'editar';
         [error]="modalError()"
         [saveLabel]="modalMode()==='editar' ? 'Guardar cambios' : 'Crear'"
         (save)="guardar()" (cancel)="cerrarModal()">
-            @if (modalKind()==='convencional') {
-              <div class="nv-grid">
-                <div class="fg"><label>Contacto ID *</label><input type="number" [(ngModel)]="form.contactoId" name="c-contacto"></div>
-                <div class="fg"><label>Tipo</label>
-                  <select [(ngModel)]="form.tipo" name="c-tipo">
-                    <option value="Nacional">Nacional</option>
-                    <option value="Departamental">Departamental</option>
-                  </select>
-                </div>
-                <div class="fg"><label>Departamento</label>
-                  <select [(ngModel)]="form.departamento" name="c-depto">
-                    <option value="">—</option>
-                    @for (d of departamentos; track d) { <option [ngValue]="d">{{ d }}</option> }
-                  </select>
-                </div>
-                <div class="fg"><label>Condición</label><input [(ngModel)]="form.condicion" name="c-cond"></div>
-                <div class="fg"><label>Organismo</label><input [(ngModel)]="form.nombreOrganismo" name="c-org"></div>
-                <div class="fg"><label>Posición</label><input [(ngModel)]="form.posicion" name="c-pos"></div>
-                <div class="fg"><label>Fecha Inicio *</label><input type="date" [(ngModel)]="form.fechaInicio" name="c-fini"></div>
-                <div class="fg"><label>Fecha Fin</label><input type="date" [(ngModel)]="form.fechaFin" name="c-ffin"></div>
-                <div class="fg check"><label><input type="checkbox" [(ngModel)]="form.adherente" name="c-adh"> Adherente</label></div>
+            <div class="nv-grid">
+              <div class="fg full"><label>Nombre de Lista *</label><input [(ngModel)]="form.nombre" name="l-nombre"></div>
+              <div class="fg"><label>Tipo</label>
+                <select [(ngModel)]="form.tipo" name="l-tipo">
+                  <option value="ODN">ODN</option>
+                </select>
               </div>
-            } @else {
-              <div class="nv-grid">
-                <div class="fg full"><label>Nombre de Lista *</label><input [(ngModel)]="form.nombre" name="l-nombre"></div>
-                <div class="fg"><label>Tipo</label>
-                  <select [(ngModel)]="form.tipo" name="l-tipo">
-                    <option value="ODN">ODN</option>
-                  </select>
-                </div>
-                <div class="fg"><label>Agrupación ID</label><input type="number" [(ngModel)]="form.agrupacionId" name="l-agr"></div>
-              </div>
-            }
+              <div class="fg"><label>Agrupación ID</label><input type="number" [(ngModel)]="form.agrupacionId" name="l-agr"></div>
+            </div>
       </app-modal-form>
     }
   `,
@@ -193,12 +160,6 @@ export class ConvencionalesComponent {
 
   tab = signal<Tab>('nacionales');
   q = '';
-
-  departamentos = [
-    'Artigas','Canelones','Cerro Largo','Colonia','Durazno','Flores','Florida',
-    'Lavalleja','Maldonado','Montevideo','Paysandú','Río Negro','Rivera','Rocha',
-    'Salto','San José','Soriano','Tacuarembó','Treinta y Tres','Nacional'
-  ];
 
   nacionales = signal<ConvencionalDto[]>([]);
   departamentales = signal<ConvDisplay[]>([]);
@@ -213,12 +174,7 @@ export class ConvencionalesComponent {
   modalError = signal('');
   form: any = {};
 
-  tituloModal = computed(() => {
-    const acc = this.modalMode() === 'editar' ? 'Editar' : 'Nuevo';
-    return this.modalKind() === 'lista'
-      ? `${this.modalMode() === 'editar' ? 'Editar' : 'Nueva'} Lista`
-      : `${acc} Convencional`;
-  });
+  tituloModal = computed(() => `${this.modalMode() === 'editar' ? 'Editar' : 'Nueva'} Lista`);
 
   constructor() {
     this.titleSvc.set('Convencionales');
@@ -264,38 +220,8 @@ export class ConvencionalesComponent {
     if (/^\d{4}-\d{2}-\d{2}/.test(s)) { const [y, m, d] = s.slice(0, 10).split('-'); return `${d}/${m}/${y}`; }
     return s;
   }
-  private toInputDate(v?: string | null): string {
-    if (!v) return '';
-    const s = String(v);
-    if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
-    const mm = s.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
-    return mm ? `${mm[3]}-${mm[2]}-${mm[1]}` : '';
-  }
   private extractError(err: any, fallback: string): string {
     return err?.error?.message || err?.error?.errorCode || err?.message || fallback;
-  }
-
-  // ── Convencional ──────────────────────────────────────────
-  abrirNuevoConvencional() {
-    this.form = { contactoId: null, tipo: 'Nacional', departamento: '', condicion: '', nombreOrganismo: '', posicion: '', fechaInicio: '', fechaFin: '', adherente: false };
-    this.modalError.set(''); this.editId.set(null);
-    this.modalMode.set('nueva'); this.modalKind.set('convencional');
-  }
-
-  abrirEditarConvencional(c: ConvencionalDto) {
-    this.form = {
-      contactoId: c.contactoId,
-      tipo: c.tipo || 'Nacional',
-      departamento: c.departamento || '',
-      condicion: c.condicion || '',
-      nombreOrganismo: c.nombreOrganismo || '',
-      posicion: c.posicion || '',
-      fechaInicio: this.toInputDate(c.fechaInicio),
-      fechaFin: this.toInputDate(c.fechaFin),
-      adherente: !!c.adherente,
-    };
-    this.modalError.set(''); this.editId.set(c.id);
-    this.modalMode.set('editar'); this.modalKind.set('convencional');
   }
 
   // ── Lista ─────────────────────────────────────────────────
@@ -315,35 +241,7 @@ export class ConvencionalesComponent {
     this.modalKind.set(null); this.editId.set(null); this.modalError.set('');
   }
 
-  guardar() {
-    if (this.modalKind() === 'convencional') this.guardarConvencional();
-    else this.guardarLista();
-  }
-
-  private guardarConvencional() {
-    if (this.form.contactoId == null || this.form.contactoId === '') { this.modalError.set('El Contacto ID es obligatorio.'); return; }
-    if (!this.form.fechaInicio) { this.modalError.set('La Fecha Inicio es obligatoria.'); return; }
-    const input: ConvencionalInput = {
-      contactoId: Number(this.form.contactoId),
-      tipo: this.form.tipo || 'Nacional',
-      departamento: this.form.departamento || null,
-      condicion: this.form.condicion || null,
-      adherente: !!this.form.adherente,
-      nombreOrganismo: this.form.nombreOrganismo || null,
-      posicion: this.form.posicion || null,
-      fechaInicio: this.form.fechaInicio,
-      fechaFin: this.form.fechaFin || null,
-    };
-    this.modalBusy.set(true); this.modalError.set('');
-    const id = this.editId();
-    const req = this.modalMode() === 'editar' && id != null
-      ? this.svc.updateConvencional(id, input)
-      : this.svc.createConvencional(input);
-    req.subscribe({
-      next: () => { this.modalBusy.set(false); this.cerrarModal(); this.loadNacionales(); this.refreshStats(); },
-      error: (err) => { this.modalBusy.set(false); this.modalError.set(this.extractError(err, 'No se pudo guardar el convencional.')); },
-    });
-  }
+  guardar() { this.guardarLista(); }
 
   private guardarLista() {
     if (!this.form.nombre?.trim()) { this.modalError.set('El nombre de la lista es obligatorio.'); return; }
