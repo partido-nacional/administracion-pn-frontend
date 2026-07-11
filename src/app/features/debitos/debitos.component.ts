@@ -75,6 +75,7 @@ const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto'
     <div class="card">
       <div class="card-header">
         <h2 class="card-title">Últimos Débitos Rechazados</h2>
+        <!-- TODO: "Ver todos" pendiente — requiere vista/endpoint de listado completo de débitos rechazados (ver auditoría de pendientes, sección 2) -->
         <a class="btn btn-secondary btn-sm">Ver todos</a>
       </div>
       <div class="card-body" style="padding:0;overflow-x:auto">

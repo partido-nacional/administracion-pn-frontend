@@ -1,7 +1,7 @@
 import { Component, HostListener, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Subject, debounceTime } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { PageTitleService } from '../../core/page-title.service';
@@ -37,10 +37,13 @@ type Tab = 'gestion' | 'listar' | 'ventas' | 'donaciones' | 'form';
       <div class="toolbar" style="flex-wrap:wrap; gap:12px">
         <div class="toolbar-left" style="gap:12px; flex-wrap:wrap; align-items:center">
           <label style="font-size:13px; font-weight:500; color:var(--gray-600)">Fecha desde</label>
-          <input type="date" class="form-input" style="width:150px; padding:6px 10px; font-size:13px">
+          <input type="date" class="form-input" style="width:150px; padding:6px 10px; font-size:13px" [ngModel]="fgDesde()" (ngModelChange)="fgDesde.set($event)" name="fgD">
           <label style="font-size:13px; font-weight:500; color:var(--gray-600)">hasta</label>
-          <input type="date" class="form-input" style="width:150px; padding:6px 10px; font-size:13px">
-          <button class="btn btn-primary" style="padding:6px 16px; font-size:13px">Generar reporte para periodo</button>
+          <input type="date" class="form-input" style="width:150px; padding:6px 10px; font-size:13px" [ngModel]="fgHasta()" (ngModelChange)="fgHasta.set($event)" name="fgH">
+          <button class="btn btn-primary" style="padding:6px 16px; font-size:13px" (click)="loadStats()">Generar reporte para periodo</button>
+          @if (fgDesde() || fgHasta()) {
+            <a class="action-link" style="font-size:13px" (click)="fgDesde.set(''); fgHasta.set(''); loadStats()">Limpiar</a>
+          }
         </div>
       </div>
 
@@ -173,10 +176,13 @@ type Tab = 'gestion' | 'listar' | 'ventas' | 'donaciones' | 'form';
       <div class="toolbar" style="flex-wrap:wrap; gap:12px">
         <div class="toolbar-left" style="gap:12px; flex-wrap:wrap; align-items:center">
           <label style="font-size:13px; font-weight:500; color:var(--gray-600)">Fecha desde</label>
-          <input type="date" class="form-input" style="width:150px; padding:6px 10px; font-size:13px">
+          <input type="date" class="form-input" style="width:150px; padding:6px 10px; font-size:13px" [ngModel]="fvDesde()" (ngModelChange)="fvDesde.set($event)" name="fvD">
           <label style="font-size:13px; font-weight:500; color:var(--gray-600)">hasta</label>
-          <input type="date" class="form-input" style="width:150px; padding:6px 10px; font-size:13px">
-          <button class="btn btn-primary" style="padding:6px 16px; font-size:13px">Filtrar</button>
+          <input type="date" class="form-input" style="width:150px; padding:6px 10px; font-size:13px" [ngModel]="fvHasta()" (ngModelChange)="fvHasta.set($event)" name="fvH">
+          <button class="btn btn-primary" style="padding:6px 16px; font-size:13px" (click)="onFilterVenta()">Filtrar</button>
+          @if (fvDesde() || fvHasta()) {
+            <a class="action-link" style="font-size:13px" (click)="fvDesde.set(''); fvHasta.set(''); onFilterVenta()">Limpiar</a>
+          }
         </div>
         <button class="btn btn-primary" (click)="abrirNuevaVenta()">+ Nueva Venta</button>
       </div>
@@ -217,12 +223,15 @@ type Tab = 'gestion' | 'listar' | 'ventas' | 'donaciones' | 'form';
       <div class="toolbar" style="flex-wrap:wrap; gap:12px">
         <div class="toolbar-left" style="gap:12px; flex-wrap:wrap; align-items:center">
           <label style="font-size:13px; font-weight:500; color:var(--gray-600)">Fecha desde</label>
-          <input type="date" class="form-input" style="width:150px; padding:6px 10px; font-size:13px">
+          <input type="date" class="form-input" style="width:150px; padding:6px 10px; font-size:13px" [ngModel]="fdDesde()" (ngModelChange)="fdDesde.set($event)" name="fdD">
           <label style="font-size:13px; font-weight:500; color:var(--gray-600)">hasta</label>
-          <input type="date" class="form-input" style="width:150px; padding:6px 10px; font-size:13px">
-          <button class="btn btn-primary" style="padding:6px 16px; font-size:13px">Filtrar</button>
+          <input type="date" class="form-input" style="width:150px; padding:6px 10px; font-size:13px" [ngModel]="fdHasta()" (ngModelChange)="fdHasta.set($event)" name="fdH">
+          <button class="btn btn-primary" style="padding:6px 16px; font-size:13px" (click)="onFilterDonacion()">Filtrar</button>
+          @if (fdDesde() || fdHasta()) {
+            <a class="action-link" style="font-size:13px" (click)="fdDesde.set(''); fdHasta.set(''); onFilterDonacion()">Limpiar</a>
+          }
         </div>
-        <button class="btn btn-primary">+ Nueva Donacion</button>
+        <button class="btn btn-primary" (click)="abrirNuevaDonacion()">+ Nueva Donacion</button>
       </div>
 
       <div class="card">
@@ -419,6 +428,39 @@ type Tab = 'gestion' | 'listar' | 'ventas' | 'donaciones' | 'form';
         </div>
       </div>
     }
+
+    @if (modalDonacion()) {
+      <div class="vm-backdrop" (click)="cerrarNuevaDonacion()">
+        <div class="vm" (click)="$event.stopPropagation()">
+          <div class="vm-header">
+            <div class="vm-title">Nueva Donación</div>
+            <button class="vm-close" (click)="cerrarNuevaDonacion()">×</button>
+          </div>
+          <div class="vm-body">
+            <div class="vm-fg">
+              <label>Monto *</label>
+              <input type="number" min="0" step="0.01" [ngModel]="dMonto()" (ngModelChange)="dMonto.set($event)" name="dMonto">
+            </div>
+            <div class="vm-fg">
+              <label>Destinatario *</label>
+              <input [ngModel]="dDestinatario()" (ngModelChange)="dDestinatario.set($event)" name="dDest">
+            </div>
+            <div class="vm-fg">
+              <label>Observaciones</label>
+              <textarea rows="3" [ngModel]="dObservaciones()" (ngModelChange)="dObservaciones.set($event)" name="dObs"></textarea>
+            </div>
+            <small class="vm-info">Se registra automáticamente: <strong>{{ ahora() }}</strong></small>
+            @if (dError()) { <div class="vm-err">{{ dError() }}</div> }
+          </div>
+          <div class="vm-footer">
+            <button class="btn btn-secondary" (click)="cerrarNuevaDonacion()">Cancelar</button>
+            <button class="btn btn-primary" (click)="guardarDonacion()" [disabled]="dBusy()">
+              {{ dBusy() ? 'Guardando…' : 'Guardar donación' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
   `,
   styles: [`
     th.sortable { cursor:pointer; user-select:none; }
@@ -571,6 +613,19 @@ export class ProductosComponent {
     });
   }
 
+  // Rangos de fecha de los toolbars (type=date → 'yyyy-mm-dd')
+  fgDesde = signal(''); fgHasta = signal('');  // gestión (stats)
+  fvDesde = signal(''); fvHasta = signal('');  // ventas
+  fdDesde = signal(''); fdHasta = signal('');  // donaciones
+
+  // Modal Nueva Donación (monetaria)
+  modalDonacion = signal(false);
+  dBusy = signal(false);
+  dError = signal('');
+  dMonto = signal<number | null>(null);
+  dDestinatario = signal('');
+  dObservaciones = signal('');
+
   modalVenta = signal(false);
   vBusy = signal(false);
   vError = signal('');
@@ -694,6 +749,46 @@ export class ProductosComponent {
     });
   }
 
+  abrirNuevaDonacion() {
+    this.dMonto.set(null);
+    this.dDestinatario.set('');
+    this.dObservaciones.set('');
+    this.dError.set('');
+    this.ahora.set(new Date().toLocaleString('es-UY'));
+    this.modalDonacion.set(true);
+  }
+
+  cerrarNuevaDonacion() {
+    this.modalDonacion.set(false);
+    this.dError.set('');
+  }
+
+  guardarDonacion() {
+    const monto = Number(this.dMonto()) || 0;
+    if (monto <= 0) { this.dError.set('El monto debe ser mayor a 0.'); return; }
+    if (!this.dDestinatario().trim()) { this.dError.set('Ingresá un destinatario.'); return; }
+
+    this.dBusy.set(true);
+    this.dError.set('');
+    this.http.post(`${environment.apiUrl}/donaciones`, {
+      monto,
+      tipo: 'Monetaria',
+      destinatario: this.dDestinatario().trim(),
+      observaciones: this.dObservaciones().trim() || null
+    }).subscribe({
+      next: () => {
+        this.dBusy.set(false);
+        this.cerrarNuevaDonacion();
+        this.loadDonaciones();
+        this.loadStats();
+      },
+      error: (err) => {
+        this.dBusy.set(false);
+        this.dError.set(err?.error?.message || err?.message || 'No se pudo guardar la donación.');
+      }
+    });
+  }
+
   tab = signal<Tab>('gestion');
 
   productos = signal<ProductoListado[]>([]);
@@ -772,14 +867,25 @@ export class ProductosComponent {
   private donacionesFilter$ = new Subject<void>();
 
   loadVentas() {
-    const q: GridQuery = { page: this.ventasPage(), pageSize: this.ventasPageSize(), filters: {} };
+    const q: GridQuery = { page: this.ventasPage(), pageSize: this.ventasPageSize(),
+      filters: { desde: this.fvDesde(), hasta: this.fvHasta() } };
     this.http.get<PagedResult<Venta>>(`${environment.apiUrl}/ventas`, { params: buildPagedParams(q) })
       .subscribe({ next: r => { this.ventas.set(r.items); this.ventasTotal.set(r.total); }, error: () => {} });
   }
   loadDonaciones() {
-    const q: GridQuery = { page: this.donacionesPage(), pageSize: this.donacionesPageSize(), filters: {} };
+    const q: GridQuery = { page: this.donacionesPage(), pageSize: this.donacionesPageSize(),
+      filters: { desde: this.fdDesde(), hasta: this.fdHasta() } };
     this.http.get<PagedResult<Donacion>>(`${environment.apiUrl}/donaciones`, { params: buildPagedParams(q) })
       .subscribe({ next: r => { this.donaciones.set(r.items); this.donacionesTotal.set(r.total); }, error: () => {} });
+  }
+
+  /** Stats del período de Gestión (vacío = mes actual, lo resuelve el backend). */
+  loadStats() {
+    let params = new HttpParams();
+    if (this.fgDesde()) params = params.set('desde', this.fgDesde());
+    if (this.fgHasta()) params = params.set('hasta', this.fgHasta());
+    this.http.get<Stats>(`${environment.apiUrl}/productos/stats`, { params })
+      .subscribe(x => this.stats.set(x));
   }
 
   onFilterVenta() { this.ventasFilter$.next(); }
@@ -804,7 +910,7 @@ export class ProductosComponent {
     this.loadMovimientos();
     this.loadVentas();
     this.loadDonaciones();
-    this.http.get<Stats>(`${environment.apiUrl}/productos/stats`).subscribe(x => this.stats.set(x));
+    this.loadStats();
   }
 
   nuevoProducto() { this.formP = { activo: true, precio: 0 }; this.tab.set('form'); }
