@@ -16,7 +16,7 @@ export interface Movimiento {
 export interface Parlamentario {
   cortesia: string; apellidos: string; nombre: string; direccion: string; domicilio: string;
   departamento: string; telMovil: string; mailPartido: string; posOrganismo: string;
-  nombreOrganismo: string; credCivica: string; cedulaId: string; observaciones: string;
+  nombreOrganismo: string; condicion: string; credCivica: string; cedulaId: string; observaciones: string;
 }
 
 export interface IntPN {

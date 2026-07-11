@@ -40,6 +40,13 @@ import { exportarCSV } from '../../core/exportar-csv';
                   <option>Camara de Senadores</option>
                 </select>
               </th>
+              <th>
+                <select class="column-filter" [(ngModel)]="fCondicion" (ngModelChange)="onFilter()">
+                  <option value="">Todas</option>
+                  <option>Titular</option>
+                  <option>Suplente</option>
+                </select>
+              </th>
               <th></th>
               <th></th>
               <th></th>
@@ -55,6 +62,7 @@ import { exportarCSV } from '../../core/exportar-csv';
               <th style="min-width:150px">Mail Partido</th>
               <th style="min-width:140px">Posicion Organismo</th>
               <th style="min-width:140px">Nombre Organismo</th>
+              <th style="min-width:95px" class="sortable" (click)="sortBy('condicion')">Condicion {{ arrow('condicion') }}</th>
               <th style="min-width:85px" class="sortable" (click)="sortBy('credcivica')">Cred. Civica {{ arrow('credcivica') }}</th>
               <th style="min-width:95px" class="sortable" (click)="sortBy('cedulaid')">Cedula Id. {{ arrow('cedulaid') }}</th>
               <th style="min-width:200px">Observaciones</th>
@@ -73,12 +81,13 @@ import { exportarCSV } from '../../core/exportar-csv';
                 <td>{{ p.mailPartido }}</td>
                 <td>{{ p.posOrganismo }}</td>
                 <td>{{ p.nombreOrganismo }}</td>
+                <td><span class="badge">{{ p.condicion }}</span></td>
                 <td>{{ p.credCivica }}</td>
                 <td>{{ p.cedulaId }}</td>
                 <td>{{ p.observaciones }}</td>
               </tr>
             } @empty {
-              <tr><td colspan="13" style="text-align:center; padding:24px; color:var(--gray-500)">
+              <tr><td colspan="14" style="text-align:center; padding:24px; color:var(--gray-500)">
                 {{ loading() ? 'Cargando…' : 'Sin resultados' }}
               </td></tr>
             }
@@ -110,7 +119,7 @@ export class ParlamentariasComponent implements OnInit {
   loading = signal(false);
   exporting = signal(false);
 
-  fApellidos = ''; fNombre = ''; fDepartamento = ''; fPos = ''; fOrg = '';
+  fApellidos = ''; fNombre = ''; fDepartamento = ''; fPos = ''; fOrg = ''; fCondicion = '';
 
   private filter$ = new Subject<void>();
 
@@ -126,7 +135,7 @@ export class ParlamentariasComponent implements OnInit {
       page: this.page(), pageSize: this.pageSize(), sort: this.sort(), order: this.order(), all,
       filters: {
         apellidos: this.fApellidos, nombre: this.fNombre,
-        departamento: this.fDepartamento, pos: this.fPos, org: this.fOrg,
+        departamento: this.fDepartamento, pos: this.fPos, org: this.fOrg, condicion: this.fCondicion,
       },
     };
   }
@@ -161,6 +170,7 @@ export class ParlamentariasComponent implements OnInit {
           { get: 'domicilio', label: 'Domicilio' }, { get: 'departamento', label: 'Departamento' },
           { get: 'telMovil', label: 'Tel. Movil' }, { get: 'mailPartido', label: 'Mail Partido' },
           { get: 'posOrganismo', label: 'Posicion Organismo' }, { get: 'nombreOrganismo', label: 'Nombre Organismo' },
+          { get: 'condicion', label: 'Condicion' },
           { get: 'credCivica', label: 'Cred. Civica' }, { get: 'cedulaId', label: 'Cedula Id.' },
           { get: 'observaciones', label: 'Observaciones' },
         ], 'parlamentarias.csv');
