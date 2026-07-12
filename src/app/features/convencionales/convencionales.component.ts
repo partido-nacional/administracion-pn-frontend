@@ -78,13 +78,22 @@ type ModalMode = 'nueva' | 'editar';
     }
 
     @if (tab()==='departamentales') {
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input class="search-input" placeholder="Buscar por nombre, lista, departamento, cargo…" [(ngModel)]="q">
+          </div>
+        </div>
+      </div>
+
       <div class="card"><div class="card-body" style="padding:0;overflow-x:auto">
         <table class="table">
           <thead>
             <tr><th>ID</th><th>Nombre</th><th>Lista ODD</th><th>Código LRF</th><th>Departamento</th><th>Cargo</th><th>Contacto</th></tr>
           </thead>
           <tbody>
-            @for (c of departamentales(); track c.id) {
+            @for (c of filtrarDepartamentales(); track c.id) {
               <tr>
                 <td>{{ c.id }}</td>
                 <td><strong>{{ c.nombre }}</strong></td>
@@ -94,6 +103,8 @@ type ModalMode = 'nueva' | 'editar';
                 <td>{{ c.cargoLista }}</td>
                 <td><a class="action-link">{{ c.contacto }}</a></td>
               </tr>
+            } @empty {
+              <tr><td colspan="7"><div class="empty-state"><div class="empty-state-text">Sin convencionales departamentales</div></div></td></tr>
             }
           </tbody>
         </table>
@@ -213,6 +224,18 @@ export class ConvencionalesComponent {
       (c.condicion || '').toLowerCase().includes(q) ||
       (c.nombreOrganismo || '').toLowerCase().includes(q) ||
       (c.posicion || '').toLowerCase().includes(q));
+  }
+
+  filtrarDepartamentales() {
+    const arr = this.departamentales();
+    if (!this.q) return arr;
+    const q = this.q.toLowerCase();
+    return arr.filter(c =>
+      (c.nombre || '').toLowerCase().includes(q) ||
+      (c.lista || '').toLowerCase().includes(q) ||
+      (c.departamento || '').toLowerCase().includes(q) ||
+      (c.cargoLista || '').toLowerCase().includes(q) ||
+      (c.contacto || '').toLowerCase().includes(q));
   }
 
   filtrarListas() {

@@ -103,6 +103,10 @@ const DIAS_SEM = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
               <div class="fg"><label>Fecha *</label><input type="date" [(ngModel)]="form.fecha" name="fecha"></div>
               <div class="fg"><label>Hora *</label><input type="time" [(ngModel)]="form.hora" name="hora"></div>
             </div>
+            <div class="row">
+              <div class="fg"><label>Hasta (fecha)</label><input type="date" [(ngModel)]="form.fechaHasta" name="fechaHasta"></div>
+              <div class="fg"><label>Hasta (hora)</label><input type="time" [(ngModel)]="form.horaHasta" name="horaHasta"></div>
+            </div>
             <div class="fg"><label>Tipo</label>
               <select [(ngModel)]="form.tipo" name="tipo">
                 <option value="">—</option>
@@ -292,7 +296,7 @@ export class DashboardComponent {
   modalError = signal('');
   busy = signal(false);
   soloPrivados = signal(false);
-  form: any = { titulo: '', fecha: '', hora: '', tipo: '', descripcion: '', esPublico: true };
+  form: any = { titulo: '', fecha: '', hora: '', fechaHasta: '', horaHasta: '', tipo: '', descripcion: '', esPublico: true };
 
   usuario = computed(() => this.auth.session()?.usuario ?? 'desconocido');
 
@@ -374,7 +378,7 @@ export class DashboardComponent {
   }
 
   abrirCrear(isoDate: string) {
-    this.form = { titulo: '', fecha: isoDate, hora: '09:00', tipo: '', descripcion: '', esPublico: true };
+    this.form = { titulo: '', fecha: isoDate, hora: '09:00', fechaHasta: '', horaHasta: '', tipo: '', descripcion: '', esPublico: true };
     this.modalError.set('');
     this.modal.set('crear');
   }
@@ -387,6 +391,8 @@ export class DashboardComponent {
       titulo: e.titulo,
       fecha: e.fechaInicio.slice(0, 10),
       hora: e.fechaInicio.slice(11, 16),
+      fechaHasta: e.fechaFin ? e.fechaFin.slice(0, 10) : '',
+      horaHasta: e.fechaFin ? e.fechaFin.slice(11, 16) : '',
       tipo: e.tipo || '',
       descripcion: e.descripcion || '',
       esPublico: e.esPublico,
@@ -399,6 +405,13 @@ export class DashboardComponent {
     this.modal.set(null); this.eventoSel.set(null); this.editId.set(null); this.modalError.set('');
   }
 
+  /** Fin opcional: solo si se completó fecha y hora de "Hasta". El backend valida fin > inicio. */
+  private fechaFinForm(): string | null {
+    return this.form.fechaHasta && this.form.horaHasta
+      ? `${this.form.fechaHasta}T${this.form.horaHasta}:00`
+      : null;
+  }
+
   guardarNuevo() {
     if (!this.form.titulo.trim()) { this.modalError.set('El título es obligatorio.'); return; }
     if (!this.form.fecha || !this.form.hora) { this.modalError.set('Fecha y hora son obligatorias.'); return; }
@@ -407,7 +420,7 @@ export class DashboardComponent {
     this.http.post<Evento>(`${environment.apiUrl}/calendario/eventos`, {
       titulo: this.form.titulo.trim(),
       fechaInicio,
-      fechaFin: null,
+      fechaFin: this.fechaFinForm(),
       descripcion: this.form.descripcion || null,
       tipo: this.form.tipo || null,
       creadorNombre: this.usuario(),
@@ -431,7 +444,7 @@ export class DashboardComponent {
     this.http.put(`${environment.apiUrl}/calendario/eventos/${id}`, {
       titulo: this.form.titulo.trim(),
       fechaInicio,
-      fechaFin: null,
+      fechaFin: this.fechaFinForm(),
       descripcion: this.form.descripcion || null,
       tipo: this.form.tipo || null,
       creadorNombre: this.usuario(),
