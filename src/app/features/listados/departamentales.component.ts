@@ -7,8 +7,7 @@ import { PaginatorComponent } from '../../shared/components/paginator/paginator.
 import { ListadosService, ComDep } from '../../core/services/listados.service';
 import { GridQuery, SortOrder, DEFAULT_PAGE_SIZE } from '../../core/models/paged';
 import { exportarCSV } from '../../core/exportar-csv';
-
-const DEPTOS = ['Artigas','Canelones','Cerro Largo','Colonia','Durazno','Flores','Florida','Lavalleja','Maldonado','Montevideo','Paysandu','Rio Negro','Rivera','Rocha','Salto','San Jose','Soriano','Tacuarembo','Treinta y Tres'];
+import { DEPARTAMENTOS } from '../../core/departamentos';
 
 @Component({
   selector: 'app-listados-departamentales',
@@ -86,7 +85,7 @@ const DEPTOS = ['Artigas','Canelones','Cerro Largo','Colonia','Durazno','Flores'
 export class DepartamentalesComponent implements OnInit {
   private svc = inject(ListadosService);
   private titleSvc = inject(PageTitleService);
-  deptos = DEPTOS;
+  deptos = DEPARTAMENTOS;
 
   items = signal<ComDep[]>([]);
   total = signal(0);

@@ -7,6 +7,7 @@ import { PaginatorComponent } from '../../shared/components/paginator/paginator.
 import { ListadosService, IntNac } from '../../core/services/listados.service';
 import { GridQuery, SortOrder, DEFAULT_PAGE_SIZE } from '../../core/models/paged';
 import { exportarCSV } from '../../core/exportar-csv';
+import { DEPARTAMENTOS } from '../../core/departamentos';
 
 @Component({
   selector: 'app-listados-int-nac',
@@ -87,11 +88,7 @@ export class IntendenciasNacComponent implements OnInit {
 
   fApellidos = ''; fNombre = ''; fPos = ''; fDepto = '';
 
-  readonly departamentos = [
-    'Artigas', 'Canelones', 'Cerro Largo', 'Colonia', 'Durazno', 'Flores', 'Florida',
-    'Lavalleja', 'Maldonado', 'Montevideo', 'Paysandú', 'Río Negro', 'Rivera', 'Rocha',
-    'Salto', 'San José', 'Soriano', 'Tacuarembó', 'Treinta y Tres',
-  ];
+  readonly departamentos = DEPARTAMENTOS;
 
   private filter$ = new Subject<void>();
 
