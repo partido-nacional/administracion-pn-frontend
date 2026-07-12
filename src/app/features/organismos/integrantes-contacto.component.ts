@@ -1,8 +1,9 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ContactosService, IntegranteOrganismo } from '../agenda/contactos.service';
 import { PageTitleService } from '../../core/page-title.service';
+import { ToastService } from '../../core/services/toast.service';
 
 @Component({
   selector: 'app-integrantes-contacto',
@@ -11,6 +12,14 @@ import { PageTitleService } from '../../core/page-title.service';
   template: `
     <div class="topbar-inline">
       <a routerLink="/agenda" class="btn btn-secondary">← Volver a contactos</a>
+      @if (hayActiva()) {
+        <button class="btn btn-primary" disabled
+                title="El contacto ya tiene un integrante de organismo vigente. Finalizalo antes de agregar otro.">
+          Nuevo integrante organismo
+        </button>
+      } @else {
+        <a [routerLink]="['/agenda', contactoId, 'organismos', 'nuevo']" class="btn btn-primary">Nuevo integrante organismo</a>
+      }
     </div>
 
     <div class="card">
@@ -33,6 +42,7 @@ import { PageTitleService } from '../../core/page-title.service';
                 <th>Orden</th>
                 <th>Nom. Org.</th>
                 <th>Nota</th>
+                <th>Estado</th>
                 <th></th>
               </tr>
             </thead>
@@ -48,13 +58,22 @@ import { PageTitleService } from '../../core/page-title.service';
                   <td>{{ i.orden ?? '—' }}</td>
                   <td>{{ i.nombreOrganismo || '—' }}</td>
                   <td>{{ i.nota || '—' }}</td>
+                  <td>
+                    @if (i.activo) {
+                      <span class="estado vigente">Vigente</span>
+                    } @else {
+                      <span class="estado finalizada">Finalizada{{ i.fechaFin ? ' · ' + i.fechaFin : '' }}</span>
+                    }
+                  </td>
                   <td (click)="$event.stopPropagation()">
-                    <button class="btn btn-sm btn-danger" (click)="eliminar(i.id)">Eliminar</button>
+                    @if (i.activo) {
+                      <button class="btn btn-sm btn-danger" (click)="finalizar(i.id)">Finalizar</button>
+                    }
                   </td>
                 </tr>
                 @if (expandedId() === i.id) {
                   <tr class="detalle-row">
-                    <td colspan="10">
+                    <td colspan="11">
                       <div class="detalle-wrap">
                         <div class="detalle-section">
                           <div class="detalle-section-title">Detalle del integrante</div>
@@ -105,16 +124,22 @@ import { PageTitleService } from '../../core/page-title.service';
     .kv.full { grid-column:1 / -1; }
     .kv .k { font-size:11px; color:#888; text-transform:uppercase; letter-spacing:.4px; }
     .kv .v { font-size:14px; color:#222; word-break:break-word; }
+    .estado { font-size:12px; font-weight:600; padding:2px 8px; border-radius:20px; white-space:nowrap; }
+    .estado.vigente { color:#2e7d5b; background:#e1f0e8; }
+    .estado.finalizada { color:#7a5c33; background:#f1e9dc; }
   `]
 })
 export class IntegrantesContactoComponent {
   private route = inject(ActivatedRoute);
   private svc = inject(ContactosService);
   private titleSvc = inject(PageTitleService);
+  private toast = inject(ToastService);
 
   contactoId!: number;
   items = signal<IntegranteOrganismo[]>([]);
   expandedId = signal<number | null>(null);
+  /** True si el contacto tiene una ficha activa → deshabilita "Nuevo" (feature 022). */
+  hayActiva = computed(() => this.items().some(i => i.activo));
 
   constructor() {
     this.titleSvc.set('Ficha de Integrante de Organismo');
@@ -130,11 +155,12 @@ export class IntegrantesContactoComponent {
     this.expandedId.set(this.expandedId() === id ? null : id);
   }
 
-  eliminar(id: number) {
-    if (!confirm('¿Eliminar este integrante? Quedará marcado como inactivo.')) return;
-    this.svc.eliminarIntegranteOrganismo(id).subscribe(() => {
+  finalizar(id: number) {
+    if (!confirm('¿Finalizar esta ficha? Quedará con fecha fin (hoy) y sin vigencia.')) return;
+    this.svc.finalizarIntegranteOrganismo(id).subscribe(() => {
       this.expandedId.set(null);
       this.reload();
+      this.toast.success('Ficha finalizada.');
     });
   }
 }

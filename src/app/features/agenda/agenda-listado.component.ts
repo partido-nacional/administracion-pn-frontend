@@ -115,7 +115,7 @@ type Tab = 'todos' | 'duplicados';
                       @if (c.tieneIntegranteOrganismo) {
                         <a [routerLink]="['/agenda', c.id, 'organismos']" class="btn btn-sm btn-secondary">Int. Organismo</a>
                       } @else {
-                        <button class="btn btn-sm btn-secondary" disabled title="El contacto no pertenece a ningún organismo">Int. Organismo</button>
+                        <a [routerLink]="['/agenda', c.id, 'organismos', 'nuevo']" class="btn btn-sm btn-primary" title="Agregar una ficha de integrante de organismo">Agregar integrante organismo</a>
                       }
                     </div>
                   </td>

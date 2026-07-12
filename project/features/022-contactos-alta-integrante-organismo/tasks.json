@@ -1,0 +1,88 @@
+{
+  "feature": "contactos-alta-integrante-organismo",
+  "local_config": { "database": null },
+  "stats": { "total": 7, "done": 7, "by_layer": { "1": 4, "2": 3 } },
+  "execution_strategy": "batched",
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "Backend: validación 409 + Finalizar + GET todas",
+      "description": "POST /organismos/integrantes: 409 si el contacto ya tiene una ficha activa (fuerza activo=true/fechaFin=null). Finalizar (ambos DELETE): setear FechaFin=hoy + Activo=false. GET /contactos/{id}/integrantes-organismo: quitar filtro Activo y exponer 'activo' en el DTO. ContactosController.List: tieneIntegranteOrganismo = Any() (≥1 ficha). + tests.",
+      "status": "done", "layer": 1, "depends_on": [],
+      "files": [
+        "backend: src/AdministracionPn.Api/Controllers/OrganismosController.cs",
+        "backend: src/AdministracionPn.Api/Controllers/IntegrantesOrganismoController.cs",
+        "backend: src/AdministracionPn.Api/Controllers/ContactosController.cs",
+        "backend: tests/AdministracionPn.Tests/IntegranteOrganismoAltaTests.cs"
+      ],
+      "acceptance_criteria": ["AC-11", "AC-9", "AC-5", "AC-4", "BR-1", "BR-3", "BR-4", "GATE: dotnet build", "GATE: tests verdes"],
+      "references": ["US-3", "US-4", "US-2"]
+    },
+    {
+      "id": "TASK-002",
+      "title": "Front: service + botón en grilla de contactos",
+      "description": "contactos.service: crearIntegranteOrganismo(input) (POST) + 'activo' en la interface IntegranteOrganismo. agenda-listado: si tieneIntegranteOrganismo → link 'Int. Organismo'; si no → botón 'Agregar integrante organismo' → /agenda/{id}/organismos/nuevo.",
+      "status": "done", "layer": 1, "depends_on": ["TASK-001"],
+      "files": [
+        "src/app/features/agenda/contactos.service.ts",
+        "src/app/features/agenda/agenda-listado.component.ts"
+      ],
+      "acceptance_criteria": ["AC-1", "AC-2", "AC-4", "GATE: npm run build"],
+      "references": ["US-1", "US-2"]
+    },
+    {
+      "id": "TASK-003",
+      "title": "Front: pantalla de alta de integrante de organismo",
+      "description": "IntegranteOrganismoNuevoComponent + ruta /agenda/:contactoId/organismos/nuevo. Form (Organismo requerido, sector, cargo, posición, orden, condición, fecha designación, nota) → POST; al guardar vuelve a la grilla. Carga catálogos (organismos, partido-sectores).",
+      "status": "done", "layer": 1, "depends_on": ["TASK-002"],
+      "files": [
+        "src/app/features/organismos/integrante-organismo-nuevo.component.ts",
+        "src/app/app.routes.ts"
+      ],
+      "acceptance_criteria": ["AC-2", "AC-3", "AC-12", "GATE: npm run build"],
+      "references": ["US-1"]
+    },
+    {
+      "id": "TASK-004",
+      "title": "Front: grilla con historial + Nuevo + Finalizar",
+      "description": "IntegrantesContactoComponent: mostrar todas las fichas con estado (Vigente/Finalizada); botón 'Nuevo integrante organismo' arriba (deshabilitado si alguna activa, con tooltip); renombrar 'Eliminar'→'Finalizar' (solo en filas activas).",
+      "status": "done", "layer": 1, "depends_on": ["TASK-002"],
+      "files": ["src/app/features/organismos/integrantes-contacto.component.ts"],
+      "acceptance_criteria": ["AC-5", "AC-6", "AC-7", "AC-8", "AC-9", "AC-10", "EC-1", "GATE: npm run build", "GATE: tests verdes"],
+      "references": ["US-2", "US-3"]
+    },
+    {
+      "id": "TASK-005",
+      "title": "Code review",
+      "description": "Revisar diseño, nombres, duplicación entre los dos DELETE, coherencia del gate por 'activo' y adherencia a convenciones.",
+      "status": "done", "layer": 2, "depends_on": ["TASK-001", "TASK-002", "TASK-003", "TASK-004"],
+      "files": [],
+      "acceptance_criteria": ["0 hallazgos sin resolver"],
+      "references": ["US-1", "US-2", "US-3", "US-4"]
+    },
+    {
+      "id": "TASK-006",
+      "title": "Security review",
+      "description": "Confirmar que la regla se valida server-side (409, no solo UI), que los endpoints mantienen [Authorize] AdminSecciones y que el alta fuerza activo/fechaFin.",
+      "status": "done", "layer": 2, "depends_on": ["TASK-001", "TASK-002", "TASK-003", "TASK-004"],
+      "files": [],
+      "acceptance_criteria": ["AC-11 verificado server-side", "Autorización intacta"],
+      "references": ["US-4"]
+    },
+    {
+      "id": "TASK-007",
+      "title": "Performance review",
+      "description": "Verificar que el GET (ahora todas las fichas) no trae N+1 ni datos excesivos, y que la validación 409 es un Any eficiente.",
+      "status": "done", "layer": 2, "depends_on": ["TASK-001", "TASK-002", "TASK-003", "TASK-004"],
+      "files": [],
+      "acceptance_criteria": ["Sin N+1", "Any eficiente"],
+      "references": ["US-2"]
+    }
+  ],
+  "dependency_graph": {
+    "by_layer": {
+      "1": { "level_0": ["TASK-001"], "level_1": ["TASK-002"], "level_2": ["TASK-003", "TASK-004"] },
+      "2": { "level_0": ["TASK-005", "TASK-006", "TASK-007"] }
+    }
+  }
+}
