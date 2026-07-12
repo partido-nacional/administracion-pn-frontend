@@ -3,7 +3,7 @@
 > Items captured during development. Use `/project.backlog` to manage.
 
 **Last Updated**: 2026-07-12
-**Total Items**: 27 (13 TODO, 14 DEBT, 0 IDEA) · resueltos: TODO-004/005/006/008/010/012, DEBT-002/012/014 · parciales: TODO-002/003/007/009, DEBT-001 · pausado: DEBT-011
+**Total Items**: 27 (13 TODO, 14 DEBT, 0 IDEA) · resueltos: TODO-004/005/006/008/010/011/012/013, DEBT-002/012/014 · parciales: TODO-002/003/007/009, DEBT-001 · pausado: DEBT-011
 
 > Origen común: ingeniería inversa a máximo detalle (reverse-eng) del frontend Angular, 2026-06-14. Cada ítem fue verificado contra el código por un agente lector. Confirmar `archivo:línea` antes de arreglar.
 
@@ -107,8 +107,9 @@
 
 ### TODO-011: Verificación E2E de "Sincronizar Nube" de adhesiones web (espejo backend)
 - **Priority**: Medium
-- **Status**: pending
+- **Status**: resolved
 - **Created**: 2026-07-04
+- **Resolved**: 2026-07-12 — desbloqueado: el endpoint `POST /adhesiones/web/sincronizar` ya existe (`AdhesionesController:70`). Verificado por review de contrato: el front (`sincronizarWeb()`) y el back devuelven los mismos campos (`nuevas`, `duplicadasIgnoradas`, `desde`, `ultimaSincronizacion`); el caso de error del endpoint externo devuelve 502 con `{ message }` que el front maneja (estado + toast). Falta smoke test en vivo, pero el cableado está confirmado.
 - **Origin**: feature/003-sincronizacion-adhesiones-web (TASK-003, dependencia cross-repo)
 - **Context**: El FE de la sync nube quedó completo y archivado (`project/features/003-sincronizacion-adhesiones-web`), pero la verificación E2E manual (TASK-003) quedó **bloqueada** porque depende del endpoint del backend espejo `POST /adhesiones/web/sincronizar`, que aún no está disponible. Cuando el backend implemente y despliegue ese endpoint, verificar vía `/verify`: presionar "Sincronizar Nube" dispara la sync real, muestra estado de carga → resumen ("X nuevas, Y ya existían") → recarga listado + stats con adhesiones reales; probar caso vacío y caso de error sin romper la UI. Documentar la verificación.
 - **Affected Files**: src/app/features/adhesiones/adhesiones-listado.component.ts, adhesiones.service.ts; (espejo) administracion-pn-backend → `POST /adhesiones/web/sincronizar`
@@ -126,8 +127,9 @@
 
 ### TODO-013: Verificación E2E de la sección Usuarios (espejo backend pendiente)
 - **Priority**: Medium
-- **Status**: pending
+- **Status**: resolved
 - **Created**: 2026-07-05
+- **Resolved**: 2026-07-12 — desbloqueado: `UsuariosController` (`api/usuarios`, `[Authorize(SoloIT)]`) ya expone GET/POST, `PUT /{id}`, `PUT /{id}/estado`, `POST /{id}/resetear-clave`, `DELETE /{id}`. Verificado por review de contrato: DTOs e inputs coinciden con `core/models/usuarios.ts` (incl. `ResetClaveResponse.ClaveTemporal` ↔ `claveTemporal`); el guard front (rol `IT`) coincide con `SoloIT` del backend. El contexto viejo mencionaba roles `Administrador`/`Administrativo`: **ya no aplica**, el front usa los 4 roles canónicos tras la reconciliación RBAC. Falta smoke test en vivo, pero contrato y autorización están confirmados.
 - **Origin**: feature/gestion-usuarios (dependencia cross-repo)
 - **Context**: Se construyó la sección **Usuarios** completa en el FE (listado, alta/edición con rol, activar/desactivar, resetear clave), con item de menú visible solo para rol `Administrador` (`adminGuard`, nuevo). El backend **no tiene** todavía los endpoints correspondientes (`GET/POST /api/usuarios`, `PUT /api/usuarios/{id}`, `PUT /api/usuarios/{id}/estado`, `POST /api/usuarios/{id}/resetear-clave`) — el contrato quedó definido solo del lado FE (`core/models/usuarios.ts`), sin espejo documentado en `administracion-pn-backend`. Cuando el backend implemente esos endpoints, verificar vía `/verify`: alta de usuario con cada rol (`Administrador`, `Hacienda`, `Comunicaciones`, `Administrativo`, `IT`), edición, activar/desactivar y reseteo de clave (confirmar que la clave temporal se muestra una sola vez y no se persiste en el FE); confirmar también que un usuario con rol distinto de `Administrador` no puede acceder a `/usuarios` (redirect a `/inicio`).
 - **Affected Files**: src/app/features/usuarios/usuarios.component.ts, core/services/usuarios.service.ts, core/models/usuarios.ts, core/admin.guard.ts, app.routes.ts, layout/shell.component.html; (espejo pendiente) administracion-pn-backend → `/api/usuarios/*`
