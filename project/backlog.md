@@ -142,8 +142,10 @@
 
 ### DEBT-002: Sin manejo global de errores HTTP
 - **Priority**: High
-- **Status**: pending
+- **Status**: resolved
+- **Feature**: project/features/021-manejo-global-errores-http
 - **Created**: 2026-06-14
+- **Resolved**: 2026-07-12 — ToastService + interceptor con toast global, opt-out por request, toasts de éxito y `<app-list-state>` (loading/vacío/error+retry).
 - **Origin**: transversal
 - **Context**: El `authInterceptor` solo maneja 401 (logout + redirect). No hay `ErrorHandler` global ni interceptor de errores; cada componente queda librado a sí mismo (ver TODO-002).
 - **Affected Files**: src/app/core/auth.interceptor.ts, src/app/app.config.ts

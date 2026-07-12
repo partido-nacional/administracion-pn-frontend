@@ -13,6 +13,9 @@ import { ModalFormComponent } from '../../shared/components/modal-form/modal-for
 import { GridQuery, PagedResult, SortOrder, DEFAULT_PAGE_SIZE } from '../../core/models/paged';
 import { buildPagedParams } from '../../core/services/paged';
 import { toggleSort, sortArrow } from '../../shared/grid/grid-sort';
+import { ToastService } from '../../core/services/toast.service';
+import { skipErrorToast } from '../../core/http/skip-error-toast';
+import { ListStateComponent, ListState } from '../../shared/components/list-state/list-state.component';
 
 interface Agrupacion {
   id: number; codAgrup: string; codDepto: string; pendiente: boolean; tipo: string; solic: number;
@@ -34,7 +37,7 @@ type Tab = 'todas' | 'pendientes' | 'fichas' | 'periodo' | 'padron';
 @Component({
   selector: 'app-agrupaciones',
   standalone: true,
-  imports: [CommonModule, FormsModule, FichasAgrupacionComponent, AgrupacionesPendientesComponent, AgrupacionesPorPeriodoComponent, PaginatorComponent, ModalFormComponent],
+  imports: [CommonModule, FormsModule, FichasAgrupacionComponent, AgrupacionesPendientesComponent, AgrupacionesPorPeriodoComponent, PaginatorComponent, ModalFormComponent, ListStateComponent],
   template: `
     <div class="topbar-inline">
       <button class="btn btn-primary" (click)="abrirNueva()">+ Nueva Agrupación</button>
@@ -147,6 +150,8 @@ type Tab = 'todas' | 'pendientes' | 'fichas' | 'periodo' | 'padron';
       <div class="sort-hint">
         💡 Click en una columna para ordenar (server-side).
       </div>
+      <app-list-state [state]="todasState()" emptyText="Sin agrupaciones"
+                      errorText="No se pudieron cargar las agrupaciones." (retry)="loadTodas()">
       <div class="card"><div class="card-body" style="padding:0;overflow-x:auto">
         <table class="table">
           <thead>
@@ -259,9 +264,7 @@ type Tab = 'todas' | 'pendientes' | 'fichas' | 'periodo' | 'padron';
                 </tr>
               }
             } @empty {
-              <tr><td colspan="10"><div class="empty-state"><div class="empty-state-text">
-                {{ loadingTodas() ? 'Cargando…' : 'Sin agrupaciones' }}
-              </div></div></td></tr>
+              <tr><td colspan="10"><div class="empty-state"><div class="empty-state-text">Sin agrupaciones</div></div></td></tr>
             }
           </tbody>
         </table>
@@ -269,6 +272,7 @@ type Tab = 'todas' | 'pendientes' | 'fichas' | 'periodo' | 'padron';
           [total]="total()" [page]="page()" [pageSize]="pageSize()"
           (pageChange)="onPage($event)" (pageSizeChange)="onPageSize($event)" />
       </div></div>
+      </app-list-state>
     }
 
     @if (tab()==='pendientes') {
@@ -376,6 +380,7 @@ type Tab = 'todas' | 'pendientes' | 'fichas' | 'periodo' | 'padron';
 export class AgrupacionesComponent {
   private http = inject(HttpClient);
   private titleSvc = inject(PageTitleService);
+  private toast = inject(ToastService);
 
   tab = signal<Tab>('todas');
   agrupaciones = signal<Agrupacion[]>([]);
@@ -431,7 +436,7 @@ export class AgrupacionesComponent {
   pageSize = signal(DEFAULT_PAGE_SIZE);
   sort = signal<string | undefined>(undefined);
   order = signal<SortOrder>('asc');
-  loadingTodas = signal(false);
+  todasState = signal<ListState>('loading');
 
   onSort(field: string) {
     toggleSort(this.sort, this.order, field);
@@ -575,11 +580,12 @@ export class AgrupacionesComponent {
     const editId = this.editandoId();
     if (this.modoModal() === 'editar' && editId != null) {
       body.id = editId;
-      this.http.put(`${environment.apiUrl}/agrupaciones/${editId}`, body).subscribe({
+      this.http.put(`${environment.apiUrl}/agrupaciones/${editId}`, body, { context: skipErrorToast() }).subscribe({
         next: () => {
           this.nuevoBusy.set(false);
           this.cerrarNueva();
           this.loadTodas();
+          this.toast.success('Agrupación actualizada.');
         },
         error: (err) => {
           this.nuevoBusy.set(false);
@@ -587,11 +593,12 @@ export class AgrupacionesComponent {
         }
       });
     } else {
-      this.http.post(`${environment.apiUrl}/agrupaciones-pendientes/nueva`, body).subscribe({
+      this.http.post(`${environment.apiUrl}/agrupaciones-pendientes/nueva`, body, { context: skipErrorToast() }).subscribe({
         next: () => {
           this.nuevoBusy.set(false);
           this.cerrarNueva();
           this.setTab('pendientes');
+          this.toast.success('Agrupación creada.');
         },
         error: (err) => {
           this.nuevoBusy.set(false);
@@ -602,12 +609,15 @@ export class AgrupacionesComponent {
   }
 
   loadTodas() {
-    this.loadingTodas.set(true);
+    this.todasState.set('loading');
     const q: GridQuery = { page: this.page(), pageSize: this.pageSize(), sort: this.sort(), order: this.order() };
     this.http.get<PagedResult<Agrupacion>>(`${environment.apiUrl}/agrupaciones`, { params: buildPagedParams(q) })
       .subscribe({
-        next: r => { this.agrupaciones.set(r.items); this.total.set(r.total); this.loadingTodas.set(false); },
-        error: () => this.loadingTodas.set(false),
+        next: r => {
+          this.agrupaciones.set(r.items); this.total.set(r.total);
+          this.todasState.set(r.total === 0 ? 'empty' : 'ready');
+        },
+        error: () => this.todasState.set('error'),
       });
   }
   loadPadron() {
