@@ -57,6 +57,22 @@ export interface IntegranteOrganismo {
   nota?: string;
   fechaFin?: string;
   fechaDesignacion?: string;
+  activo?: boolean;
+}
+
+/** Body para crear una ficha de integrante de organismo (POST /organismos/integrantes). */
+export interface IntegranteOrganismoInput {
+  contactoId: number;
+  organismoId?: number | null;
+  cargo?: string | null;
+  partidoSectorId?: number | null;
+  posicionOrganismo?: string | null;
+  orden?: number | null;
+  orden2?: number | null;
+  nota?: string | null;
+  condicion?: string | null;
+  fechaDesignacion?: string | null;
+  activo: boolean;
 }
 
 export interface FichaAdhesion {
@@ -120,7 +136,9 @@ export class ContactosService {
   delete(id: number) { return this.http.delete<void>(`${this.base}/${id}`); }
   fichasAdhesion(id: number) { return this.http.get<FichaAdhesion[]>(`${this.base}/${id}/fichas-adhesion`); }
   integrantesOrganismo(id: number) { return this.http.get<IntegranteOrganismo[]>(`${this.base}/${id}/integrantes-organismo`); }
-  eliminarIntegranteOrganismo(id: number) { return this.http.delete<void>(`${environment.apiUrl}/integrantes-organismo/${id}`); }
+  crearIntegranteOrganismo(input: IntegranteOrganismoInput) { return this.http.post<IntegranteOrganismo>(`${environment.apiUrl}/organismos/integrantes`, input); }
+  /** "Finalizar" una ficha: el backend setea FechaFin=hoy + Activo=false (feature 022). */
+  finalizarIntegranteOrganismo(id: number) { return this.http.delete<void>(`${environment.apiUrl}/integrantes-organismo/${id}`); }
   duplicados() { return this.http.get<DuplicadoPar[]>(`${this.base}/duplicados`); }
   /**
    * Fusiona dos contactos duplicados de forma transaccional en el backend:

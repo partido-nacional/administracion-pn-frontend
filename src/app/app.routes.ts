@@ -16,6 +16,7 @@ export const routes: Routes = [
       { path: 'agenda/nuevo', loadComponent: () => import('./features/agenda/agenda-nuevo.component').then(m => m.AgendaNuevoComponent) },
       { path: 'agenda/:contactoId/fichas/nueva', loadComponent: () => import('./features/adhesiones/nueva-ficha.component').then(m => m.NuevaFichaComponent) },
       { path: 'agenda/:contactoId/fichas', loadComponent: () => import('./features/adhesiones/fichas-contacto.component').then(m => m.FichasContactoComponent) },
+      { path: 'agenda/:contactoId/organismos/nuevo', loadComponent: () => import('./features/organismos/integrante-organismo-nuevo.component').then(m => m.IntegranteOrganismoNuevoComponent) },
       { path: 'agenda/:contactoId/organismos', loadComponent: () => import('./features/organismos/integrantes-contacto.component').then(m => m.IntegrantesContactoComponent) },
       { path: 'agenda/:id', loadComponent: () => import('./features/agenda/agenda-nuevo.component').then(m => m.AgendaNuevoComponent) },
       { path: 'adhesiones', canActivate: [rolesGuard('Hacienda','IT')], loadComponent: () => import('./features/adhesiones/adhesiones-listado.component').then(m => m.AdhesionesListadoComponent) },
