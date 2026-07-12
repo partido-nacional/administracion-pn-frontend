@@ -1,0 +1,117 @@
+{
+  "feature": "manejo-global-errores-http",
+  "local_config": { "database": null },
+  "stats": { "total": 11, "done": 0, "by_layer": { "1": 8, "2": 3 } },
+  "execution_strategy": "batched",
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "ToastService + modelo Toast",
+      "description": "core/models/toast.ts (Toast, ToastTipo) y core/services/toast.service.ts con signal toasts(), error()/success()/info()/dismiss(), auto-descarte 5s y tope de visibles.",
+      "status": "pending", "layer": 1, "depends_on": [],
+      "files": ["src/app/core/models/toast.ts", "src/app/core/services/toast.service.ts", "src/app/core/services/toast.service.spec.ts"],
+      "acceptance_criteria": ["AC-5", "BR-4", "EC-2", "GATE: npm run build", "GATE: tests verdes"],
+      "references": ["US-1", "US-2"]
+    },
+    {
+      "id": "TASK-002",
+      "title": "resolveErrorMessage + token de opt-out",
+      "description": "core/http/http-error-message.ts (mapeo status→mensaje, status 0, message del backend) y core/http/skip-error-toast.ts (HttpContextToken SKIP_ERROR_TOAST + helper skipErrorToast).",
+      "status": "pending", "layer": 1, "depends_on": [],
+      "files": ["src/app/core/http/http-error-message.ts", "src/app/core/http/http-error-message.spec.ts", "src/app/core/http/skip-error-toast.ts"],
+      "acceptance_criteria": ["AC-2", "AC-12", "BR-2", "EC-1", "EC-3", "GATE: tests verdes"],
+      "references": ["US-1", "US-4"]
+    },
+    {
+      "id": "TASK-003",
+      "title": "<app-toasts> + montaje en el shell",
+      "description": "shared/components/toasts/toasts.component.ts (overlay fixed, color/ícono por tipo, cerrar, aria-live, reduced-motion). Montar una vez en layout/shell.component.html.",
+      "status": "pending", "layer": 1, "depends_on": ["TASK-001"],
+      "files": ["src/app/shared/components/toasts/toasts.component.ts", "src/app/shared/components/toasts/toasts.component.spec.ts", "src/app/layout/shell.component.ts", "src/app/layout/shell.component.html"],
+      "acceptance_criteria": ["AC-5", "AC-7", "NFR: aria-live/role status", "GATE: npm run build"],
+      "references": ["US-1", "US-2"]
+    },
+    {
+      "id": "TASK-004",
+      "title": "Ampliar httpErrorInterceptor (toast + opt-out)",
+      "description": "El interceptor inyecta ToastService y, si status≠401 y sin SKIP_ERROR_TOAST, dispara toast.error(resolveErrorMessage). Mantiene console.error y throwError. Tests: dispara, omite 401, respeta opt-out.",
+      "status": "pending", "layer": 1, "depends_on": ["TASK-001", "TASK-002"],
+      "files": ["src/app/core/interceptors/http-error.interceptor.ts", "src/app/core/interceptors/http-error.interceptor.spec.ts"],
+      "acceptance_criteria": ["AC-1", "AC-3", "AC-4", "AC-13", "BR-1", "BR-3", "GATE: tests verdes"],
+      "references": ["US-1", "US-4"]
+    },
+    {
+      "id": "TASK-005",
+      "title": "Opt-out en flujos con error inline",
+      "description": "Aplicar skipErrorToast() (o migrar al toast) en los flujos que ya muestran error inline: modal de venta (productos) y pasar-a-local (adhesiones-listado), para no duplicar mensajes.",
+      "status": "pending", "layer": 1, "depends_on": ["TASK-002", "TASK-004"],
+      "files": ["src/app/features/productos/productos.component.ts", "src/app/features/adhesiones/adhesiones-listado.component.ts"],
+      "acceptance_criteria": ["AC-12", "AC-13", "EC-4", "GATE: npm run build"],
+      "references": ["US-4"]
+    },
+    {
+      "id": "TASK-006",
+      "title": "Toasts de éxito en mutaciones",
+      "description": "Disparar toast.success() en guardar/eliminar de los flujos principales: productos, ventas, donaciones, agrupaciones (crear/editar) y eventos del dashboard, y pasar-a-local.",
+      "status": "pending", "layer": 1, "depends_on": ["TASK-001", "TASK-003"],
+      "files": ["src/app/features/productos/productos.component.ts", "src/app/features/adhesiones/adhesiones-listado.component.ts", "src/app/features/agrupaciones/agrupaciones.component.ts", "src/app/features/dashboard/dashboard.component.ts"],
+      "acceptance_criteria": ["AC-6", "AC-7", "GATE: npm run build"],
+      "references": ["US-2"]
+    },
+    {
+      "id": "TASK-007",
+      "title": "<app-list-state> reutilizable",
+      "description": "shared/components/list-state/list-state.component.ts con Input state (loading|error|empty|ready), Input emptyText, Output retry; proyecta <ng-content> en ready. Tests de los 4 estados + retry.",
+      "status": "pending", "layer": 1, "depends_on": [],
+      "files": ["src/app/shared/components/list-state/list-state.component.ts", "src/app/shared/components/list-state/list-state.component.spec.ts"],
+      "acceptance_criteria": ["AC-8", "AC-9", "AC-10", "AC-11", "GATE: tests verdes"],
+      "references": ["US-3"]
+    },
+    {
+      "id": "TASK-008",
+      "title": "Aplicar <app-list-state> a los listados",
+      "description": "Exponer signal state en las vistas de listado y envolver la tabla con <app-list-state>. Prioridad: las con PagedResult (agrupaciones ×4, productos) y luego el resto de listados.",
+      "status": "pending", "layer": 1, "depends_on": ["TASK-007"],
+      "files": ["src/app/features/agrupaciones/agrupaciones.component.ts", "src/app/features/agrupaciones/agrupaciones-pendientes.component.ts", "src/app/features/agrupaciones/agrupaciones-por-periodo.component.ts", "src/app/features/agrupaciones/fichas-agrupacion.component.ts", "src/app/features/productos/productos.component.ts"],
+      "acceptance_criteria": ["AC-8", "AC-9", "AC-10", "GATE: npm run build", "GATE: tests verdes"],
+      "references": ["US-3"]
+    },
+    {
+      "id": "TASK-009",
+      "title": "Code review",
+      "description": "Revisar diseño, nombres, duplicación, dead code y adherencia a la estructura estándar (core/shared). Corregir todo hallazgo.",
+      "status": "pending", "layer": 2, "depends_on": ["TASK-001", "TASK-002", "TASK-003", "TASK-004", "TASK-005", "TASK-006", "TASK-007", "TASK-008"],
+      "files": [],
+      "acceptance_criteria": ["0 hallazgos sin resolver"],
+      "references": ["US-1", "US-2", "US-3", "US-4"]
+    },
+    {
+      "id": "TASK-010",
+      "title": "Performance review",
+      "description": "Verificar que no haya fugas de setTimeout (auto-dismiss), suscripciones sin cerrar ni re-render innecesario; toasts topeados.",
+      "status": "pending", "layer": 2, "depends_on": ["TASK-001", "TASK-002", "TASK-003", "TASK-004", "TASK-005", "TASK-006", "TASK-007", "TASK-008"],
+      "files": [],
+      "acceptance_criteria": ["Sin timers/suscripciones colgadas", "EC-2 topeado"],
+      "references": ["US-1"]
+    },
+    {
+      "id": "TASK-011",
+      "title": "Security review",
+      "description": "Confirmar que el toast nunca expone stack traces ni detalles internos (solo message conocido o fallback), y que el 401 no filtra info.",
+      "status": "pending", "layer": 2, "depends_on": ["TASK-001", "TASK-002", "TASK-003", "TASK-004", "TASK-005", "TASK-006", "TASK-007", "TASK-008"],
+      "files": [],
+      "acceptance_criteria": ["AC-3 verificado", "Sin datos sensibles en toasts"],
+      "references": ["US-1"]
+    }
+  ],
+  "dependency_graph": {
+    "by_layer": {
+      "1": {
+        "level_0": ["TASK-001", "TASK-002", "TASK-007"],
+        "level_1": ["TASK-003", "TASK-004", "TASK-008"],
+        "level_2": ["TASK-005", "TASK-006"]
+      },
+      "2": { "level_0": ["TASK-009", "TASK-010", "TASK-011"] }
+    }
+  }
+}

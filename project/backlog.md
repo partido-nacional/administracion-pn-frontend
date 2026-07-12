@@ -142,7 +142,8 @@
 
 ### DEBT-002: Sin manejo global de errores HTTP
 - **Priority**: High
-- **Status**: pending
+- **Status**: in-progress
+- **Feature**: project/wip/021-manejo-global-errores-http
 - **Created**: 2026-06-14
 - **Origin**: transversal
 - **Context**: El `authInterceptor` solo maneja 401 (logout + redirect). No hay `ErrorHandler` global ni interceptor de errores; cada componente queda librado a sí mismo (ver TODO-002).
