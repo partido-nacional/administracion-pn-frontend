@@ -3,7 +3,7 @@
 > Items captured during development. Use `/project.backlog` to manage.
 
 **Last Updated**: 2026-07-12
-**Total Items**: 27 (13 TODO, 14 DEBT, 0 IDEA) · resueltos: TODO-004/005/006/010/012, DEBT-002/012/014 · parciales: TODO-002/003/007/009, DEBT-001 · pausado: DEBT-011
+**Total Items**: 27 (13 TODO, 14 DEBT, 0 IDEA) · resueltos: TODO-004/005/006/008/010/012, DEBT-002/012/014 · parciales: TODO-002/003/007/009, DEBT-001 · pausado: DEBT-011
 
 > Origen común: ingeniería inversa a máximo detalle (reverse-eng) del frontend Angular, 2026-06-14. Cada ítem fue verificado contra el código por un agente lector. Confirmar `archivo:línea` antes de arreglar.
 
@@ -77,8 +77,10 @@
 
 ### TODO-008: Agrupaciones — sin CRUD de integrantes
 - **Priority**: Medium
-- **Status**: pending
+- **Status**: resolved
+- **Feature**: project/features/023-agrupaciones-integrantes-alta-baja
 - **Created**: 2026-06-14
+- **Resolved**: 2026-07-12 — alta (autocomplete de contacto + cargo + fecha → POST) y baja (confirm → DELETE) en la vista Por Período. Sin edición (backend no expone PUT).
 - **Origin**: feature/agrupaciones
 - **Context**: Los integrantes llegan embebidos en `GET /agrupaciones-periodos` (solo lectura); no hay alta/baja desde el front aunque el backend expone `agrupacion-integrantes`.
 - **Affected Files**: src/app/features/agrupaciones/agrupaciones-por-periodo.component.ts
