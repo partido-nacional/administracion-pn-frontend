@@ -1,6 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { PageTitleService } from '../../core/page-title.service';
@@ -42,12 +43,22 @@ const DIAS_SEM = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   template: `
     <div class="stats-grid">
-      <div class="stat-card"><div class="stat-value">{{ resumen()?.contactos ?? '—' }}</div><div class="stat-label">Todos los contactos</div></div>
-      <div class="stat-card"><div class="stat-value">{{ resumen()?.adhesionesLocales ?? '—' }}</div><div class="stat-label">Adhesiones locales</div></div>
-      <div class="stat-card"><div class="stat-value">{{ resumen()?.ventasMes ?? '—' }}</div><div class="stat-label">Ventas</div></div>
+      <a class="stat-card" routerLink="/agenda" title="Ir a contactos">
+        <div class="stat-value">{{ resumen()?.contactos ?? '—' }}</div><div class="stat-label">Todos los contactos</div>
+      </a>
+      @if (puedeVer(['Hacienda','IT'])) {
+        <a class="stat-card" routerLink="/adhesiones" title="Ir a adhesiones">
+          <div class="stat-value">{{ resumen()?.adhesionesLocales ?? '—' }}</div><div class="stat-label">Adhesiones locales</div>
+        </a>
+      }
+      @if (puedeVer(['Secretaria','Hacienda','IT'])) {
+        <a class="stat-card" routerLink="/productos" title="Ir a productos">
+          <div class="stat-value">{{ resumen()?.ventasMes ?? '—' }}</div><div class="stat-label">Ventas</div>
+        </a>
+      }
     </div>
 
     <div class="card">
@@ -170,6 +181,13 @@ const DIAS_SEM = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
     }
   `,
   styles: [`
+    a.stat-card {
+      text-decoration:none; color:inherit; cursor:pointer; display:block;
+      transition:box-shadow .15s ease, transform .15s ease;
+    }
+    a.stat-card:hover { box-shadow:0 6px 18px rgba(15,23,42,.12); transform:translateY(-2px); }
+    a.stat-card:focus-visible { outline:2px solid #1e5aa8; outline-offset:2px; }
+    @media (prefers-reduced-motion:reduce) { a.stat-card { transition:none; } a.stat-card:hover { transform:none; } }
     .cal-header { display:flex; justify-content:space-between; align-items:center; }
     .cal-nav { display:flex; align-items:center; gap:6px; }
     .cal-month { font-weight:600; min-width:160px; text-align:center; text-transform:capitalize; }
@@ -281,6 +299,12 @@ export class DashboardComponent {
   private title = inject(PageTitleService);
   private auth = inject(AuthService);
   private toast = inject(ToastService);
+
+  /** True si el rol actual está entre los permitidos (espejo del guard de la ruta destino). */
+  puedeVer(roles: string[]): boolean {
+    const rol = this.auth.session()?.rol;
+    return !!rol && roles.includes(rol);
+  }
 
   DIAS_SEM = DIAS_SEM;
 

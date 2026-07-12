@@ -3,7 +3,7 @@
 > Items captured during development. Use `/project.backlog` to manage.
 
 **Last Updated**: 2026-07-12
-**Total Items**: 27 (13 TODO, 14 DEBT, 0 IDEA) · resueltos: TODO-004/005/006/008/010/011/012/013, DEBT-002/012/014 · parciales: TODO-002/003/007/009, DEBT-001 · pausado: DEBT-011
+**Total Items**: 27 (13 TODO, 14 DEBT, 0 IDEA) · resueltos: TODO-004/005/006/007/008/010/011/012/013, DEBT-002/012/014 · parciales: TODO-002/003/009, DEBT-001 · pausado: DEBT-011
 
 > Origen común: ingeniería inversa a máximo detalle (reverse-eng) del frontend Angular, 2026-06-14. Cada ítem fue verificado contra el código por un agente lector. Confirmar `archivo:línea` antes de arreglar.
 
@@ -67,9 +67,9 @@
 
 ### TODO-007: Dashboard — eventos sin edición y `fechaFin` nunca capturada
 - **Priority**: Medium
-- **Status**: partially-resolved
+- **Status**: resolved
 - **Created**: 2026-06-14
-- **Resolved (parcial)**: 2026-07-12 — edición de eventos ya existía (botón "Editar" + modal); `fechaFin` ahora se captura ("Hasta" opcional) en alta/edición; `alert` de borrar migrado al toast global (feature 021). **Pendiente**: las tarjetas de resumen no enrutan a sus secciones.
+- **Resolved**: 2026-07-12 — edición de eventos ya existía (botón "Editar" + modal); `fechaFin` ahora se captura ("Hasta" opcional) en alta/edición; `alert` de borrar migrado al toast global (feature 021); y las **tarjetas de resumen ahora enrutan** a su sección (contactos→/agenda, adhesiones→/adhesiones, ventas→/productos), mostrándose solo si el rol tiene acceso (espejo del guard).
 - **Origin**: feature/dashboard
 - **Context**: El calendario solo crea/elimina (no edita); `fechaFin` siempre se envía `null` (`:395`); las tarjetas de resumen no enrutan a sus secciones; usa `confirm`/`alert` nativos.
 - **Affected Files**: src/app/features/dashboard/dashboard.component.ts
