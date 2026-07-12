@@ -2,8 +2,8 @@
 
 > Items captured during development. Use `/project.backlog` to manage.
 
-**Last Updated**: 2026-07-05
-**Total Items**: 27 (13 TODO, 14 DEBT, 0 IDEA) · resueltos: DEBT-012, DEBT-014
+**Last Updated**: 2026-07-12
+**Total Items**: 27 (13 TODO, 14 DEBT, 0 IDEA) · resueltos: TODO-004/005/006/010/012, DEBT-002/012/014 · parciales: TODO-002/003/007/009, DEBT-001 · pausado: DEBT-011
 
 > Origen común: ingeniería inversa a máximo detalle (reverse-eng) del frontend Angular, 2026-06-14. Cada ítem fue verificado contra el código por un agente lector. Confirmar `archivo:línea` antes de arreglar.
 
@@ -20,8 +20,9 @@
 
 ### TODO-002: Manejo de errores/estados HTTP ausente en la mayoría de las vistas
 - **Priority**: High
-- **Status**: pending
+- **Status**: partially-resolved
 - **Created**: 2026-06-14
+- **Resolved (parcial)**: 2026-07-12 — feature 021 (espejo de DEBT-002): manejo **global** de errores (toast desde el interceptor, ya no queda la UI en blanco) + `<app-list-state>` reutilizable (loading/vacío/error+retry). **Pendiente**: aplicar `<app-list-state>` al resto de los listados (hoy en agrupaciones "todas"); es incremental por vista.
 - **Origin**: transversal (varias features)
 - **Context**: La mayoría de los GET no manejan error/loading/vacío (dashboard, listados, agenda, adhesiones, productos parcial). Si el backend falla, la UI queda en blanco sin feedback.
 - **Affected Files**: src/app/features/**/*.component.ts
@@ -29,8 +30,9 @@
 
 ### TODO-003: Botones y acciones sin handler (UI muerta)
 - **Priority**: Medium
-- **Status**: pending
+- **Status**: partially-resolved
 - **Created**: 2026-06-14
+- **Resolved (parcial)**: 2026-07-11/12 — Productos: "+ Nueva Donación", "Filtrar" (×2) y "Generar reporte para periodo" cableados; tabs "Padrón"/"Exportar" de agenda **removidos** (features 017/018). **Pendiente**: "Sincronizar Nube"/"Detalle" (adhesiones), "Editar" (organismos), "Exportar TSV" (convencionales), "Ver todos" de Débitos (bloqueado: sección mock).
 - **Origin**: transversal
 - **Context**: Numerosas acciones decorativas sin binding: "Sincronizar Nube" y "Detalle" (adhesiones), "+ Nueva Donación" (productos), "Editar" en organismos, "Filtrar"/"Generar reporte"/"Eliminar" (productos), "Exportar TSV" (convencionales), tabs "Padrón"/"Exportar" (agenda).
 - **Affected Files**: src/app/features/{adhesiones,productos,organismos,convencionales,agenda}/*.component.ts
@@ -237,7 +239,8 @@
 
 ### DEBT-011: Migrar a la estructura estándar (core/services, core/models, shared)
 - **Priority**: High
-- **Status**: pending
+- **Status**: paused
+- **Nota**: 2026-07-12 — pausado por decisión. Refactor grande sin beneficio de usuario; se puede hacer incremental por feature cuando se retome (las features nuevas ya usan core/shared).
 - **Created**: 2026-06-14
 - **Origin**: chore/boilerplate-scaffold (transversal)
 - **Context**: El estándar objetivo ya está scaffoldeado (`core/interceptors/` con auth + http-error, carpetas `core/services/`, `core/models/`, `shared/{components,directives,pipes}`). Falta **migrar la lógica**: mover las llamadas `HttpClient` dispersas a services por dominio en `core/services/` (DEBT-006), extraer las interfaces inline a `core/models/` (DEBT-009), y los componentes/pipes reutilizables a `shared/`. Migrar feature por feature; usar `auth`/`agenda` como piloto. Ver `CLAUDE.md` → "Cómo se construye una feature nueva".
