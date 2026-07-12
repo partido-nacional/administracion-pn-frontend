@@ -8,6 +8,7 @@ import { ContactosService, Contacto, ContactoListado } from './contactos.service
 import { DuplicadosContactosComponent } from './duplicados-contactos.component';
 import { PaginatorComponent } from '../../shared/components/paginator/paginator.component';
 import { GridQuery, SortOrder, DEFAULT_PAGE_SIZE } from '../../core/models/paged';
+import { DEPARTAMENTOS } from '../../core/departamentos';
 import { exportarCSV } from '../../core/exportar-csv';
 
 type Tab = 'todos' | 'duplicados';
@@ -319,7 +320,7 @@ export class AgendaListadoComponent implements OnInit {
   private svc = inject(ContactosService);
 
   tab = signal<Tab>('todos');
-  deptos = ['Montevideo', 'Canelones', 'Maldonado', 'Salto'];
+  deptos = DEPARTAMENTOS;
   items = signal<ContactoListado[]>([]);
   total = signal(0);
   page = signal(1);
