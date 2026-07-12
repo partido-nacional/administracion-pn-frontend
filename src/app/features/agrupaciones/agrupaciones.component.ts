@@ -436,7 +436,6 @@ export class AgrupacionesComponent {
   pageSize = signal(DEFAULT_PAGE_SIZE);
   sort = signal<string | undefined>(undefined);
   order = signal<SortOrder>('asc');
-  loadingTodas = signal(false);
   todasState = signal<ListState>('loading');
 
   onSort(field: string) {
@@ -610,16 +609,15 @@ export class AgrupacionesComponent {
   }
 
   loadTodas() {
-    this.loadingTodas.set(true);
     this.todasState.set('loading');
     const q: GridQuery = { page: this.page(), pageSize: this.pageSize(), sort: this.sort(), order: this.order() };
     this.http.get<PagedResult<Agrupacion>>(`${environment.apiUrl}/agrupaciones`, { params: buildPagedParams(q) })
       .subscribe({
         next: r => {
-          this.agrupaciones.set(r.items); this.total.set(r.total); this.loadingTodas.set(false);
+          this.agrupaciones.set(r.items); this.total.set(r.total);
           this.todasState.set(r.total === 0 ? 'empty' : 'ready');
         },
-        error: () => { this.loadingTodas.set(false); this.todasState.set('error'); },
+        error: () => this.todasState.set('error'),
       });
   }
   loadPadron() {

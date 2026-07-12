@@ -26,6 +26,6 @@ stages:
   tasks:
     status: pending
   implementation:
-    status: pending
-    completed_tasks: 0
-    total_tasks: 0
+    status: complete
+    completed_tasks: 11
+    total_tasks: 11
