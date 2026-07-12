@@ -65,8 +65,9 @@
 
 ### TODO-007: Dashboard — eventos sin edición y `fechaFin` nunca capturada
 - **Priority**: Medium
-- **Status**: pending
+- **Status**: partially-resolved
 - **Created**: 2026-06-14
+- **Resolved (parcial)**: 2026-07-12 — edición de eventos ya existía (botón "Editar" + modal); `fechaFin` ahora se captura ("Hasta" opcional) en alta/edición; `alert` de borrar migrado al toast global (feature 021). **Pendiente**: las tarjetas de resumen no enrutan a sus secciones.
 - **Origin**: feature/dashboard
 - **Context**: El calendario solo crea/elimina (no edita); `fechaFin` siempre se envía `null` (`:395`); las tarjetas de resumen no enrutan a sus secciones; usa `confirm`/`alert` nativos.
 - **Affected Files**: src/app/features/dashboard/dashboard.component.ts
@@ -83,8 +84,9 @@
 
 ### TODO-009: Filtros cosméticos que no filtran
 - **Priority**: Low
-- **Status**: pending
+- **Status**: partially-resolved
 - **Created**: 2026-06-14
+- **Resolved (parcial)**: 2026-07-12 — Productos (rango de fecha) resuelto en la feature de los 5 botones; Convencionales "departamentales" ahora tiene buscador (`filtrarDepartamentales`). **Pendiente**: filtro de mes de Débitos (la sección es un stub con data estática — no filtra por diseño; se resolverá cuando débitos deje de ser mock).
 - **Origin**: feature/debitos, feature/convencionales, feature/productos
 - **Context**: El filtro por mes de Débitos no se envía al backend ni recarga; la tab "departamentales" de Convencionales no aplica el buscador; los filtros de rango de fecha de Productos no filtran.
 - **Affected Files**: src/app/features/{debitos,convencionales,productos}/*.component.ts
