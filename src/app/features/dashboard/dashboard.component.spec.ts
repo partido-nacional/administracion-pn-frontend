@@ -1,6 +1,7 @@
 import { TestBed, ComponentFixture } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
+import { provideRouter } from '@angular/router';
 import { DashboardComponent } from './dashboard.component';
 
 /**
@@ -22,7 +23,7 @@ describe('DashboardComponent — editar evento', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [DashboardComponent],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
     });
     fixture = TestBed.createComponent(DashboardComponent);
     cmp = fixture.componentInstance;
@@ -44,6 +45,21 @@ describe('DashboardComponent — editar evento', () => {
     expect(cmp.form.tipo).toBe('Reunion');
     expect(cmp.form.descripcion).toBe('notas');
     expect(cmp.form.esPublico).toBeFalse();
+  });
+
+  it('la tarjeta de contactos enruta a /agenda; las restringidas se ocultan sin rol', () => {
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('a.stat-card[href="/agenda"]')).toBeTruthy();
+    // sin sesión/rol, adhesiones (Hacienda/IT) y ventas (Secretaria/Hacienda/IT) no se muestran
+    expect(el.querySelector('a.stat-card[href="/adhesiones"]')).toBeNull();
+    expect(el.querySelector('a.stat-card[href="/productos"]')).toBeNull();
+  });
+
+  it('puedeVer respeta la matriz de roles', () => {
+    spyOn(cmp['auth'], 'session').and.returnValue({ rol: 'IT' } as any);
+    expect(cmp.puedeVer(['Hacienda', 'IT'])).toBeTrue();
+    expect(cmp.puedeVer(['Secretaria'])).toBeFalse();
   });
 
   it('guardarEdicion hace PUT al evento con el body correcto y cierra el modal', () => {
