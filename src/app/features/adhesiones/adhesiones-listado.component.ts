@@ -370,8 +370,12 @@ export class AdhesionesListadoComponent {
   }
 
   pasar(id: number) {
-    this.http.post(`${environment.apiUrl}/adhesiones/web/${id}/pasar-a-local`, {}).subscribe(() => {
-      this.reloadWeb(); this.reloadLocales(); this.reloadStats();
+    this.http.post(`${environment.apiUrl}/adhesiones/web/${id}/pasar-a-local`, {}).subscribe({
+      next: () => { this.reloadWeb(); this.reloadLocales(); this.reloadStats(); },
+      error: (err) => {
+        alert(err?.error?.message || 'No se pudo pasar la adhesión a local.');
+        this.reloadWeb();
+      }
     });
   }
 
