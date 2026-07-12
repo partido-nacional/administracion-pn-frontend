@@ -105,7 +105,7 @@ import { ToastService } from '../../core/services/toast.service';
     </div>
   `,
   styles: [`
-    .topbar-inline { display:flex; justify-content:flex-start; margin-bottom:16px; }
+    .topbar-inline { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:16px; }
     tr.clickable { cursor:pointer; }
     tr.clickable:hover { background:#f5f8ff; }
     tr.selected { background:#e6efff !important; }
