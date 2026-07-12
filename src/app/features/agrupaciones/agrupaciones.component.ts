@@ -13,6 +13,9 @@ import { ModalFormComponent } from '../../shared/components/modal-form/modal-for
 import { GridQuery, PagedResult, SortOrder, DEFAULT_PAGE_SIZE } from '../../core/models/paged';
 import { buildPagedParams } from '../../core/services/paged';
 import { toggleSort, sortArrow } from '../../shared/grid/grid-sort';
+import { ToastService } from '../../core/services/toast.service';
+import { skipErrorToast } from '../../core/http/skip-error-toast';
+import { ListStateComponent, ListState } from '../../shared/components/list-state/list-state.component';
 
 interface Agrupacion {
   id: number; codAgrup: string; codDepto: string; pendiente: boolean; tipo: string; solic: number;
@@ -376,6 +379,7 @@ type Tab = 'todas' | 'pendientes' | 'fichas' | 'periodo' | 'padron';
 export class AgrupacionesComponent {
   private http = inject(HttpClient);
   private titleSvc = inject(PageTitleService);
+  private toast = inject(ToastService);
 
   tab = signal<Tab>('todas');
   agrupaciones = signal<Agrupacion[]>([]);
@@ -575,11 +579,12 @@ export class AgrupacionesComponent {
     const editId = this.editandoId();
     if (this.modoModal() === 'editar' && editId != null) {
       body.id = editId;
-      this.http.put(`${environment.apiUrl}/agrupaciones/${editId}`, body).subscribe({
+      this.http.put(`${environment.apiUrl}/agrupaciones/${editId}`, body, { context: skipErrorToast() }).subscribe({
         next: () => {
           this.nuevoBusy.set(false);
           this.cerrarNueva();
           this.loadTodas();
+          this.toast.success('Agrupación actualizada.');
         },
         error: (err) => {
           this.nuevoBusy.set(false);
@@ -587,11 +592,12 @@ export class AgrupacionesComponent {
         }
       });
     } else {
-      this.http.post(`${environment.apiUrl}/agrupaciones-pendientes/nueva`, body).subscribe({
+      this.http.post(`${environment.apiUrl}/agrupaciones-pendientes/nueva`, body, { context: skipErrorToast() }).subscribe({
         next: () => {
           this.nuevoBusy.set(false);
           this.cerrarNueva();
           this.setTab('pendientes');
+          this.toast.success('Agrupación creada.');
         },
         error: (err) => {
           this.nuevoBusy.set(false);
