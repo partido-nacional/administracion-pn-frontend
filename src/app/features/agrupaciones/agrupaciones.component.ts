@@ -37,7 +37,7 @@ type Tab = 'todas' | 'pendientes' | 'fichas' | 'periodo' | 'padron';
 @Component({
   selector: 'app-agrupaciones',
   standalone: true,
-  imports: [CommonModule, FormsModule, FichasAgrupacionComponent, AgrupacionesPendientesComponent, AgrupacionesPorPeriodoComponent, PaginatorComponent, ModalFormComponent],
+  imports: [CommonModule, FormsModule, FichasAgrupacionComponent, AgrupacionesPendientesComponent, AgrupacionesPorPeriodoComponent, PaginatorComponent, ModalFormComponent, ListStateComponent],
   template: `
     <div class="topbar-inline">
       <button class="btn btn-primary" (click)="abrirNueva()">+ Nueva Agrupación</button>
@@ -150,6 +150,8 @@ type Tab = 'todas' | 'pendientes' | 'fichas' | 'periodo' | 'padron';
       <div class="sort-hint">
         💡 Click en una columna para ordenar (server-side).
       </div>
+      <app-list-state [state]="todasState()" emptyText="Sin agrupaciones"
+                      errorText="No se pudieron cargar las agrupaciones." (retry)="loadTodas()">
       <div class="card"><div class="card-body" style="padding:0;overflow-x:auto">
         <table class="table">
           <thead>
@@ -262,9 +264,7 @@ type Tab = 'todas' | 'pendientes' | 'fichas' | 'periodo' | 'padron';
                 </tr>
               }
             } @empty {
-              <tr><td colspan="10"><div class="empty-state"><div class="empty-state-text">
-                {{ loadingTodas() ? 'Cargando…' : 'Sin agrupaciones' }}
-              </div></div></td></tr>
+              <tr><td colspan="10"><div class="empty-state"><div class="empty-state-text">Sin agrupaciones</div></div></td></tr>
             }
           </tbody>
         </table>
@@ -272,6 +272,7 @@ type Tab = 'todas' | 'pendientes' | 'fichas' | 'periodo' | 'padron';
           [total]="total()" [page]="page()" [pageSize]="pageSize()"
           (pageChange)="onPage($event)" (pageSizeChange)="onPageSize($event)" />
       </div></div>
+      </app-list-state>
     }
 
     @if (tab()==='pendientes') {
@@ -436,6 +437,7 @@ export class AgrupacionesComponent {
   sort = signal<string | undefined>(undefined);
   order = signal<SortOrder>('asc');
   loadingTodas = signal(false);
+  todasState = signal<ListState>('loading');
 
   onSort(field: string) {
     toggleSort(this.sort, this.order, field);
@@ -609,11 +611,15 @@ export class AgrupacionesComponent {
 
   loadTodas() {
     this.loadingTodas.set(true);
+    this.todasState.set('loading');
     const q: GridQuery = { page: this.page(), pageSize: this.pageSize(), sort: this.sort(), order: this.order() };
     this.http.get<PagedResult<Agrupacion>>(`${environment.apiUrl}/agrupaciones`, { params: buildPagedParams(q) })
       .subscribe({
-        next: r => { this.agrupaciones.set(r.items); this.total.set(r.total); this.loadingTodas.set(false); },
-        error: () => this.loadingTodas.set(false),
+        next: r => {
+          this.agrupaciones.set(r.items); this.total.set(r.total); this.loadingTodas.set(false);
+          this.todasState.set(r.total === 0 ? 'empty' : 'ready');
+        },
+        error: () => { this.loadingTodas.set(false); this.todasState.set('error'); },
       });
   }
   loadPadron() {
