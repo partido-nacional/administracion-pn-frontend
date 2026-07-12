@@ -28,6 +28,12 @@ export interface AdhesionLocalDto {
   titularResp?: string; observaciones?: string;
 }
 
+/** Adherente anual cuya adhesión vence este mes (feature 024). */
+export interface AnualPorVencerDto {
+  contactoId: number; nombre: string; apellido: string;
+  celular?: string | null; sistContrib?: string | null; vencimiento: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AdhesionesService {
   private http = inject(HttpClient);
@@ -44,5 +50,8 @@ export class AdhesionesService {
   }
   locales(query: GridQuery): Observable<PagedResult<AdhesionLocalDto>> {
     return this.http.get<PagedResult<AdhesionLocalDto>>(`${this.base}/locales`, { params: buildPagedParams(query) });
+  }
+  anualesPorVencer(): Observable<AnualPorVencerDto[]> {
+    return this.http.get<AnualPorVencerDto[]>(`${this.base}/anuales-por-vencer`);
   }
 }

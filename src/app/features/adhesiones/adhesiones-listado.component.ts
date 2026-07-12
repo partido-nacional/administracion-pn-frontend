@@ -5,14 +5,15 @@ import { HttpClient } from '@angular/common/http';
 import { finalize } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { PageTitleService } from '../../core/page-title.service';
-import { AdhesionesService, AdhesionWebDto, AdhesionLocalDto } from './adhesiones.service';
+import { AdhesionesService, AdhesionWebDto, AdhesionLocalDto, AnualPorVencerDto } from './adhesiones.service';
 import { PaginatorComponent } from '../../shared/components/paginator/paginator.component';
 import { GridQuery, SortOrder, DEFAULT_PAGE_SIZE } from '../../core/models/paged';
 import { ToastService } from '../../core/services/toast.service';
+import { waLink, mensajeVencimiento } from './wa-link';
 
 interface StatsDto { locales: number; web: number; total: number; }
 
-type Tab = 'web' | 'locales' | 'nuevo';
+type Tab = 'web' | 'locales' | 'nuevo' | 'anuales';
 
 @Component({
   selector: 'app-adhesiones',
@@ -26,6 +27,7 @@ type Tab = 'web' | 'locales' | 'nuevo';
     <div class="tabs">
       <a class="tab" [class.active]="tab()==='web'"     (click)="tab.set('web')">Adhesiones Pendientes en Web</a>
       <a class="tab" [class.active]="tab()==='locales'" (click)="tab.set('locales')">Adhesiones Locales</a>
+      <a class="tab" [class.active]="tab()==='anuales'" (click)="tab.set('anuales'); reloadAnuales()">Anuales por vencer</a>
     </div>
 
     @if (tab() === 'web') {
@@ -189,6 +191,53 @@ type Tab = 'web' | 'locales' | 'nuevo';
       </div>
     }
 
+    @if (tab() === 'anuales') {
+      <div style="margin-top:16px; display:flex; align-items:baseline; gap:10px">
+        <h3 style="margin:0">Anuales por vencer este mes</h3>
+        <span style="color:#666; font-size:14px">({{ anuales().length }})</span>
+      </div>
+      <div class="card" style="margin-top:12px">
+        <div class="card-body" style="padding:0; overflow-x:auto">
+          <table class="table">
+            <thead>
+              <tr>
+                <th style="width:65px">ID Contacto</th>
+                <th>Nombre</th>
+                <th>Apellido</th>
+                <th>Celular</th>
+                <th>Sistema</th>
+                <th>Vencimiento</th>
+                <th style="text-align:right"></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (a of anuales(); track a.contactoId) {
+                <tr>
+                  <td>{{ a.contactoId }}</td>
+                  <td><strong>{{ a.nombre }}</strong></td>
+                  <td><strong>{{ a.apellido }}</strong></td>
+                  <td>{{ a.celular || '—' }}</td>
+                  <td><span class="badge">{{ a.sistContrib || 'ANUAL' }}</span></td>
+                  <td>{{ a.vencimiento }}</td>
+                  <td style="text-align:right">
+                    @if (waParaFila(a); as link) {
+                      <a class="btn btn-sm btn-wpp" [href]="link" target="_blank" rel="noopener" title="Avisar por WhatsApp">
+                        WhatsApp
+                      </a>
+                    }
+                  </td>
+                </tr>
+              } @empty {
+                <tr><td colspan="7"><div class="empty-state"><div class="empty-state-text">
+                  {{ loadingAnuales() ? 'Cargando…' : 'Sin anuales por vencer este mes' }}
+                </div></div></td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+
     @if (tab() === 'nuevo') {
       <div class="card" style="margin-top:16px">
         <div class="card-body">
@@ -251,6 +300,11 @@ type Tab = 'web' | 'locales' | 'nuevo';
       padding:8px 10px; border:1px solid #ddd; border-radius:4px; font-size:14px;
     }
     th.sortable { cursor:pointer; user-select:none; }
+    .btn-wpp {
+      background:#25d366; color:#fff; border:none; text-decoration:none;
+      padding:5px 12px; border-radius:5px; font-weight:600; white-space:nowrap;
+    }
+    .btn-wpp:hover { background:#1da851; }
   `]
 })
 export class AdhesionesListadoComponent {
@@ -262,6 +316,8 @@ export class AdhesionesListadoComponent {
   tab = signal<Tab>('locales');
   web = signal<AdhesionWebDto[]>([]);
   locales = signal<AdhesionLocalDto[]>([]);
+  anuales = signal<AnualPorVencerDto[]>([]);
+  loadingAnuales = signal(false);
   stats = signal<StatsDto>({ locales: 0, web: 0, total: 0 });
 
   sincronizando = signal(false);
@@ -328,6 +384,19 @@ export class AdhesionesListadoComponent {
     });
   }
   reloadStats() { this.http.get<StatsDto>(`${environment.apiUrl}/adhesiones/stats`).subscribe(x => this.stats.set(x)); }
+
+  reloadAnuales() {
+    this.loadingAnuales.set(true);
+    this.adhesionesSvc.anualesPorVencer().subscribe({
+      next: r => { this.anuales.set(r); this.loadingAnuales.set(false); },
+      error: () => this.loadingAnuales.set(false),
+    });
+  }
+
+  /** Deep link de WhatsApp para la fila, o null si el contacto no tiene celular válido. */
+  waParaFila(a: AnualPorVencerDto): string | null {
+    return waLink(a.celular, mensajeVencimiento(a.nombre, a.vencimiento));
+  }
 
   onWebPage(p: number) { this.webPage.set(p); this.reloadWeb(); }
   onWebPageSize(s: number) { this.webPageSize.set(s); this.webPage.set(1); this.reloadWeb(); }
