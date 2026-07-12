@@ -1,0 +1,53 @@
+{
+  "feature": "agrupaciones-integrantes-alta-baja",
+  "local_config": { "database": null },
+  "stats": { "total": 4, "done": 4, "by_layer": { "1": 1, "2": 3 } },
+  "execution_strategy": "sequential",
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "Alta/baja de integrantes en Por Período",
+      "description": "En agrupaciones-por-periodo: form inline 'Agregar integrante' (autocomplete de contacto vía ContactosService.listado + cargo + fecha) → POST /agrupacion-integrantes; botón 'Quitar' por fila → confirm + DELETE. Refrescar con load() tras cada mutación. + test.",
+      "status": "done", "layer": 1, "depends_on": [],
+      "files": [
+        "src/app/features/agrupaciones/agrupaciones-por-periodo.component.ts",
+        "src/app/features/agrupaciones/agrupaciones-por-periodo.component.spec.ts"
+      ],
+      "acceptance_criteria": ["AC-1","AC-2","AC-3","AC-4","AC-5","AC-6","AC-7","AC-8","AC-9","BR-1","BR-2","BR-3","GATE: npm run build","GATE: tests verdes"],
+      "references": ["US-1","US-2"]
+    },
+    {
+      "id": "TASK-002",
+      "title": "Code review",
+      "description": "Revisar el autocomplete (debounce, sin fugas), el armado del body del POST, el refresco y la adherencia al estilo del componente.",
+      "status": "done", "layer": 2, "depends_on": ["TASK-001"],
+      "files": [],
+      "acceptance_criteria": ["0 hallazgos sin resolver"],
+      "references": ["US-1","US-2"]
+    },
+    {
+      "id": "TASK-003",
+      "title": "Security review",
+      "description": "Confirmar que la vista sigue bajo rol AdminSecciones y que no se expone nada sensible; el borrado es físico e intencional.",
+      "status": "done", "layer": 2, "depends_on": ["TASK-001"],
+      "files": [],
+      "acceptance_criteria": ["Autorización intacta"],
+      "references": ["US-2"]
+    },
+    {
+      "id": "TASK-004",
+      "title": "Performance review",
+      "description": "Verificar que el autocomplete debounce y que load() tras la mutación no dispara consultas de más.",
+      "status": "done", "layer": 2, "depends_on": ["TASK-001"],
+      "files": [],
+      "acceptance_criteria": ["Autocomplete con debounce", "Sin recargas redundantes"],
+      "references": ["US-1"]
+    }
+  ],
+  "dependency_graph": {
+    "by_layer": {
+      "1": { "level_0": ["TASK-001"] },
+      "2": { "level_0": ["TASK-002","TASK-003","TASK-004"] }
+    }
+  }
+}

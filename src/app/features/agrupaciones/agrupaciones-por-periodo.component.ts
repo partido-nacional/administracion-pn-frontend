@@ -9,6 +9,8 @@ import { PaginatorComponent } from '../../shared/components/paginator/paginator.
 import { GridQuery, PagedResult, SortOrder, DEFAULT_PAGE_SIZE } from '../../core/models/paged';
 import { buildPagedParams } from '../../core/services/paged';
 import { toggleSort, sortArrow } from '../../shared/grid/grid-sort';
+import { ContactosService, ContactoListado } from '../agenda/contactos.service';
+import { ToastService } from '../../core/services/toast.service';
 
 interface IntegranteRow {
   id: number;
@@ -257,7 +259,46 @@ interface AgrupacionPeriodoRow {
                     </div>
 
                     <div class="seccion">
-                      <div class="seccion-title">Integrantes ({{ r.integrantes.length }})</div>
+                      <div class="seccion-title" style="display:flex; align-items:center; justify-content:space-between">
+                        <span>Integrantes ({{ r.integrantes.length }})</span>
+                        @if (!agregando()) {
+                          <button class="btn btn-sm btn-primary" (click)="abrirAgregar(r.periodoId)">+ Agregar integrante</button>
+                        }
+                      </div>
+
+                      @if (agregando() && agregandoPeriodo() === r.periodoId) {
+                        <div class="add-int">
+                          <div class="add-combo">
+                            <label>Contacto *</label>
+                            <div class="combo">
+                              <input class="combo-input"
+                                     [placeholder]="contactoSel() ? '' : 'Buscar por nombre o cédula…'"
+                                     [value]="contactoSel() ? labelContacto(contactoSel()!) : qContacto()"
+                                     (input)="onBuscarContacto($event)"
+                                     (focus)="contactoSel.set(null)">
+                              @if (contactoSel()) {
+                                <button type="button" class="combo-clear" (click)="contactoSel.set(null); qContacto.set('')">×</button>
+                              }
+                              @if (!contactoSel() && resultados().length > 0) {
+                                <div class="combo-list">
+                                  @for (c of resultados(); track c.id) {
+                                    <div class="combo-opt" (click)="seleccionarContacto(c)">{{ labelContacto(c) }}</div>
+                                  }
+                                </div>
+                              }
+                            </div>
+                          </div>
+                          <div class="add-fg"><label>Cargo</label><input [(ngModel)]="cargoNuevo" name="cargoNuevo"></div>
+                          <div class="add-fg"><label>Fecha ingreso</label><input type="date" [(ngModel)]="fechaIngresoNuevo" name="fiNuevo"></div>
+                          <div class="add-actions">
+                            <button class="btn btn-sm btn-secondary" (click)="cerrarAgregar()">Cancelar</button>
+                            <button class="btn btn-sm btn-primary" (click)="guardarIntegrante(r.periodoId)" [disabled]="!contactoSel() || guardando()">
+                              {{ guardando() ? 'Guardando…' : 'Guardar' }}
+                            </button>
+                          </div>
+                        </div>
+                      }
+
                       @if (r.integrantes.length === 0) {
                         <div style="font-size:13px; color:#888">Sin integrantes registrados en este período.</div>
                       } @else {
@@ -273,6 +314,7 @@ interface AgrupacionPeriodoRow {
                               <th>Email</th>
                               <th>Cargo</th>
                               <th>Fecha Ingreso</th>
+                              <th></th>
                             </tr>
                           </thead>
                           <tbody>
@@ -287,6 +329,7 @@ interface AgrupacionPeriodoRow {
                                 <td>{{ i.email || '—' }}</td>
                                 <td>{{ i.cargo || '—' }}</td>
                                 <td>{{ i.fechaIngreso || '—' }}</td>
+                                <td><button class="btn btn-sm btn-danger" (click)="quitarIntegrante(i)">Quitar</button></td>
                               </tr>
                             }
                           </tbody>
@@ -425,13 +468,55 @@ interface AgrupacionPeriodoRow {
       padding:12px 18px; border-top:1px solid #eef1f5; background:#fafbfd;
       display:flex; gap:8px; justify-content:flex-end;
     }
+    .add-int {
+      display:flex; flex-wrap:wrap; align-items:flex-end; gap:12px;
+      background:#f0f6ff; border:1px solid #d6e4f5; border-radius:6px;
+      padding:12px 14px; margin:10px 0 14px;
+    }
+    .add-int label { display:block; font-size:11px; font-weight:600; color:#666; text-transform:uppercase; letter-spacing:.4px; margin-bottom:4px; }
+    .add-int input {
+      padding:7px 10px; font-size:13px; font-family:inherit;
+      border:1px solid #cfd6e0; border-radius:5px; outline:none;
+    }
+    .add-int input:focus { border-color:#1e3a8a; box-shadow:0 0 0 3px rgba(30,58,138,.12); }
+    .add-combo { flex:1 1 260px; min-width:220px; }
+    .add-fg { flex:0 0 auto; }
+    .add-actions { display:flex; gap:8px; margin-left:auto; }
+    .combo { position:relative; }
+    .combo-input { width:100%; box-sizing:border-box; padding-right:28px; }
+    .combo-clear {
+      position:absolute; right:6px; top:50%; transform:translateY(-50%);
+      background:transparent; border:none; font-size:16px; cursor:pointer; color:#888;
+    }
+    .combo-list {
+      position:absolute; top:100%; left:0; right:0; z-index:20;
+      max-height:200px; overflow-y:auto; background:#fff;
+      border:1px solid #cfd6e0; border-radius:5px; margin-top:2px;
+      box-shadow:0 6px 16px rgba(0,0,0,.12);
+    }
+    .combo-opt { padding:8px 12px; cursor:pointer; font-size:13px; border-bottom:1px solid #f0f3f7; }
+    .combo-opt:last-child { border-bottom:none; }
+    .combo-opt:hover { background:#eef5ff; }
   `]
 })
 export class AgrupacionesPorPeriodoComponent {
   private http = inject(HttpClient);
+  private contactosSvc = inject(ContactosService);
+  private toast = inject(ToastService);
 
   items = signal<AgrupacionPeriodoRow[]>([]);
   expandido = signal<number | null>(null);
+
+  // Alta de integrante (feature 023)
+  agregando = signal(false);
+  agregandoPeriodo = signal<number | null>(null);
+  qContacto = signal('');
+  resultados = signal<ContactoListado[]>([]);
+  contactoSel = signal<ContactoListado | null>(null);
+  cargoNuevo = '';
+  fechaIngresoNuevo = new Date().toISOString().slice(0, 10);
+  guardando = signal(false);
+  private buscarContacto$ = new Subject<string>();
 
   total = signal(0);
   page = signal(1);
@@ -442,6 +527,68 @@ export class AgrupacionesPorPeriodoComponent {
 
   toggle(id: number) {
     this.expandido.set(this.expandido() === id ? null : id);
+    this.cerrarAgregar();
+  }
+
+  // ── Alta / baja de integrantes (feature 023) ──────────────
+  labelContacto(c: ContactoListado): string {
+    return `${c.apellido}, ${c.nombre}${c.cedula ? ' (' + c.cedula + ')' : ''}`;
+  }
+
+  abrirAgregar(periodoId: number) {
+    this.agregandoPeriodo.set(periodoId);
+    this.qContacto.set('');
+    this.resultados.set([]);
+    this.contactoSel.set(null);
+    this.cargoNuevo = '';
+    this.fechaIngresoNuevo = new Date().toISOString().slice(0, 10);
+    this.agregando.set(true);
+  }
+
+  cerrarAgregar() {
+    this.agregando.set(false);
+    this.agregandoPeriodo.set(null);
+    this.resultados.set([]);
+  }
+
+  onBuscarContacto(ev: Event) {
+    const q = (ev.target as HTMLInputElement).value;
+    this.qContacto.set(q);
+    this.contactoSel.set(null);
+    this.buscarContacto$.next(q);
+  }
+
+  seleccionarContacto(c: ContactoListado) {
+    this.contactoSel.set(c);
+    this.resultados.set([]);
+  }
+
+  guardarIntegrante(periodoId: number) {
+    const c = this.contactoSel();
+    if (!c) return;
+    this.guardando.set(true);
+    this.http.post(`${environment.apiUrl}/agrupacion-integrantes`, {
+      contactoId: c.id,
+      agrupacionPeriodoId: periodoId,
+      cargo: this.cargoNuevo.trim() || null,
+      fechaIngreso: this.fechaIngresoNuevo || null,
+    }).subscribe({
+      next: () => {
+        this.guardando.set(false);
+        this.cerrarAgregar();
+        this.load();
+        this.toast.success('Integrante agregado.');
+      },
+      error: () => this.guardando.set(false),  // el toast global muestra el error
+    });
+  }
+
+  quitarIntegrante(i: IntegranteRow) {
+    if (!confirm(`¿Quitar a ${i.apellido}, ${i.nombre} de esta agrupación?`)) return;
+    this.http.delete(`${environment.apiUrl}/agrupacion-integrantes/${i.id}`).subscribe(() => {
+      this.load();
+      this.toast.success('Integrante quitado.');
+    });
   }
 
   onSort(field: string) {
@@ -589,6 +736,12 @@ export class AgrupacionesPorPeriodoComponent {
     this.filter$.pipe(debounceTime(300)).subscribe(() => { this.page.set(1); this.load(); });
     this.http.get<{ periodos: string[]; deptos: string[] }>(`${this.base}/opciones`)
       .subscribe(o => { this.periodos.set(o.periodos ?? []); this.deptos.set(o.deptos ?? []); });
+    // Autocomplete de contacto para el alta de integrante (feature 023).
+    this.buscarContacto$.pipe(debounceTime(250)).subscribe(q => {
+      if (!q.trim()) { this.resultados.set([]); return; }
+      this.contactosSvc.listado({ page: 1, pageSize: 8, filters: { q } })
+        .subscribe(r => this.resultados.set(r.items));
+    });
     this.load();
   }
 }
