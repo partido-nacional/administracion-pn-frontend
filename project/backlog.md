@@ -77,8 +77,10 @@
 
 ### TODO-008: Agrupaciones — sin CRUD de integrantes
 - **Priority**: Medium
-- **Status**: pending
+- **Status**: resolved
+- **Feature**: project/features/023-agrupaciones-integrantes-alta-baja
 - **Created**: 2026-06-14
+- **Resolved**: 2026-07-12 — alta (autocomplete de contacto + cargo + fecha → POST) y baja (confirm → DELETE) en la vista Por Período. Sin edición (backend no expone PUT).
 - **Origin**: feature/agrupaciones
 - **Context**: Los integrantes llegan embebidos en `GET /agrupaciones-periodos` (solo lectura); no hay alta/baja desde el front aunque el backend expone `agrupacion-integrantes`.
 - **Affected Files**: src/app/features/agrupaciones/agrupaciones-por-periodo.component.ts
