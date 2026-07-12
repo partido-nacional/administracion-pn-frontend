@@ -5,6 +5,8 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { PageTitleService } from '../../core/page-title.service';
 import { AuthService } from '../../core/auth.service';
+import { ToastService } from '../../core/services/toast.service';
+import { skipErrorToast } from '../../core/http/skip-error-toast';
 
 interface Resumen {
   contactos: number;
@@ -274,6 +276,7 @@ export class DashboardComponent {
   private http = inject(HttpClient);
   private title = inject(PageTitleService);
   private auth = inject(AuthService);
+  private toast = inject(ToastService);
 
   DIAS_SEM = DIAS_SEM;
 
@@ -409,8 +412,8 @@ export class DashboardComponent {
       tipo: this.form.tipo || null,
       creadorNombre: this.usuario(),
       esPublico: this.form.esPublico
-    }).subscribe({
-      next: () => { this.busy.set(false); this.cerrarModal(); this.cargarEventos(); },
+    }, { context: skipErrorToast() }).subscribe({
+      next: () => { this.busy.set(false); this.cerrarModal(); this.cargarEventos(); this.toast.success('Evento creado.'); },
       error: (err) => {
         this.busy.set(false);
         this.modalError.set(err?.error?.message || 'No se pudo crear el evento.');
@@ -433,8 +436,8 @@ export class DashboardComponent {
       tipo: this.form.tipo || null,
       creadorNombre: this.usuario(),
       esPublico: this.form.esPublico
-    }).subscribe({
-      next: () => { this.busy.set(false); this.cerrarModal(); this.cargarEventos(); },
+    }, { context: skipErrorToast() }).subscribe({
+      next: () => { this.busy.set(false); this.cerrarModal(); this.cargarEventos(); this.toast.success('Evento actualizado.'); },
       error: (err) => {
         this.busy.set(false);
         this.modalError.set(err?.error?.message || 'No se pudo guardar el evento.');
@@ -448,8 +451,8 @@ export class DashboardComponent {
     if (!confirm(`Eliminar el evento "${e.titulo}"?`)) return;
     this.busy.set(true);
     this.http.delete(`${environment.apiUrl}/calendario/eventos/${e.id}`).subscribe({
-      next: () => { this.busy.set(false); this.cerrarModal(); this.cargarEventos(); },
-      error: () => { this.busy.set(false); alert('No se pudo eliminar el evento.'); }
+      next: () => { this.busy.set(false); this.cerrarModal(); this.cargarEventos(); this.toast.success('Evento eliminado.'); },
+      error: () => this.busy.set(false)   // el toast global muestra el error
     });
   }
 }

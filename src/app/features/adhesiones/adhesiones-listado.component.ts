@@ -8,6 +8,7 @@ import { PageTitleService } from '../../core/page-title.service';
 import { AdhesionesService, AdhesionWebDto, AdhesionLocalDto } from './adhesiones.service';
 import { PaginatorComponent } from '../../shared/components/paginator/paginator.component';
 import { GridQuery, SortOrder, DEFAULT_PAGE_SIZE } from '../../core/models/paged';
+import { ToastService } from '../../core/services/toast.service';
 
 interface StatsDto { locales: number; web: number; total: number; }
 
@@ -256,6 +257,7 @@ export class AdhesionesListadoComponent {
   private http = inject(HttpClient);
   private titleSvc = inject(PageTitleService);
   private adhesionesSvc = inject(AdhesionesService);
+  private toast = inject(ToastService);
 
   tab = signal<Tab>('locales');
   web = signal<AdhesionWebDto[]>([]);
@@ -370,12 +372,13 @@ export class AdhesionesListadoComponent {
   }
 
   pasar(id: number) {
+    // El error lo muestra el toast global (interceptor); acá solo el éxito y recargar.
     this.http.post(`${environment.apiUrl}/adhesiones/web/${id}/pasar-a-local`, {}).subscribe({
-      next: () => { this.reloadWeb(); this.reloadLocales(); this.reloadStats(); },
-      error: (err) => {
-        alert(err?.error?.message || 'No se pudo pasar la adhesión a local.');
-        this.reloadWeb();
-      }
+      next: () => {
+        this.reloadWeb(); this.reloadLocales(); this.reloadStats();
+        this.toast.success('Adhesión pasada a local.');
+      },
+      error: () => this.reloadWeb()
     });
   }
 
@@ -383,6 +386,7 @@ export class AdhesionesListadoComponent {
     if (!confirm('Eliminar esta adhesion web?')) return;
     this.http.delete(`${environment.apiUrl}/adhesiones/web/${id}`).subscribe(() => {
       this.reloadWeb(); this.reloadStats();
+      this.toast.success('Adhesión web eliminada.');
     });
   }
 
@@ -390,17 +394,19 @@ export class AdhesionesListadoComponent {
     if (!confirm('Eliminar esta adhesion local?')) return;
     this.http.delete(`${environment.apiUrl}/adhesiones/locales/${id}`).subscribe(() => {
       this.reloadLocales(); this.reloadStats();
+      this.toast.success('Adhesión local eliminada.');
     });
   }
 
   crearLocal() {
-    if (!this.form.contactoId) { alert('Falta el ID de contacto'); return; }
+    if (!this.form.contactoId) { this.toast.error('Falta el ID de contacto.'); return; }
     this.http.post(`${environment.apiUrl}/adhesiones/locales`, {
       ...this.form
     }).subscribe(() => {
       this.form = { contactoId: null, sector: '', sistContrib: '', aporte: null, titularResponsable: '', observaciones: '' };
       this.tab.set('locales');
       this.reloadLocales(); this.reloadStats();
+      this.toast.success('Adhesión local creada.');
     });
   }
 }

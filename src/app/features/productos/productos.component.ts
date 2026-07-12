@@ -9,6 +9,8 @@ import { AuthService } from '../../core/auth.service';
 import { PaginatorComponent } from '../../shared/components/paginator/paginator.component';
 import { GridQuery, PagedResult, SortOrder, DEFAULT_PAGE_SIZE } from '../../core/models/paged';
 import { buildPagedParams } from '../../core/services/paged';
+import { ToastService } from '../../core/services/toast.service';
+import { skipErrorToast } from '../../core/http/skip-error-toast';
 
 interface ProductoListado {
   id: number; nombre: string; descripcion?: string; precio: number;
@@ -555,6 +557,7 @@ export class ProductosComponent {
   private http = inject(HttpClient);
   private titleSvc = inject(PageTitleService);
   private auth = inject(AuthService);
+  private toast = inject(ToastService);
 
   usuario = computed(() => this.auth.session()?.usuario ?? 'desconocido');
   ahora = signal('');
@@ -600,11 +603,12 @@ export class ProductosComponent {
       cantidad: this.sForm.cantidad,
       motivo: this.sForm.motivo || null,
       observaciones: this.sForm.observaciones || null
-    }).subscribe({
+    }, { context: skipErrorToast() }).subscribe({
       next: () => {
         this.sBusy.set(false);
         this.cerrarStock();
         this.reload();
+        this.toast.success('Stock actualizado.');
       },
       error: (err) => {
         this.sBusy.set(false);
@@ -736,11 +740,12 @@ export class ProductosComponent {
       recaudacion: rec,
       nroRecibo: this.vNroRecibo() || null,
       metodoPago: this.vMetodoPago()
-    }).subscribe({
+    }, { context: skipErrorToast() }).subscribe({
       next: () => {
         this.vBusy.set(false);
         this.cerrarNuevaVenta();
         this.reload();
+        this.toast.success('Venta registrada.');
       },
       error: (err) => {
         this.vBusy.set(false);
@@ -775,12 +780,13 @@ export class ProductosComponent {
       tipo: 'Monetaria',
       destinatario: this.dDestinatario().trim(),
       observaciones: this.dObservaciones().trim() || null
-    }).subscribe({
+    }, { context: skipErrorToast() }).subscribe({
       next: () => {
         this.dBusy.set(false);
         this.cerrarNuevaDonacion();
         this.loadDonaciones();
         this.loadStats();
+        this.toast.success('Donación registrada.');
       },
       error: (err) => {
         this.dBusy.set(false);
@@ -919,9 +925,14 @@ export class ProductosComponent {
 
   guardar() {
     const body = { id: this.formP.id, nombre: this.formP.nombre, descripcion: this.formP.descripcion, precio: this.formP.precio, categoria: this.formP.categoria, activo: this.formP.activo ?? true };
-    const req = this.formP.id
+    const editando = !!this.formP.id;
+    const req = editando
       ? this.http.put(`${environment.apiUrl}/productos/${this.formP.id}`, body)
       : this.http.post(`${environment.apiUrl}/productos`, body);
-    req.subscribe(() => { this.tab.set('listar'); this.reload(); });
+    req.subscribe(() => {
+      this.tab.set('listar');
+      this.reload();
+      this.toast.success(editando ? 'Producto actualizado.' : 'Producto creado.');
+    });
   }
 }
