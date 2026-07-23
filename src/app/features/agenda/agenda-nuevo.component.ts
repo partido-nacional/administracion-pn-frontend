@@ -64,7 +64,7 @@ function describeError(label: string, errors: any): string {
               }
             </div>
             <div class="form-group"><label class="form-label">Departamento Credencial</label>
-              <select class="form-select" name="depCred" [(ngModel)]="c.departamentoCredencial" disabled>
+              <select class="form-select" name="depCred" [(ngModel)]="c.departamentoCredencial">
                 <option value="">—</option>
                 @for (d of departamentos; track d) { <option>{{ d }}</option> }
               </select></div>
@@ -108,13 +108,6 @@ function describeError(label: string, errors: any): string {
                      inputmode="numeric"
                      placeholder="Solo numeros, sin espacios">
             </div>
-            <div class="form-group">
-              <label class="form-label">Interno</label>
-              <input class="form-input" name="internoContacto" [(ngModel)]="c.interno"
-                     (input)="onlyDigits($event, 'interno')"
-                     (keypress)="blockNonDigit($event)"
-                     inputmode="numeric" placeholder="Solo numeros">
-            </div>
           </div>
 
           <div class="form-section"><div class="form-section-title">Dirección</div></div>
@@ -141,6 +134,13 @@ function describeError(label: string, errors: any): string {
                      (keypress)="blockNonDigit($event)"
                      inputmode="numeric"
                      placeholder="Solo numeros, sin espacios">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Interno</label>
+              <input class="form-input" name="internoContacto" [(ngModel)]="c.interno"
+                     (input)="onlyDigits($event, 'interno')"
+                     (keypress)="blockNonDigit($event)"
+                     inputmode="numeric" placeholder="Solo numeros">
             </div>
             <div class="form-group"><label class="form-label">Departamento</label>
               <select class="form-select" name="depLab" [(ngModel)]="c.departamentoLaboral">
@@ -258,11 +258,11 @@ export class AgendaNuevoComponent {
     v = letters + digits;
     input.value = v;
     this.c.credencialCivica = v;
+    // La primera letra de la credencial sugiere el departamento. No se limpia cuando
+    // no hay credencial: el depto credencial es editable de forma independiente (feature 025).
     if (letters.length >= 1) {
       const dep = this.credencialMap[letters[0]];
       if (dep) this.c.departamentoCredencial = dep;
-    } else {
-      this.c.departamentoCredencial = '';
     }
   }
 
