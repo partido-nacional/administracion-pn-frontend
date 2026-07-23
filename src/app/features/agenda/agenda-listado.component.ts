@@ -325,7 +325,7 @@ export class AgendaListadoComponent implements OnInit {
   total = signal(0);
   page = signal(1);
   pageSize = signal(DEFAULT_PAGE_SIZE);
-  sort = signal<string | undefined>(undefined);
+  sort = signal<string | undefined>('id');
   order = signal<SortOrder>('asc');
   loading = signal(false);
   expandedId = signal<number | null>(null);
