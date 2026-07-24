@@ -1,7 +1,7 @@
 import {
-  SISTEMAS, DEPARTAMENTOS, APORTES_SEC_AGR,
+  SISTEMAS, DEPARTAMENTOS, APORTES_SEC_AGR, SECTORES, IMPORTE_DEFAULT,
   showTelefonoAntel, showCedula, showFechasPago,
-  applySistContrib, applyAporteTodo, sanitizarFichaParaGuardar,
+  applySistContrib, applyAporteTodo, applyArt46, sanitizarFichaParaGuardar,
 } from './ficha-adhesion.constants';
 import { FichaAdhesionDetalle } from '../../features/agenda/contactos.service';
 
@@ -19,6 +19,31 @@ describe('ficha-adhesion.constants — catálogos', () => {
     expect(SISTEMAS).toContain('Antel');
     expect(DEPARTAMENTOS).toContain('Montevideo');
     expect(APORTES_SEC_AGR.length).toBeGreaterThan(0);
+  });
+
+  it('SECTORES es la lista fija sin "TODO POR EL PUEBLO"', () => {
+    expect(SECTORES).toEqual([
+      'ALIANZA NACIONAL', 'AIRE FRESCO', 'MEJOR PAÍS', 'D CENTRO',
+      'ESPACIO 40', 'HERRERISMO', 'POR LA PATRIA'
+    ]);
+    expect(SECTORES).not.toContain('TODO POR EL PUEBLO');
+  });
+
+  it('IMPORTE_DEFAULT es 250', () => {
+    expect(IMPORTE_DEFAULT).toBe(250);
+  });
+});
+
+describe('applyArt46 (Art. 46 → importe 0 y bloqueo)', () => {
+  it('al marcar pone art46=true y aporte=0', () => {
+    const r = applyArt46(ficha({ art46: false, aporte: 250 }), true);
+    expect(r.art46).toBeTrue();
+    expect(r.aporte).toBe(0);
+  });
+  it('al desmarcar pone art46=false y conserva el aporte actual', () => {
+    const r = applyArt46(ficha({ art46: true, aporte: 0 }), false);
+    expect(r.art46).toBeFalse();
+    expect(r.aporte).toBe(0);
   });
 });
 

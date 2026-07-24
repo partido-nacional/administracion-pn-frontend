@@ -4,8 +4,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ContactosService, FichaAdhesionDetalle } from '../agenda/contactos.service';
 import { AdhesionesService } from './adhesiones.service';
 import { PageTitleService } from '../../core/page-title.service';
-import { CatalogosService } from '../../core/catalogos.service';
-import { DEPARTAMENTOS, sanitizarFichaParaGuardar } from '../../shared/adhesiones/ficha-adhesion.constants';
+import { DEPARTAMENTOS, IMPORTE_DEFAULT, sanitizarFichaParaGuardar } from '../../shared/adhesiones/ficha-adhesion.constants';
 import { hoyISO, normalizarFechaSalida } from '../../shared/adhesiones/confirmado-baja.util';
 import { FichaAdhesionFormComponent } from '../../shared/adhesiones/ficha-adhesion-form.component';
 
@@ -27,8 +26,7 @@ import { FichaAdhesionFormComponent } from '../../shared/adhesiones/ficha-adhesi
           <div class="form-section"><div class="form-section-title">Datos de adhesión</div></div>
           <app-ficha-adhesion-form
             [ficha]="f"
-            (fichaChange)="ficha.set($event)"
-            [sectores]="sectores()">
+            (fichaChange)="ficha.set($event)">
           </app-ficha-adhesion-form>
 
           <div class="form-actions">
@@ -51,18 +49,13 @@ export class NuevaFichaComponent {
   private contactosSvc = inject(ContactosService);
   private adhSvc = inject(AdhesionesService);
   private titleSvc = inject(PageTitleService);
-  private catSvc = inject(CatalogosService);
 
   contactoId!: number;
   contactoNombre = signal<string>('');
   ficha = signal<FichaAdhesionDetalle | null>(null);
-  sectores = signal<string[]>([]);
 
   constructor() {
     this.titleSvc.set('Nueva Ficha de Adhesión');
-    this.catSvc.sectores().subscribe(list =>
-      this.sectores.set(list.map(s => s.descripcion))
-    );
     this.contactoId = +this.route.snapshot.paramMap.get('contactoId')!;
     this.contactosSvc.get(this.contactoId).subscribe(c => {
       this.contactoNombre.set(`${c.apellido}, ${c.nombre}`);
@@ -74,7 +67,7 @@ export class NuevaFichaComponent {
         contactoNombre: `${c.nombre} ${c.apellido}`,
         sector: undefined,
         sistContrib: undefined,
-        aporte: undefined,
+        aporte: IMPORTE_DEFAULT,
         fechaAdhesion: today,
         fechaSalida: undefined,
         aporteConfirmado: null,
