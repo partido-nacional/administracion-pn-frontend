@@ -4,7 +4,6 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ContactosService, FichaAdhesion, FichaAdhesionDetalle } from '../agenda/contactos.service';
 import { AdhesionesService } from './adhesiones.service';
 import { PageTitleService } from '../../core/page-title.service';
-import { CatalogosService } from '../../core/catalogos.service';
 import { normalizarFechaSalida } from '../../shared/adhesiones/confirmado-baja.util';
 import { sanitizarFichaParaGuardar } from '../../shared/adhesiones/ficha-adhesion.constants';
 import { FichaAdhesionFormComponent } from '../../shared/adhesiones/ficha-adhesion-form.component';
@@ -70,8 +69,7 @@ import { FichaAdhesionFormComponent } from '../../shared/adhesiones/ficha-adhesi
                             [ficha]="detalle()!"
                             (fichaChange)="detalle.set($event)"
                             [disabled]="!editMode()"
-                            [showId]="true"
-                            [sectores]="sectores()">
+                            [showId]="true">
                           </app-ficha-adhesion-form>
                         </div>
                       </div>
@@ -102,7 +100,6 @@ export class FichasContactoComponent {
   private svc = inject(ContactosService);
   private adhSvc = inject(AdhesionesService);
   private titleSvc = inject(PageTitleService);
-  private catSvc = inject(CatalogosService);
 
   contactoId!: number;
   fichas = signal<FichaAdhesion[]>([]);
@@ -111,13 +108,8 @@ export class FichasContactoComponent {
   editMode = signal(false);
   private original: FichaAdhesionDetalle | null = null;
 
-  sectores = signal<string[]>([]);
-
   constructor() {
     this.titleSvc.set('Fichas de Adhesión');
-    this.catSvc.sectores().subscribe(list =>
-      this.sectores.set(list.map(s => s.descripcion))
-    );
     this.contactoId = +this.route.snapshot.paramMap.get('contactoId')!;
     this.svc.fichasAdhesion(this.contactoId).subscribe(x => this.fichas.set(x));
   }

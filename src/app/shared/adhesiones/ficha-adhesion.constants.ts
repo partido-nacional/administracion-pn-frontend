@@ -23,6 +23,15 @@ export const APORTES_SEC_AGR = [
   'Comision Departamental', 'C. Cultura', 'Movimiento Afro-Nacionalista (MAN)'
 ];
 
+/** Sectores fijos para "Aporte a un Sector" (lista canónica, no viene del backend). */
+export const SECTORES = [
+  'ALIANZA NACIONAL', 'AIRE FRESCO', 'MEJOR PAÍS', 'D CENTRO',
+  'ESPACIO 40', 'HERRERISMO', 'POR LA PATRIA'
+];
+
+/** Importe por defecto de una ficha nueva (modificable). */
+export const IMPORTE_DEFAULT = 250;
+
 /** Sistema `Antel` → se pide Teléfono Antel. */
 export const showTelefonoAntel = (s?: string) => s === 'Antel';
 /** Sistemas con tarjeta/débito → se pide Cédula del responsable. */
@@ -46,6 +55,15 @@ export function applySistContrib(f: FichaAdhesionDetalle, s: string): FichaAdhes
  */
 export function applyAporteTodo(f: FichaAdhesionDetalle, v: boolean): FichaAdhesionDetalle {
   return { ...f, aporteTodoAlPartido: v };
+}
+
+/**
+ * Setea `art46`. Al marcarlo, el importe queda en 0 y el campo de importe se bloquea
+ * en el formulario (el bloqueo lo hace la vista según `art46`). Al desmarcarlo, el
+ * importe vuelve a ser editable conservando el valor actual.
+ */
+export function applyArt46(f: FichaAdhesionDetalle, v: boolean): FichaAdhesionDetalle {
+  return v ? { ...f, art46: true, aporte: 0 } : { ...f, art46: false };
 }
 
 /**
