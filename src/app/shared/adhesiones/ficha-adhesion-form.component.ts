@@ -3,9 +3,9 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FichaAdhesionDetalle } from '../../features/agenda/contactos.service';
 import {
-  SISTEMAS, DEPARTAMENTOS, APORTES_SEC_AGR,
+  SISTEMAS, DEPARTAMENTOS, APORTES_SEC_AGR, SECTORES,
   showTelefonoAntel, showCedula, showFechasPago,
-  applySistContrib, applyAporteTodo,
+  applySistContrib, applyAporteTodo, applyArt46,
 } from './ficha-adhesion.constants';
 import { resolverConfirmado } from './confirmado-baja.util';
 
@@ -25,6 +25,20 @@ import { resolverConfirmado } from './confirmado-baja.util';
   imports: [CommonModule, FormsModule],
   template: `
     <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label">Confirmado</label>
+        <select class="form-select" [ngModel]="ficha().aporteConfirmado" (ngModelChange)="onConfirmadoChange($event)" name="confirmado" [disabled]="disabled()">
+          <option [ngValue]="null">-</option>
+          <option [ngValue]="false">D</option>
+          <option [ngValue]="true">S</option>
+        </select>
+      </div>
+      @if (ficha().aporteConfirmado === false) {
+        <div class="form-group">
+          <label class="form-label">Fecha de salida</label>
+          <input class="form-input" type="date" [(ngModel)]="ficha().fechaSalida" name="fechaSalidaCond" [disabled]="disabled()">
+        </div>
+      }
       @if (showId()) {
         <div class="form-group">
           <label class="form-label">Id Adhesión</label>
@@ -37,7 +51,7 @@ import { resolverConfirmado } from './confirmado-baja.util';
       </div>
       <div class="form-group">
         <label class="form-label">Importe</label>
-        <input class="form-input" type="number" [(ngModel)]="ficha().aporte" name="importe" [disabled]="disabled()">
+        <input class="form-input" type="number" [(ngModel)]="ficha().aporte" name="importe" [disabled]="disabled() || ficha().art46">
       </div>
       <div class="form-group">
         <label class="form-label">Sistema de Contribución</label>
@@ -83,7 +97,7 @@ import { resolverConfirmado } from './confirmado-baja.util';
           <label class="form-label">Aporte a un Sector</label>
           <select class="form-select" [(ngModel)]="ficha().sector" name="sector" [disabled]="disabled()">
             <option [ngValue]="undefined">-</option>
-            @for (s of sectores(); track s) { <option [ngValue]="s">{{ s }}</option> }
+            @for (s of sectores; track s) { <option [ngValue]="s">{{ s }}</option> }
           </select>
         </div>
         <div class="form-group">
@@ -110,27 +124,13 @@ import { resolverConfirmado } from './confirmado-baja.util';
         </div>
       }
       <div class="form-group">
-        <label class="form-label">Confirmado</label>
-        <select class="form-select" [ngModel]="ficha().aporteConfirmado" (ngModelChange)="onConfirmadoChange($event)" name="confirmado" [disabled]="disabled()">
-          <option [ngValue]="null">-</option>
-          <option [ngValue]="false">D</option>
-          <option [ngValue]="true">S</option>
-        </select>
-      </div>
-      @if (ficha().aporteConfirmado === false) {
-        <div class="form-group">
-          <label class="form-label">Fecha de salida</label>
-          <input class="form-input" type="date" [(ngModel)]="ficha().fechaSalida" name="fechaSalidaCond" [disabled]="disabled()">
-        </div>
-      }
-      <div class="form-group">
         <label class="form-label">Carnet Entregado</label>
         <input class="form-input" type="date" [(ngModel)]="ficha().carnetEntregado" name="carnetEntregado" [disabled]="disabled()">
       </div>
       <div class="form-group">
         <label class="form-label">Art. 46</label>
         <label style="display:flex; align-items:center; gap:8px; padding-top:8px">
-          <input type="checkbox" [(ngModel)]="ficha().art46" name="art46" [disabled]="disabled()">
+          <input type="checkbox" [ngModel]="ficha().art46" (ngModelChange)="onArt46Change($event)" name="art46" [disabled]="disabled()">
           <span>Sí</span>
         </label>
       </div>
@@ -154,12 +154,11 @@ export class FichaAdhesionFormComponent {
   disabled = input<boolean>(false);
   /** Muestra el campo "Id Adhesión" (solo en la edición de una ficha existente). */
   showId = input<boolean>(false);
-  /** Sectores del catálogo, provistos por el padre. */
-  sectores = input<string[]>([]);
 
   sistemas = SISTEMAS;
   departamentos = DEPARTAMENTOS;
   aportesSecAgr = APORTES_SEC_AGR;
+  sectores = SECTORES;
 
   showTelefonoAntel = showTelefonoAntel;
   showCedula = showCedula;
@@ -171,6 +170,11 @@ export class FichaAdhesionFormComponent {
 
   onAporteTodoChange(v: boolean) {
     this.ficha.set(applyAporteTodo(this.ficha(), v));
+  }
+
+  onArt46Change(v: boolean) {
+    // Art. 46 → importe 0 y bloqueo del campo (el bloqueo lo hace el template).
+    this.ficha.set(applyArt46(this.ficha(), v));
   }
 
   onConfirmadoChange(v: boolean | null) {
