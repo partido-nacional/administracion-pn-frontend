@@ -51,8 +51,6 @@ export interface IntegranteOrganismo {
   partidoSectorDescripcion?: string;
   posicionOrganismo?: string;
   orden?: number;
-  orden2?: number;
-  cargo?: string;
   condicion?: string;
   nota?: string;
   fechaFin?: string;
@@ -64,11 +62,9 @@ export interface IntegranteOrganismo {
 export interface IntegranteOrganismoInput {
   contactoId: number;
   organismoId?: number | null;
-  cargo?: string | null;
   partidoSectorId?: number | null;
   posicionOrganismo?: string | null;
   orden?: number | null;
-  orden2?: number | null;
   nota?: string | null;
   condicion?: string | null;
   fechaDesignacion?: string | null;
@@ -137,8 +133,10 @@ export class ContactosService {
   fichasAdhesion(id: number) { return this.http.get<FichaAdhesion[]>(`${this.base}/${id}/fichas-adhesion`); }
   integrantesOrganismo(id: number) { return this.http.get<IntegranteOrganismo[]>(`${this.base}/${id}/integrantes-organismo`); }
   crearIntegranteOrganismo(input: IntegranteOrganismoInput) { return this.http.post<IntegranteOrganismo>(`${environment.apiUrl}/organismos/integrantes`, input); }
-  /** "Finalizar" una ficha: el backend setea FechaFin=hoy + Activo=false (feature 022). */
-  finalizarIntegranteOrganismo(id: number) { return this.http.delete<void>(`${environment.apiUrl}/integrantes-organismo/${id}`); }
+  /** "Finalizar" una ficha: envía la fecha (editable) que persiste el backend + Activo=false (feature 026). */
+  finalizarIntegranteOrganismo(id: number, fechaFin: string) {
+    return this.http.delete<void>(`${environment.apiUrl}/integrantes-organismo/${id}`, { params: { fechaFin } });
+  }
   duplicados() { return this.http.get<DuplicadoPar[]>(`${this.base}/duplicados`); }
   /**
    * Fusiona dos contactos duplicados de forma transaccional en el backend:
