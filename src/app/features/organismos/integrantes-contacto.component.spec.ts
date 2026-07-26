@@ -6,8 +6,8 @@ import { of } from 'rxjs';
 import { IntegrantesContactoComponent } from './integrantes-contacto.component';
 import { ContactosService, IntegranteOrganismo } from '../agenda/contactos.service';
 
-// Feature 022: la grilla muestra todas las fichas; "Nuevo" se deshabilita si hay una activa;
-// "Finalizar" solo aplica a las activas.
+// Feature 026: el listado muestra solo fichas vigentes; "Nuevo" siempre habilitado
+// (un contacto puede tener varias fichas vigentes); "Finalizar" pide una fecha editable.
 describe('IntegrantesContactoComponent', () => {
   let svc: jasmine.SpyObj<ContactosService>;
 
@@ -31,30 +31,38 @@ describe('IntegrantesContactoComponent', () => {
   const ficha = (id: number, activo: boolean): IntegranteOrganismo =>
     ({ id, contactoId: 7, nombres: 'Ana Lopez', activo });
 
-  it('con una ficha activa: hayActiva=true y "Nuevo" queda deshabilitado', () => {
-    const f = setup([ficha(1, false), ficha(2, true)]);
-    expect(f.componentInstance.hayActiva()).toBeTrue();
-    expect(f.nativeElement.querySelector('button[disabled]')).toBeTruthy();
-  });
-
-  it('con todas finalizadas: hayActiva=false y "Nuevo" es un link habilitado', () => {
-    const f = setup([ficha(1, false)]);
-    expect(f.componentInstance.hayActiva()).toBeFalse();
+  it('"Nuevo integrante organismo" es siempre un link habilitado (sin botón deshabilitado)', () => {
+    const f = setup([ficha(1, true)]);
     expect(f.nativeElement.querySelector('button[disabled]')).toBeNull();
     expect(f.nativeElement.innerHTML).toContain('Nuevo integrante organismo');
   });
 
-  it('muestra todas las fichas (activas y finalizadas)', () => {
-    const f = setup([ficha(1, true), ficha(2, false)]);
-    expect(f.componentInstance.items().length).toBe(2);
+  it('renderiza las fichas vigentes', () => {
+    const f = setup([ficha(1, true)]);
+    expect(f.componentInstance.items().length).toBe(1);
     expect(f.nativeElement.innerHTML).toContain('Vigente');
-    expect(f.nativeElement.innerHTML).toContain('Finalizada');
   });
 
-  it('finalizar llama al service con el id', () => {
+  it('abrirFinalizar precarga la fecha de hoy y abre el diálogo', () => {
     const f = setup([ficha(1, true)]);
-    spyOn(window, 'confirm').and.returnValue(true);
-    f.componentInstance.finalizar(1);
-    expect(svc.finalizarIntegranteOrganismo).toHaveBeenCalledWith(1);
+    f.componentInstance.abrirFinalizar(1);
+    expect(f.componentInstance.finalizarId()).toBe(1);
+    expect(f.componentInstance.fechaFin()).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+
+  it('confirmarFinalizar llama al service con el id y la fecha ingresada', () => {
+    const f = setup([ficha(1, true)]);
+    f.componentInstance.abrirFinalizar(1);
+    f.componentInstance.fechaFin.set('2026-03-15');
+    f.componentInstance.confirmarFinalizar();
+    expect(svc.finalizarIntegranteOrganismo).toHaveBeenCalledWith(1, '2026-03-15');
+  });
+
+  it('confirmarFinalizar sin fecha no llama al service', () => {
+    const f = setup([ficha(1, true)]);
+    f.componentInstance.abrirFinalizar(1);
+    f.componentInstance.fechaFin.set('');
+    f.componentInstance.confirmarFinalizar();
+    expect(svc.finalizarIntegranteOrganismo).not.toHaveBeenCalled();
   });
 });

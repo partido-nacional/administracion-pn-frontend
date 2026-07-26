@@ -1,5 +1,6 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ContactosService, IntegranteOrganismo } from '../agenda/contactos.service';
 import { PageTitleService } from '../../core/page-title.service';
@@ -8,18 +9,11 @@ import { ToastService } from '../../core/services/toast.service';
 @Component({
   selector: 'app-integrantes-contacto',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink],
   template: `
     <div class="topbar-inline">
       <a routerLink="/agenda" class="btn btn-secondary">← Volver a contactos</a>
-      @if (hayActiva()) {
-        <button class="btn btn-primary" disabled
-                title="El contacto ya tiene un integrante de organismo vigente. Finalizalo antes de agregar otro.">
-          Nuevo integrante organismo
-        </button>
-      } @else {
-        <a [routerLink]="['/agenda', contactoId, 'organismos', 'nuevo']" class="btn btn-primary">Nuevo integrante organismo</a>
-      }
+      <a [routerLink]="['/agenda', contactoId, 'organismos', 'nuevo']" class="btn btn-primary">Nuevo integrante organismo</a>
     </div>
 
     <div class="card">
@@ -67,7 +61,7 @@ import { ToastService } from '../../core/services/toast.service';
                   </td>
                   <td (click)="$event.stopPropagation()">
                     @if (i.activo) {
-                      <button class="btn btn-sm btn-danger" (click)="finalizar(i.id)">Finalizar</button>
+                      <button class="btn btn-sm btn-danger" (click)="abrirFinalizar(i.id)">Finalizar</button>
                     }
                   </td>
                 </tr>
@@ -85,8 +79,6 @@ import { ToastService } from '../../core/services/toast.service';
                             <div class="kv"><span class="k">Partido-Sector</span><span class="v">{{ i.partidoSectorDescripcion || i.partidoSectorCodigo || '—' }}</span></div>
                             <div class="kv full"><span class="k">Posición</span><span class="v">{{ i.posicionOrganismo || '—' }}</span></div>
                             <div class="kv"><span class="k">Orden</span><span class="v">{{ i.orden ?? '—' }}</span></div>
-                            <div class="kv"><span class="k">Orden 2</span><span class="v">{{ i.orden2 ?? '—' }}</span></div>
-                            <div class="kv"><span class="k">Cargo</span><span class="v">{{ i.cargo || '—' }}</span></div>
                             <div class="kv"><span class="k">Condición</span><span class="v">{{ i.condicion || '—' }}</span></div>
                             <div class="kv"><span class="k">Fecha Designación</span><span class="v">{{ i.fechaDesignacion || '—' }}</span></div>
                             <div class="kv"><span class="k">Fecha Fin</span><span class="v">{{ i.fechaFin || '—' }}</span></div>
@@ -103,6 +95,25 @@ import { ToastService } from '../../core/services/toast.service';
         }
       </div>
     </div>
+
+    @if (finalizarId() !== null) {
+      <div class="modal-backdrop" (click)="cancelarFinalizar()">
+        <div class="modal-card" (click)="$event.stopPropagation()">
+          <h3 style="margin:0 0 12px">Finalizar ficha</h3>
+          <div class="form-group">
+            <label class="form-label">Fecha de finalización *</label>
+            <input type="date" class="form-input" [(ngModel)]="fechaFin" name="ff">
+          </div>
+          @if (errorFin()) { <div style="color:#a8261b; margin-top:8px">{{ errorFin() }}</div> }
+          <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:16px">
+            <button class="btn btn-secondary" (click)="cancelarFinalizar()">Cancelar</button>
+            <button class="btn btn-danger" (click)="confirmarFinalizar()" [disabled]="busy()">
+              {{ busy() ? 'Finalizando…' : 'Finalizar' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
   `,
   styles: [`
     .topbar-inline { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:16px; }
@@ -127,6 +138,12 @@ import { ToastService } from '../../core/services/toast.service';
     .estado { font-size:12px; font-weight:600; padding:2px 8px; border-radius:20px; white-space:nowrap; }
     .estado.vigente { color:#2e7d5b; background:#e1f0e8; }
     .estado.finalizada { color:#7a5c33; background:#f1e9dc; }
+    .modal-backdrop {
+      position:fixed; inset:0; background:rgba(0,0,0,.35);
+      display:flex; align-items:center; justify-content:center; z-index:1000;
+    }
+    .modal-card { background:#fff; border-radius:8px; padding:20px 24px; width:340px; max-width:90vw; box-shadow:0 8px 30px rgba(0,0,0,.2); }
+    .form-group { display:flex; flex-direction:column; gap:5px; }
   `]
 })
 export class IntegrantesContactoComponent {
@@ -138,8 +155,12 @@ export class IntegrantesContactoComponent {
   contactoId!: number;
   items = signal<IntegranteOrganismo[]>([]);
   expandedId = signal<number | null>(null);
-  /** True si el contacto tiene una ficha activa → deshabilita "Nuevo" (feature 022). */
-  hayActiva = computed(() => this.items().some(i => i.activo));
+
+  // Estado del diálogo de finalización (feature 026): la fecha es editable y obligatoria.
+  finalizarId = signal<number | null>(null);
+  fechaFin = signal<string>('');
+  errorFin = signal('');
+  busy = signal(false);
 
   constructor() {
     this.titleSvc.set('Ficha de Integrante de Organismo');
@@ -155,12 +176,40 @@ export class IntegrantesContactoComponent {
     this.expandedId.set(this.expandedId() === id ? null : id);
   }
 
-  finalizar(id: number) {
-    if (!confirm('¿Finalizar esta ficha? Quedará con fecha fin (hoy) y sin vigencia.')) return;
-    this.svc.finalizarIntegranteOrganismo(id).subscribe(() => {
-      this.expandedId.set(null);
-      this.reload();
-      this.toast.success('Ficha finalizada.');
+  abrirFinalizar(id: number) {
+    this.errorFin.set('');
+    this.fechaFin.set(this.hoyIso()); // precargada con hoy, editable
+    this.finalizarId.set(id);
+  }
+
+  cancelarFinalizar() {
+    this.finalizarId.set(null);
+  }
+
+  confirmarFinalizar() {
+    const id = this.finalizarId();
+    if (id === null) return;
+    if (!this.fechaFin()) { this.errorFin.set('Ingresá la fecha de finalización.'); return; }
+    this.busy.set(true);
+    this.svc.finalizarIntegranteOrganismo(id, this.fechaFin()).subscribe({
+      next: () => {
+        this.busy.set(false);
+        this.finalizarId.set(null);
+        this.expandedId.set(null);
+        this.reload();
+        this.toast.success('Ficha finalizada.');
+      },
+      error: () => {
+        this.busy.set(false);
+        this.errorFin.set('No se pudo finalizar la ficha.');
+      }
     });
+  }
+
+  /** Fecha de hoy en formato yyyy-MM-dd (zona local). */
+  private hoyIso(): string {
+    const d = new Date();
+    const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
+    return local.toISOString().slice(0, 10);
   }
 }
