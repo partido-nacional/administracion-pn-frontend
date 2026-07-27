@@ -116,6 +116,20 @@ export interface ContactoListado {
   id: number; nombre: string; apellido: string; cedula?: string; credencial?: string;
   departamento?: string; celular?: string; celular2?: string; email?: string; adhesion?: string;
   adherente?: boolean; tieneFicha?: boolean; tieneIntegranteOrganismo?: boolean;
+  tieneReferenciaPartidaria?: boolean;
+}
+
+/** Referencia partidaria de un contacto (solo lectura, feature 028). */
+export interface ReferenciaPartidaria {
+  id: number;
+  contactoId: number;
+  rol?: string;
+  nombreOrganismo?: string;
+  periodo?: string;
+  fechaDesignacion?: string;
+  fechaCese?: string;
+  art44: boolean;
+  notas?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -132,6 +146,8 @@ export class ContactosService {
   delete(id: number) { return this.http.delete<void>(`${this.base}/${id}`); }
   fichasAdhesion(id: number) { return this.http.get<FichaAdhesion[]>(`${this.base}/${id}/fichas-adhesion`); }
   integrantesOrganismo(id: number) { return this.http.get<IntegranteOrganismo[]>(`${this.base}/${id}/integrantes-organismo`); }
+  /** Referencias partidarias del contacto (solo lectura, feature 028). */
+  referenciasPartidarias(id: number) { return this.http.get<ReferenciaPartidaria[]>(`${this.base}/${id}/referencias-partidarias`); }
   crearIntegranteOrganismo(input: IntegranteOrganismoInput) { return this.http.post<IntegranteOrganismo>(`${environment.apiUrl}/organismos/integrantes`, input); }
   /** "Finalizar" una ficha: envía la fecha (editable) que persiste el backend + Activo=false (feature 026). */
   finalizarIntegranteOrganismo(id: number, fechaFin: string) {

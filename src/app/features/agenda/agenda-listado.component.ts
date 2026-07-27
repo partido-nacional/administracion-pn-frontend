@@ -121,6 +121,9 @@ type Tab = 'todos' | 'duplicados';
                       } @else {
                         <a [routerLink]="['/agenda', c.id, 'organismos', 'nuevo']" class="btn btn-sm btn-primary" title="Agregar una ficha de integrante de organismo">Agregar integrante organismo</a>
                       }
+                      @if (c.tieneReferenciaPartidaria) {
+                        <a [routerLink]="['/agenda', c.id, 'referencias']" class="btn btn-sm btn-secondary" title="Ver referencias partidarias del contacto">Ver referencias partidarias</a>
+                      }
                     </div>
                   </td>
                 </tr>
