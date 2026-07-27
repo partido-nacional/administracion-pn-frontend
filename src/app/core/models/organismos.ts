@@ -77,6 +77,19 @@ export interface ReferenteResumenDto {
   periodo: string | null;
 }
 
+/** Referencia partidaria de un organismo puntual (solo lectura, feature 028). */
+export interface ReferenciaOrganismo {
+  id: number;
+  contactoId: number;
+  nombres: string;
+  rol?: string;
+  periodo?: string;
+  fechaDesignacion?: string;
+  fechaCese?: string;
+  art44: boolean;
+  notas?: string;
+}
+
 /** Info de organización tal cual la devuelve el backend (FK única organismoId). */
 export interface InfoOrganizacionDto {
   id: number;

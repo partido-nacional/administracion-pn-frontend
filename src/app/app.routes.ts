@@ -18,6 +18,7 @@ export const routes: Routes = [
       { path: 'agenda/:contactoId/fichas', loadComponent: () => import('./features/adhesiones/fichas-contacto.component').then(m => m.FichasContactoComponent) },
       { path: 'agenda/:contactoId/organismos/nuevo', loadComponent: () => import('./features/organismos/integrante-organismo-nuevo.component').then(m => m.IntegranteOrganismoNuevoComponent) },
       { path: 'agenda/:contactoId/organismos', loadComponent: () => import('./features/organismos/integrantes-contacto.component').then(m => m.IntegrantesContactoComponent) },
+      { path: 'agenda/:contactoId/referencias', loadComponent: () => import('./features/organismos/referencias-contacto.component').then(m => m.ReferenciasContactoComponent) },
       { path: 'agenda/:id', loadComponent: () => import('./features/agenda/agenda-nuevo.component').then(m => m.AgendaNuevoComponent) },
       { path: 'adhesiones', canActivate: [rolesGuard('Hacienda','IT')], loadComponent: () => import('./features/adhesiones/adhesiones-listado.component').then(m => m.AdhesionesListadoComponent) },
       { path: 'productos', canActivate: [rolesGuard('Secretaria','Hacienda','IT')], loadComponent: () => import('./features/productos/productos.component').then(m => m.ProductosComponent) },
@@ -34,6 +35,7 @@ export const routes: Routes = [
       { path: 'listados/directorio', canActivate: [rolesGuard('Secretaria','Hacienda','IT')], loadComponent: () => import('./features/listados/directorio.component').then(m => m.DirectorioComponent) },
       { path: 'debitos', canActivate: [rolesGuard('Hacienda','IT')], loadComponent: () => import('./features/debitos/debitos.component').then(m => m.DebitosComponent) },
       { path: 'organismos', canActivate: [rolesGuard('Secretaria','Hacienda','IT')], loadComponent: () => import('./features/organismos/organismos.component').then(m => m.OrganismosComponent) },
+      { path: 'organismos/:organismoId/referencias', canActivate: [rolesGuard('Secretaria','Hacienda','IT')], loadComponent: () => import('./features/organismos/referencias-organismo.component').then(m => m.ReferenciasOrganismoComponent) },
       { path: 'agrupaciones', canActivate: [rolesGuard('Secretaria','Hacienda','IT')], loadComponent: () => import('./features/agrupaciones/agrupaciones.component').then(m => m.AgrupacionesComponent) },
       // Convencionales quedó unificado bajo Listados → Convencionales (tabs Todos/Nacionales/Departamentales/Listas ODN).
       { path: 'convencionales', redirectTo: 'listados/convencionales', pathMatch: 'full' },

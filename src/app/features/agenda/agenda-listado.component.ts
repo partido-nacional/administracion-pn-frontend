@@ -38,7 +38,8 @@ type Tab = 'todos' | 'duplicados';
             <thead>
               <tr class="filter-row">
                 <th><input class="column-filter" [ngModel]="fId()"     (ngModelChange)="fId.set($event); onFilter()"     placeholder="Filtrar..."></th>
-                <th><input class="column-filter" [ngModel]="fNombre()" (ngModelChange)="fNombre.set($event); onFilter()" placeholder="Filtrar..."></th>
+                <th><input class="column-filter" [ngModel]="fNombre()"   (ngModelChange)="fNombre.set($event); onFilter()"   placeholder="Filtrar..."></th>
+                <th><input class="column-filter" [ngModel]="fApellido()" (ngModelChange)="fApellido.set($event); onFilter()" placeholder="Filtrar..."></th>
                 <th><input class="column-filter" [ngModel]="fCedula()" (ngModelChange)="fCedula.set($event); onFilter()" placeholder="Filtrar..."></th>
                 <th><input class="column-filter" [ngModel]="fCred()"   (ngModelChange)="fCred.set($event); onFilter()"   placeholder="Filtrar..."></th>
                 <th>
@@ -61,7 +62,8 @@ type Tab = 'todos' | 'duplicados';
               </tr>
               <tr>
                 <th class="sortable" (click)="onSort('id')">ID <span class="ind">{{ indicador('id') }}</span></th>
-                <th class="sortable" (click)="onSort('apellido')">Nombre <span class="ind">{{ indicador('apellido') }}</span></th>
+                <th class="sortable" (click)="onSort('nombre')">Nombre <span class="ind">{{ indicador('nombre') }}</span></th>
+                <th class="sortable" (click)="onSort('apellido')">Apellido <span class="ind">{{ indicador('apellido') }}</span></th>
                 <th class="sortable" (click)="onSort('cedula')">Cedula <span class="ind">{{ indicador('cedula') }}</span></th>
                 <th class="sortable" (click)="onSort('credencial')">Credencial <span class="ind">{{ indicador('credencial') }}</span></th>
                 <th class="sortable" (click)="onSort('departamento')">Departamento <span class="ind">{{ indicador('departamento') }}</span></th>
@@ -75,7 +77,8 @@ type Tab = 'todos' | 'duplicados';
               @for (c of items(); track c.id) {
                 <tr class="clickable" [class.selected]="expandedId() === c.id" (click)="toggle(c.id)">
                   <td>{{ c.id }}</td>
-                  <td><strong>{{ c.apellido }}, {{ c.nombre }}</strong></td>
+                  <td><strong>{{ c.nombre }}</strong></td>
+                  <td><strong>{{ c.apellido }}</strong></td>
                   <td>{{ c.cedula || '—' }}</td>
                   <td>{{ c.credencial || '—' }}</td>
                   <td>
@@ -118,12 +121,15 @@ type Tab = 'todos' | 'duplicados';
                       } @else {
                         <a [routerLink]="['/agenda', c.id, 'organismos', 'nuevo']" class="btn btn-sm btn-primary" title="Agregar una ficha de integrante de organismo">Agregar integrante organismo</a>
                       }
+                      @if (c.tieneReferenciaPartidaria) {
+                        <a [routerLink]="['/agenda', c.id, 'referencias']" class="btn btn-sm btn-secondary" title="Ver referencias partidarias del contacto">Ver referencias partidarias</a>
+                      }
                     </div>
                   </td>
                 </tr>
                 @if (expandedId() === c.id && detalle()) {
                   <tr class="detalle-row">
-                    <td colspan="9">
+                    <td colspan="10">
                       <div class="detalle-wrap">
                         <div class="detalle-section">
                           <div class="detalle-section-title">Datos personales</div>
@@ -196,7 +202,7 @@ type Tab = 'todos' | 'duplicados';
                   </tr>
                 }
               } @empty {
-                <tr><td colspan="9"><div class="empty-state"><div class="empty-state-text">Sin contactos</div></div></td></tr>
+                <tr><td colspan="10"><div class="empty-state"><div class="empty-state-text">Sin contactos</div></div></td></tr>
               }
             </tbody>
           </table>
@@ -361,6 +367,7 @@ export class AgendaListadoComponent implements OnInit {
 
   fId = signal('');
   fNombre = signal('');
+  fApellido = signal('');
   fCedula = signal('');
   fCred = signal('');
   fDepto = signal('');
@@ -372,7 +379,7 @@ export class AgendaListadoComponent implements OnInit {
       page: this.page(), pageSize: this.pageSize(),
       sort: this.sort(), order: this.order(), all,
       filters: {
-        id: this.fId(), nombre: this.fNombre(), cedula: this.fCedula(),
+        id: this.fId(), nombre: this.fNombre(), apellido: this.fApellido(), cedula: this.fCedula(),
         credencial: this.fCred(), departamento: this.fDepto(), celular: this.fCel(),
         adhesion: this.fAdh(),
       },
@@ -439,7 +446,8 @@ export class AgendaListadoComponent implements OnInit {
     this.svc.listado(this.buildQuery(true)).subscribe(r => {
       exportarCSV(r.items, [
         { get: 'id', label: 'ID' },
-        { get: (c) => `${c.apellido}, ${c.nombre}`, label: 'Nombre' },
+        { get: 'nombre', label: 'Nombre' },
+        { get: 'apellido', label: 'Apellido' },
         { get: 'cedula', label: 'Cédula' },
         { get: 'credencial', label: 'Credencial' },
         { get: 'departamento', label: 'Departamento' },
