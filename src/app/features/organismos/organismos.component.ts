@@ -8,20 +8,21 @@ import { ModalFormComponent } from '../../shared/components/modal-form/modal-for
 import { PaginatorComponent } from '../../shared/components/paginator/paginator.component';
 import { GridQuery, SortOrder, DEFAULT_PAGE_SIZE } from '../../core/models/paged';
 import { toggleSort, sortArrow } from '../../shared/grid/grid-sort';
+import { RouterLink } from '@angular/router';
 import {
   Ambito, OrganismoDto, OrganismoUpdateInput,
   TipoOrganizacionDto, InfoOrganizacionDto, InfoOrganizacionInput,
-  ReferenteResumenDto, IntegranteOrg,
+  IntegranteOrg,
 } from '../../core/models/organismos';
 
-type Tab = 'todos' | 'info' | 'referencias';
+type Tab = 'todos' | 'info';
 type ModalKind = 'organismo' | 'info';
 type ModalMode = 'nueva' | 'editar';
 
 @Component({
   selector: 'app-organismos',
   standalone: true,
-  imports: [CommonModule, FormsModule, ModalFormComponent, PaginatorComponent],
+  imports: [CommonModule, FormsModule, RouterLink, ModalFormComponent, PaginatorComponent],
   template: `
     <div class="topbar-inline">
       @if (tab()==='todos') { <button class="btn btn-primary" (click)="abrirNuevoOrganismo()">+ Nuevo Organismo</button> }
@@ -32,7 +33,6 @@ type ModalMode = 'nueva' | 'editar';
     <div class="tabs">
       <a class="tab" [class.active]="tab()==='todos'"        (click)="setTab('todos')">Todos los Organismos</a>
       <a class="tab" [class.active]="tab()==='info'"         (click)="setTab('info')">Info de la Organización</a>
-      <a class="tab" [class.active]="tab()==='referencias'"  (click)="setTab('referencias')">Ref. Partidarias</a>
     </div>
 
     @if (tab()==='todos') {
@@ -97,12 +97,15 @@ type ModalMode = 'nueva' | 'editar';
                 <td>{{ o.ordenDpto }}</td>
                 <td>{{ o.observaciones || '—' }}</td>
                 <td (click)="$event.stopPropagation()">
-                  <button class="btn-pencil" (click)="abrirEditarOrganismo(o)" title="Editar">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                      <path d="M12 20h9"/>
-                      <path d="M16.5 3.5a2.121 2.121 0 113 3L7 19l-4 1 1-4 12.5-12.5z"/>
-                    </svg>
-                  </button>
+                  <div class="action-group">
+                    <button class="btn-pencil" (click)="abrirEditarOrganismo(o)" title="Editar">
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M12 20h9"/>
+                        <path d="M16.5 3.5a2.121 2.121 0 113 3L7 19l-4 1 1-4 12.5-12.5z"/>
+                      </svg>
+                    </button>
+                    <a [routerLink]="['/organismos', o.id, 'referencias']" class="btn btn-sm btn-secondary" title="Referencias partidarias de este organismo">Referencias partidarias</a>
+                  </div>
                 </td>
               </tr>
               @if (isExpanded(o)) {
@@ -205,35 +208,6 @@ type ModalMode = 'nueva' | 'editar';
       </div></div>
     }
 
-    @if (tab()==='referencias') {
-      <div class="card"><div class="card-body" style="padding:0;overflow-x:auto">
-        <table class="table">
-          <thead>
-            <tr class="filter-row">
-              <th><input class="column-filter" [ngModel]="fRefNom()" (ngModelChange)="setRefFilter(fRefNom, $event)" placeholder="Filtrar..."></th>
-              <th><input class="column-filter" [ngModel]="fRefCar()" (ngModelChange)="setRefFilter(fRefCar, $event)" placeholder="Filtrar..."></th>
-              <th></th>
-              <th></th>
-            </tr>
-            <tr><th>Nombre</th><th>Cargo</th><th>Organismo</th><th>Período</th></tr>
-          </thead>
-          <tbody>
-            @for (r of referencias(); track $index) {
-              <tr>
-                <td><strong>{{ r.nombre }}</strong></td>
-                <td>{{ r.cargo }}</td>
-                <td>{{ r.organismo }}</td>
-                <td>{{ r.periodo }}</td>
-              </tr>
-            } @empty {
-              <tr><td colspan="4"><div class="empty-state"><div class="empty-state-text">Sin resultados</div></div></td></tr>
-            }
-          </tbody>
-        </table>
-        <app-paginator [total]="refTotal()" [page]="refPage()" [pageSize]="refPageSize()"
-                       (pageChange)="onRefPage($event)" (pageSizeChange)="onRefPageSize($event)" />
-      </div></div>
-    }
 
     @if (modalKind()) {
       <app-modal-form
@@ -345,13 +319,6 @@ export class OrganismosComponent {
   fInfDir = signal(''); fInfMail = signal('');
   private infoLoaded = false;
 
-  // ── Grilla Referencias ───────────────────────────────────
-  referencias = signal<ReferenteResumenDto[]>([]);
-  refTotal = signal(0);
-  refPage = signal(1);
-  refPageSize = signal(DEFAULT_PAGE_SIZE);
-  fRefNom = signal(''); fRefCar = signal('');
-  private refLoaded = false;
 
   // ── Integrantes inline (acordeón + caché por id) ─────────
   expandedOrgId = signal<number | null>(null);
@@ -383,7 +350,6 @@ export class OrganismosComponent {
   setTab(t: Tab) {
     this.tab.set(t);
     if (t === 'info' && !this.infoLoaded) { this.infoLoaded = true; this.loadInfo(); }
-    if (t === 'referencias' && !this.refLoaded) { this.refLoaded = true; this.loadReferencias(); }
   }
 
   // ── Debounce util ────────────────────────────────────────
@@ -448,26 +414,6 @@ export class OrganismosComponent {
   onInfoPage(p: number) { this.infoPage.set(p); this.loadInfo(); }
   onInfoPageSize(s: number) { this.infoPageSize.set(s); this.infoPage.set(1); this.loadInfo(); }
 
-  // ── Referencias ──────────────────────────────────────────
-  private refQuery(all = false): GridQuery {
-    return {
-      page: this.refPage(), pageSize: this.refPageSize(),
-      filters: { nombre: this.clean(this.fRefNom()), cargo: this.clean(this.fRefCar()) },
-      all,
-    };
-  }
-  private loadReferencias() {
-    this.svc.getReferencias(this.refQuery()).subscribe(r => {
-      this.referencias.set(r.items); this.refTotal.set(r.total);
-      this.refPage.set(r.page); this.refPageSize.set(r.pageSize);
-    });
-  }
-  setRefFilter(sig: WritableSignal<string>, value: string) {
-    sig.set(value); this.refPage.set(1);
-    this.debounced('ref', () => this.loadReferencias());
-  }
-  onRefPage(p: number) { this.refPage.set(p); this.loadReferencias(); }
-  onRefPageSize(s: number) { this.refPageSize.set(s); this.refPage.set(1); this.loadReferencias(); }
 
   // ── Integrantes inline (caché por id) ────────────────────
   isExpanded(o: OrganismoDto): boolean { return this.expandedOrgId() === o.id; }
@@ -623,12 +569,6 @@ export class OrganismosComponent {
         { get: 'observaciones', label: 'Observaciones' }
       ];
       this.svc.getInfo(this.infoQuery(true)).subscribe(r => exportarCSV(r.items, cols, `info-organismos-${stamp}.csv`));
-    } else if (t === 'referencias') {
-      const cols: CsvColumn<ReferenteResumenDto>[] = [
-        { get: 'nombre', label: 'Nombre' }, { get: 'cargo', label: 'Cargo' },
-        { get: 'organismo', label: 'Organismo' }, { get: 'periodo', label: 'Período' }
-      ];
-      this.svc.getReferencias(this.refQuery(true)).subscribe(r => exportarCSV(r.items, cols, `referencias-partidarias-${stamp}.csv`));
     }
   }
 }

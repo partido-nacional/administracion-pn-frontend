@@ -7,7 +7,7 @@ import { buildPagedParams } from './paged';
 import {
   OrganismoDto, OrganismoInput, OrganismoUpdateInput,
   TipoOrganizacionDto, InfoOrganizacionDto, InfoOrganizacionInput,
-  ReferenteResumenDto, IntegranteOrg,
+  ReferenteResumenDto, IntegranteOrg, ReferenciaOrganismo,
 } from '../models/organismos';
 
 /**
@@ -32,6 +32,10 @@ export class OrganismosService {
 
   getReferencias(query: GridQuery): Observable<PagedResult<ReferenteResumenDto>> {
     return this.http.get<PagedResult<ReferenteResumenDto>>(`${this.base}/referencias`, { params: buildPagedParams(query) });
+  }
+  /** Referencias partidarias de un organismo puntual (solo lectura, feature 028). */
+  getReferenciasDeOrganismo(id: number): Observable<ReferenciaOrganismo[]> {
+    return this.http.get<ReferenciaOrganismo[]>(`${this.base}/${id}/referencias`);
   }
 
   /** Integrantes de un organismo puntual, por id (paginado; el inline pide una página grande). */

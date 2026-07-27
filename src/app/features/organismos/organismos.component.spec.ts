@@ -2,6 +2,7 @@ import { TestBed, ComponentFixture } from '@angular/core/testing';
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { of, throwError } from 'rxjs';
+import { provideRouter } from '@angular/router';
 import { OrganismosComponent } from './organismos.component';
 import { OrganismosService } from '../../core/services/organismos.service';
 import { OrganismoDto, InfoOrganizacionDto, IntegranteOrg } from '../../core/models/organismos';
@@ -38,7 +39,7 @@ describe('OrganismosComponent', () => {
       imports: [OrganismosComponent],
       providers: [
         { provide: OrganismosService, useValue: svc },
-        provideHttpClient(), provideHttpClientTesting(),
+        provideHttpClient(), provideHttpClientTesting(), provideRouter([]),
       ],
     });
     fixture = TestBed.createComponent(OrganismosComponent);
@@ -149,7 +150,8 @@ describe('OrganismosComponent', () => {
     const tabs = Array.from(fixture.nativeElement.querySelectorAll('.tabs .tab')).map((t: any) => t.textContent.trim());
     expect(tabs).not.toContain('Integrantes');
     expect(tabs).toContain('Todos los Organismos');
-    expect(tabs).toContain('Ref. Partidarias');
+    // Feature 028: la pestaña "Ref. Partidarias" se quitó (referencias ahora por contacto/organismo).
+    expect(tabs).not.toContain('Ref. Partidarias');
   });
 
   it('toggleOrg() expande y carga integrantes por id (PagedResult.items)', () => {
