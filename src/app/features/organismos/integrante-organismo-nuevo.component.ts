@@ -24,7 +24,7 @@ import { ToastService } from '../../core/services/toast.service';
       <a [routerLink]="['/agenda', contactoId, 'organismos']" class="btn btn-secondary">← Volver a la ficha</a>
     </div>
 
-    <div class="card" style="max-width:720px">
+    <div class="card form-card">
       <div class="card-header"><h2 class="card-title">Nuevo integrante de organismo — Contacto #{{ contactoId }}</h2></div>
       <div class="card-body">
         <div class="form-grid">
@@ -70,7 +70,7 @@ import { ToastService } from '../../core/services/toast.service';
         </div>
         @if (error()) { <div class="form-error" style="color:#a8261b; margin-top:8px">{{ error() }}</div> }
       </div>
-      <div class="card-footer" style="display:flex; gap:8px; justify-content:flex-end; padding:14px 20px; border-top:1px solid #eef1f5">
+      <div class="card-footer card-footer-actions">
         <a [routerLink]="['/agenda', contactoId, 'organismos']" class="btn btn-secondary">Cancelar</a>
         <button class="btn btn-primary" (click)="guardar()" [disabled]="busy() || !form.organismoId">
           {{ busy() ? 'Guardando…' : 'Guardar' }}
@@ -80,10 +80,39 @@ import { ToastService } from '../../core/services/toast.service';
   `,
   styles: [`
     .topbar-inline { display:flex; justify-content:flex-start; margin-bottom:16px; }
-    .form-grid { display:grid; grid-template-columns:repeat(2, 1fr); gap:14px 18px; }
-    .form-group { display:flex; flex-direction:column; gap:5px; }
+    .form-card { max-width:720px; width:100%; }
+
+    /* minmax(0, 1fr) y no 1fr: el default de una pista de grilla es minmax(auto, 1fr),
+       o sea que no puede achicarse por debajo del min-content de su contenido. Los
+       selects de Compañía / Organismo / Partido-Sector tienen opciones largas
+       (nombres de organismos), y ese min-content ensanchaba la columna hasta
+       desbordar la card. Con minmax(0, ...) la pista puede achicarse y manda el
+       ancho del contenedor. El min-width:0 del item hace lo propio a nivel del
+       hijo, que también arranca en auto. */
+    .form-grid { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:14px 18px; }
+    .form-group { display:flex; flex-direction:column; gap:5px; min-width:0; }
     .form-group.full-width { grid-column:1 / -1; }
-    @media (max-width:600px) { .form-grid { grid-template-columns:1fr; } }
+
+    /* .form-input global no define width, asi que los campos se dimensionaban por su
+       contenido en vez de por la columna. */
+    .form-input, .form-textarea { width:100%; max-width:100%; }
+    .form-textarea { min-height:90px; }
+
+    /* Una columna cuando el ancho util no alcanza para dos campos comodos. */
+    @media (max-width:700px) {
+      .form-grid { grid-template-columns:1fr; }
+    }
+
+    .card-footer-actions {
+      display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap;
+      padding:14px 20px; border-top:1px solid #eef1f5;
+    }
+    @media (max-width:480px) {
+      .card-footer-actions { flex-direction:column-reverse; }
+      /* .btn global es inline-flex sin justify-content, asi que a ancho completo el
+         texto queda pegado a la izquierda; text-align no alcanza. */
+      .card-footer-actions .btn { width:100%; justify-content:center; }
+    }
   `]
 })
 export class IntegranteOrganismoNuevoComponent {
