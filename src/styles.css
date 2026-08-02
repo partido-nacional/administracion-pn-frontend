@@ -1012,6 +1012,20 @@ html.dark .table th,
 html.dark .table td { border-color: var(--gray-200); }
 html.dark .table tbody tr:hover { background: #2a2f3e; }
 
+/* Resaltado de contacto moroso en tema oscuro (feature 026). Vive acá y no en los
+   estilos del componente porque la encapsulación emulada le agrega el atributo de
+   scope también al elemento html (queda html.dark[_ngcontent-xxx], que ese elemento
+   nunca lleva) y la regla no matchearía nunca.
+   Sólo se oscurece la FILA, que se apoya sobre la tabla oscura. El área desplegada
+   se deja clara a propósito: hoy `tr.detalle-row > td` y `.detalle-section` usan
+   fondos claros hardcodeados aun en tema oscuro, y `.kv .v` un `color:#222` también
+   hardcodeado. Oscurecer sólo la card del moroso dejaba texto negro sobre marrón,
+   ilegible. Cuando se salde la deuda del tema oscuro de esta grilla (ver backlog),
+   la card morosa se oscurece junto con el resto. */
+html.dark tr.moroso { background: #3b2422; }
+html.dark tr.clickable.moroso:hover { background: #472b28; }
+html.dark tr.moroso.selected { background: #3b2422 !important; }
+
 html.dark .filter-chip {
     background: #2a2f3e;
     color: var(--gray-600);

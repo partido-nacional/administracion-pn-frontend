@@ -117,6 +117,9 @@ export interface ContactoListado {
   departamento?: string; celular?: string; celular2?: string; email?: string; adhesion?: string;
   adherente?: boolean; tieneFicha?: boolean; tieneIntegranteOrganismo?: boolean;
   tieneReferenciaPartidaria?: boolean;
+  /** Situación del contacto ('M' = moroso). Opcional: si el backend no la expone todavía,
+   *  llega undefined y la grilla simplemente no resalta (feature 026). */
+  situacion?: string;
 }
 
 /** Referencia partidaria de un contacto (solo lectura, feature 028). */
