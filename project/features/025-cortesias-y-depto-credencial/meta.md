@@ -23,6 +23,7 @@ stages:
     status: approved
     approved_at: 2026-08-02
   implementation:
-    status: pending
+    status: completed
+    completed_at: 2026-08-02
     completed_tasks: 6
     total_tasks: 6

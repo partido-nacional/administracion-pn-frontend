@@ -2,9 +2,10 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { By } from '@angular/platform-browser';
 import { NgForm } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subject, of } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { AgendaNuevoComponent } from './agenda-nuevo.component';
 import { ContactosService, Contacto } from './contactos.service';
+import { PageTitleService } from '../../core/page-title.service';
 
 // Copia independiente del catálogo: si alguien toca CORTESIAS en el componente,
 // este test lo detecta en lugar de acompañar el cambio en silencio.
@@ -56,6 +57,10 @@ describe('AgendaNuevoComponent', () => {
 
   function selectDepCred(f: ComponentFixture<AgendaNuevoComponent>): HTMLSelectElement {
     return f.nativeElement.querySelector('select[name=depCred]');
+  }
+
+  function formDe(f: ComponentFixture<AgendaNuevoComponent>): NgForm {
+    return f.debugElement.query(By.directive(NgForm)).injector.get(NgForm);
   }
 
   /** Simula el (input) de la credencial sin depender del DOM real. */
@@ -179,6 +184,138 @@ describe('AgendaNuevoComponent', () => {
     expect(f.componentInstance.c.departamentoCredencial).toBe('');
   });
 
+  // ── Modo alta vs edición ───────────────────────────────────
+  it('sin :id entra en modo alta con el modelo inicial y sin pedir el contacto', () => {
+    const f = montar();
+    expect(f.componentInstance.editingId).toBeUndefined();
+    expect(f.componentInstance.c).toEqual({ activo: true });
+    expect(svcSpy.get).not.toHaveBeenCalled();
+    expect(TestBed.inject(PageTitleService).title()).toBe('Nuevo Contacto');
+  });
+
+  it('con :id entra en modo edición, carga el contacto y titula "Editar Contacto"', () => {
+    const f = montar({ ...base, cortesia: 'Dr.' });
+    expect(f.componentInstance.editingId).toBe(7);
+    expect(svcSpy.get).toHaveBeenCalledOnceWith(7);
+    expect(f.componentInstance.c.nombre).toBe('Luis');
+    expect(TestBed.inject(PageTitleService).title()).toBe('Editar Contacto');
+  });
+
+  it('la sección Adhesion sólo se renderiza en edición', () => {
+    expect(montar().nativeElement.textContent).not.toContain('Calculado automaticamente');
+    expect(montar(base).nativeElement.textContent).toContain('Calculado automaticamente');
+  });
+
+  // ── Helpers numéricos ──────────────────────────────────────
+  it('onlyDigits limpia no-dígitos del input y del modelo', () => {
+    const f = montar();
+    const input = document.createElement('input');
+    input.value = '4a7-79.69x';
+    f.componentInstance.onlyDigits({ target: input } as unknown as Event, 'documento');
+    expect(input.value).toBe('477969');
+    expect(f.componentInstance.c.documento).toBe('477969');
+  });
+
+  it('blockNonDigit bloquea letras pero deja pasar dígitos y teclas de control', () => {
+    const f = montar();
+    const ev = (key: string) => {
+      const e = new KeyboardEvent('keypress', { key, cancelable: true });
+      f.componentInstance.blockNonDigit(e);
+      return e.defaultPrevented;
+    };
+    expect(ev('a')).toBeTrue();
+    expect(ev('-')).toBeTrue();
+    expect(ev('5')).toBeFalse();
+    expect(ev('Backspace')).toBeFalse();
+    expect(ev('Enter')).toBeFalse();
+  });
+
+  it('cancelar navega al listado sin guardar', () => {
+    montar().componentInstance.cancelar();
+    expect(routerSpy.navigate).toHaveBeenCalledOnceWith(['/agenda']);
+    expect(svcSpy.create).not.toHaveBeenCalled();
+    expect(svcSpy.update).not.toHaveBeenCalled();
+  });
+
+  // ── Submit: validación, errores y navegación ───────────────
+  it('form inválido: no llama al servicio y lista los errores con etiquetas legibles', fakeAsync(() => {
+    const f = montar();
+    const cmp = f.componentInstance;
+    cmp.c = { activo: true, documento: '12' };   // faltan nombre/apellido, cédula no matchea el pattern
+    f.detectChanges();
+    tick();
+    f.detectChanges();
+
+    cmp.guardar(formDe(f));
+
+    expect(svcSpy.create).not.toHaveBeenCalled();
+    expect(cmp.submitted()).toBeTrue();
+    const errs = cmp.errores();
+    expect(errs).toContain('Nombre: campo obligatorio');
+    expect(errs).toContain('Apellido: campo obligatorio');
+    expect(errs).toContain('Cedula: formato inválido');
+  }));
+
+  it('alta válida: llama a create y navega al listado', fakeAsync(() => {
+    svcSpy.create.and.returnValue(of({} as Contacto));
+    const f = montar();
+    const cmp = f.componentInstance;
+    cmp.c = { ...base, id: undefined, cortesia: 'Ing.' };
+    f.detectChanges();
+    tick();
+
+    cmp.guardar(formDe(f));
+    tick();
+
+    expect(svcSpy.create).toHaveBeenCalledTimes(1);
+    expect(svcSpy.update).not.toHaveBeenCalled();
+    expect(routerSpy.navigate).toHaveBeenCalledOnceWith(['/agenda']);
+    expect(cmp.errores()).toEqual([]);
+  }));
+
+  it('edición válida: llama a update en lugar de create', fakeAsync(() => {
+    svcSpy.update.and.returnValue(of(undefined));
+    const f = montar(base);
+    tick();
+    f.detectChanges();
+
+    f.componentInstance.guardar(formDe(f));
+    tick();
+
+    expect(svcSpy.update).toHaveBeenCalledTimes(1);
+    expect(svcSpy.create).not.toHaveBeenCalled();
+    expect(routerSpy.navigate).toHaveBeenCalledOnceWith(['/agenda']);
+  }));
+
+  it('error del backend con message: lo muestra y no navega', fakeAsync(() => {
+    svcSpy.create.and.returnValue(throwError(() => ({ error: { message: 'Cédula duplicada' } })));
+    const f = montar();
+    const cmp = f.componentInstance;
+    cmp.c = { ...base, id: undefined };
+    f.detectChanges();
+    tick();
+
+    cmp.guardar(formDe(f));
+    tick();
+
+    expect(cmp.errores()).toEqual(['Cédula duplicada']);
+    expect(routerSpy.navigate).not.toHaveBeenCalled();
+  }));
+
+  it('error del backend sin cuerpo usable: cae al mensaje genérico', fakeAsync(() => {
+    svcSpy.create.and.returnValue(throwError(() => ({ error: { codigo: 500 } })));
+    const f = montar();
+    const cmp = f.componentInstance;
+    cmp.c = { ...base, id: undefined };
+    f.detectChanges();
+    tick();
+
+    cmp.guardar(formDe(f));
+    tick();
+
+    expect(cmp.errores()).toEqual(['No se pudo guardar el contacto.']);
+  }));
+
   it('AC-13: el departamento se envía al backend aunque el control esté deshabilitado', fakeAsync(() => {
     svcSpy.create.and.returnValue(of({} as Contacto));
     const f = montar();
@@ -191,8 +328,7 @@ describe('AgendaNuevoComponent', () => {
 
     expect(selectDepCred(f).disabled).toBeTrue();
 
-    const form = f.debugElement.query(By.directive(NgForm)).injector.get(NgForm);
-    cmp.guardar(form);
+    cmp.guardar(formDe(f));
     tick();
 
     expect(svcSpy.create).toHaveBeenCalledTimes(1);

@@ -38,7 +38,7 @@ Navegación saliente desde el listado (botones por fila, ver [Interacciones/UX](
 - Integrante de organismo → `['/agenda', c.id, 'organismos']` (`agenda-listado.component.ts:125`).
 - Nuevo contacto → `routerLink="/agenda/nuevo"` (`agenda-listado.component.ts:29`).
 
-Tras guardar/cancelar en el editor se navega a `['/agenda']` (`agenda-nuevo.component.ts:323`, `:331`).
+Tras guardar/cancelar en el editor se navega a `['/agenda']` (`agenda-nuevo.component.ts:337`, `:345`).
 
 ---
 
@@ -87,15 +87,15 @@ El computed `filtrados()` (`:382-408`) aplica todos los filtros (`m()` es case-i
 ### AgendaNuevoComponent
 Archivo: `src/app/features/agenda/agenda-nuevo.component.ts`. Standalone, imports `CommonModule, FormsModule` (`:33`). Formulario template-driven (`#f="ngForm"`, `novalidate`, `[class.submitted]`) (`:35`).
 
-**Modo nuevo vs edición.** En el constructor (`:296-303`) lee `:id` del `paramMap`:
-- Sin `id` → modo alta. Título "Nuevo Contacto". Modelo inicial `c: Partial<Contacto> = { activo: true }` (`:249`).
-- Con `id` → modo edición. `editingId = +id`, título "Editar Contacto", carga vía `svc.get(editingId)` y asigna a `c` (`:301`).
+**Modo nuevo vs edición.** En el constructor (`:310-317`) lee `:id` del `paramMap`:
+- Sin `id` → modo alta. Título "Nuevo Contacto". Modelo inicial `c: Partial<Contacto> = { activo: true }` (`:245`).
+- Con `id` → modo edición. `editingId = +id`, título "Editar Contacto", carga vía `svc.get(editingId)` y asigna a `c` (`:315`).
 
-La sección **Adhesion** (checkbox `adherente`, deshabilitado, "Calculado automaticamente segun fichas de adhesion confirmadas") sólo se renderiza si `editingId` está seteado (`:170-181`).
+La sección **Adhesion** (checkbox `adherente`, deshabilitado, "Calculado automaticamente segun fichas de adhesion confirmadas") sólo se renderiza si `editingId` está seteado (`:170-176`).
 
 **Campos del formulario.** Todos con `[(ngModel)]` a `c.*`:
 
-*Datos personales* (`:38-82`): Cortesía (select: Sr./Sra./Srta./Dr./Dra./Ing./Lic./Esc./Cr./Cra./Prof.), **Nombre** (`required`), **Apellido** (`required`), Cedula (`pattern ^[0-9]{7,8}$`, solo dígitos, `maxlength=8`, `inputmode=numeric`), Credencial (`pattern ^[A-Z]{3}[0-9]{1,6}$`, `maxlength=9`, con mensaje de error inline `:62-64`), Departamento Credencial (select **disabled** — autocompletado), Fecha Nacimiento (`type=date`), Sexo (select Masculino/Femenino/Otro), Estado civil (texto libre), Situación (select desde `situaciones`).
+*Datos personales* (`:47-92`): Cortesía (select desde `cortesiasVisibles()` — catálogo cerrado de 28 tratamientos, `:50-53`), **Nombre** (`required`), **Apellido** (`required`), Cedula (`pattern ^[0-9]{7,8}$`, solo dígitos, `maxlength=8`, `inputmode=numeric`), Credencial (`pattern ^[A-Z]{3}[0-9]{1,6}$`, `maxlength=9`, con mensaje de error inline `:70-72`), Departamento Credencial (select con `[disabled]="depCredBloqueado()"` — editable sólo sin credencial, `:75-82`), Fecha Nacimiento (`type=date`), Sexo (select Masculino/Femenino/Otro), Estado civil (texto libre), Situación (select desde `situaciones`).
 
 *Contacto* (`:84-126`): Email (`type=email`), Teléfono, Teléfono 2, Celular, Celular 2, Interno — todos solo-dígitos.
 
@@ -106,13 +106,15 @@ La sección **Adhesion** (checkbox `adherente`, deshabilitado, "Calculado automa
 **Validaciones.**
 - `Nombre` y `Apellido`: `required` (`:46-47`).
 - `Cedula`: `pattern ^[0-9]{7,8}$` + `onlyDigits`/`blockNonDigit` (`:50-54`).
-- `Credencial`: `pattern ^[A-Z]{3}[0-9]{1,6}$`; transformada en vivo por `onCredencialInput()` que mayúscula, quita espacios, limita a 3 letras + 6 dígitos y autocompleta `departamentoCredencial` vía `credencialMap` (letra inicial → departamento) (`:262-283`). Mensaje de error cuando `invalid && (dirty||touched)` (`:62-64`).
-- Campos numéricos: `onlyDigits(ev, field)` limpia no-dígitos al input (`:285-290`) y `blockNonDigit(ev)` bloquea teclas no numéricas (`:292-294`).
+- `Credencial`: `pattern ^[A-Z]{3}[0-9]{1,6}$`; transformada en vivo por `onCredencialInput()` que mayúscula, quita espacios y limita a 3 letras + 6 dígitos (`:282-296`). Mensaje de error cuando `invalid && (dirty||touched)` (`:70-72`).
+- `Cortesía`: lista cerrada de 28 tratamientos (`CORTESIAS`, `:23-30`). `cortesiasVisibles()` (`:261-265`) appendea la cortesía guardada cuando cae fuera del catálogo (contactos migrados, ej. `Srta.`), para no perder el dato al editar; la opción extra desaparece en cuanto se elige un valor del catálogo.
+- `Departamento Credencial`: editable **si y sólo si** no hay credencial. `depCredBloqueado()` (`:278-280`) lo deriva del modelo —no de un flag del handler— para que en edición abra ya bloqueado, dado que el contacto llega async. Con credencial, `onCredencialInput()` asigna el departamento según la primera letra vía `credencialMap`, y lo limpia si la letra no está mapeada (`U`–`Z`). Al borrarse la credencial el campo se desbloquea **conservando** el último valor.
+- Campos numéricos: `onlyDigits(ev, field)` limpia no-dígitos al input (`:299-304`) y `blockNonDigit(ev)` bloquea teclas no numéricas (`:306-308`).
 - Emails: `type="email"` (validación HTML nativa de Angular).
 
-**Submit / errores.** `guardar(form)` (`:305-329`): setea `submitted=true`; si `form.invalid` marca todos los controles como touched y construye lista de errores legibles vía `FIELD_LABELS` (`:9-19`) + `describeError()` (`:21-28`, mapea required/email/pattern/minlength/maxlength), mostrada en un **modal** (`:191-209`). Si es válido, llama `svc.update` (edición) o `svc.create` (alta) (`:319-321`); en `next` navega a `/agenda`; en `error` muestra `err.error.message` / `err.error` / fallback en el modal (`:324-327`). `cancelar()` navega a `/agenda` (`:331`).
+**Submit / errores.** `guardar(form)` (`:319-343`): setea `submitted=true`; si `form.invalid` marca todos los controles como touched y construye lista de errores legibles vía `FIELD_LABELS` (`:9-19`) + `describeError()` (`:30-37`, mapea required/email/pattern/minlength/maxlength), mostrada en un **modal** (`:188-202`). Si es válido, llama `svc.update` (edición) o `svc.create` (alta) (`:333-335`); en `next` navega a `/agenda`; en `error` muestra `err.error.message` / `err.error` / fallback en el modal (`:338-341`). `cancelar()` navega a `/agenda` (`:345`).
 
-**Constantes.** `departamentos` (19 departamentos de Uruguay, `:254-258`), `situaciones = ['F','M','R','V','S','SM','CEN','ICE','PC','CA','PI','FA','OOPP']` (`:260`), `credencialMap` (A–T → departamento, `:262-267`).
+**Constantes.** `CORTESIAS` (28 tratamientos, `readonly string[]` a nivel de módulo, `:23-30`), `departamentos` (19 departamentos de Uruguay, `:250-254`), `situaciones = ['F','M','R','V','S','SM','CEN','ICE','PC','CA','PI','FA','OOPP']` (`:256`), `credencialMap` (A–T → departamento, `:267-272`).
 
 ### DuplicadosContactosComponent
 Archivo: `src/app/features/agenda/duplicados-contactos.component.ts`. Standalone, imports `CommonModule, FormsModule` (`:55`). Embebido en la tab "Duplicados" del listado. Asistente de **merge** de pares duplicados.
@@ -204,7 +206,7 @@ Definidos en `contactos.service.ts` salvo indicación.
 - **Tab "Exportar":** placeholder "proximamente" (`:231-233`) — la exportación real vive en el botón CSV del topbar, no en esta tab.
 - **Búsqueda server-side ausente:** `ContactosService.list(q?)` existe pero no se usa; el listado hace `GET /contactos` sin `q` y filtra en el cliente (`:519`). El endpoint con filtros tipo `GET /contactos?q=&departamento=` **no** está cableado.
 - **Select de departamento en filtro** limitado a 4 valores hardcodeados (`deptos`, `:338`) vs. 19 en el editor — inconsistencia.
-- **`departamentoCredencial` no editable:** select disabled; sólo se setea por `onCredencialInput` (`:66-70`, `:269-283`).
-- **`adherente` de sólo lectura:** checkbox disabled; lo calcula el backend según fichas confirmadas (`:170-181`).
+- **Validación de cortesía / depto credencial sólo client-side:** el backend define ambos como `string?` libres, sin catálogo ni derivación. Un cliente que hable directo con la API puede guardar una cortesía fuera de catálogo o un departamento que no se corresponda con la credencial. Asumido y documentado (feature 025, BR-6).
+- **`adherente` de sólo lectura:** checkbox disabled; lo calcula el backend según fichas confirmadas (`:170-176`).
 - ~~**Merge no transaccional:** `aplicar()` hace `DELETE` y luego `PUT` por separado; si el `PUT` falla tras un `DELETE` exitoso, el duplicado queda eliminado sin que se actualice el conservado.~~ ✅ **Resuelto**: ahora usa el endpoint transaccional `POST /contactos/{keepId}/merge` (backend CON-09), que además reasigna los registros relacionados del duplicado al conservado. Antes el `DELETE` directo podía además fallar por FK o dejar huérfanos.
 - **`fichasAdhesion` / `integrantesOrganismo` / `eliminarIntegranteOrganismo`** definidos en el servicio pero no invocados por componentes de la feature agenda.
