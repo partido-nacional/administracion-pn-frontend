@@ -144,9 +144,10 @@
 - **Created**: 2026-06-14
 - **Origin**: transversal
 - **Context**: ~~No hay Karma/Jasmine ni ningún `*.spec.ts`, ni `tsconfig.spec.json`.~~ Feature 002 montó el runner (Karma/Jasmine, `tsconfig.spec.json`, `karma.conf.js`, script `npm test`, job CI "Unit Tests") + specs de paginado. Falta extender specs al resto del proyecto.
+- **Medición 2026-08-02** (feature 025): **72.18%** statements global (867/1201), 52.07% branches, 62.74% functions — por debajo del umbral de 80% que pide `project_type: production`. El gap está concentrado en componentes sin ningún spec; los archivos ya cubiertos superan el umbral holgadamente (ej. `agenda-nuevo.component.ts`: 91.17%). Correr `npx ng test --watch=false --browsers=ChromeHeadless --code-coverage` y atacar los archivos en 0%.
 - **Affected Files**: (todo el proyecto)
 - **Complexity**: L
-- **Risk if Ignored**: Regresiones invisibles; refactors riesgosos.
+- **Risk if Ignored**: Regresiones invisibles; refactors riesgosos. Además, cada `/project.finish` de una feature `production` arrastra el mismo warning de cobertura, que deja de leerse como señal.
 
 ### DEBT-002: Sin manejo global de errores HTTP
 - **Priority**: High
