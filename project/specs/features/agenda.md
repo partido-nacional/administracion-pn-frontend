@@ -53,7 +53,7 @@ Archivo: `src/app/features/agenda/agenda-listado.component.ts`. Standalone, impo
 - `padron` — placeholder "Padron Electoral — proximamente" (`:225-227`).
 - `exportar` — placeholder "Exportar — proximamente" (`:231-233`).
 
-**Carga de datos.** `reload()` hace `GET ${apiUrl}/contactos` directamente vía `HttpClient` (no usa `ContactosService.list`) y vuelca a `contactos` signal (`:518-521`). El modelo de fila es la interfaz local `ContactoListado` (`:13-17`), que incluye flags `tieneFicha`, `tieneIntegranteOrganismo`, `adherente`, `adhesion` (string 'Activa'|'Pendiente'|'Baja') que el backend debe proveer en el listado.
+**Carga de datos.** `load()` (`:450-456`) llama a `ContactosService.listado(query)` (paginado server-side) y vuelca `r.items`/`r.total` a los signals `items`/`total`. El modelo de fila es `ContactoListado`, definido en `contactos.service.ts:115-121`, que incluye flags `tieneFicha`, `tieneIntegranteOrganismo`, `tieneReferenciaPartidaria`, `adherente`, `adhesion` (string 'Activa'|'Pendiente'|'Baja') y `situacion` — todos provistos por el endpoint de listado.
 
 **Tabla.** Columnas: ID, Nombre (`apellido, nombre`), Cédula, Credencial, Departamento (badge), Celular, Email, Adhesión (badge por estado), y columna de acciones (`:45-211`). Estado vacío "Sin contactos" (`:208-210`).
 
@@ -73,6 +73,15 @@ Archivo: `src/app/features/agenda/agenda-listado.component.ts`. Standalone, impo
 El computed `filtrados()` (`:382-408`) aplica todos los filtros (`m()` es case-insensitive substring; `:383-384`) y luego ordena. El select de departamento usa el array fijo `deptos = ['Montevideo','Canelones','Maldonado','Salto']` (`:338`) — **no** los 19 departamentos del editor.
 
 **Ordenamiento multi-columna.** Signal `sortBy = signal<{col; dir}[]>([{ col:'apellido', dir:'asc' }])` (`:378-380`). `onSort(col, ev)` (`:410-427`): click simple reemplaza el orden (toggle asc/desc si es la única columna y es la misma), `Shift+Click` agrega/toggla la columna como orden secundario. `indicador(col)` muestra `▲`/`▼` y el número de prioridad cuando hay varios (`:429-435`). Comparador `cmp()` (`:437-443`): nulls al final, numérico para números, `localeCompare('es', {numeric:true})` para strings.
+
+**Resaltado de contactos morosos (feature 026).** Un contacto con `situacion` igual a `M` —comparada con `trim()` e ignorando mayúsculas, vía el helper de módulo `esMoroso()` (`:25-27`)— se resalta en rojo pastel `#fdecea`:
+
+- **Fila** de la grilla: `[class.moroso]` (`:95-96`), con hover propio `#fbdfdc`.
+- **Fila desplegada**: el rojo **gana** al azul de `tr.selected`, que usa `!important`, por especificidad (`tr.moroso.selected` = 0,2,1 contra 0,1,1). La expansión se marca con una barra lateral `#e57373` como `box-shadow: inset` en el primer `td` — no `border-left` sobre el `<tr>`, que sólo renderiza consistente con `border-collapse:collapse`.
+- **Área desplegada**: se tiñe en sus **dos** capas, `tr.detalle-row > td` y `.detalle-section`.
+- **Aviso**: `.aviso-morosidad` con el texto literal `**** CONTACTO SUSPENDIDO POR MOROSIDAD, CONSULTAR CON CCH ANTES DE REALIZAR CUALQUIER GESTIÓN ****` (constante `AVISO_MOROSIDAD`, `:30-31`), como **primer** hijo de `.detalle-wrap` para que se lea sin scrollear.
+- **Tema oscuro**: sólo se oscurece la fila (`#3b2422`), y las reglas viven en `src/styles.css`, no en los estilos del componente — la encapsulación emulada scopea también el elemento `html` (`html.dark[_ngcontent-xxx]`), que nunca lleva ese atributo, así que una regla `html.dark` declarada en el componente no matchea nunca. El área desplegada se deja clara a propósito: `.kv .v` usa `color:#222` hardcodeado y oscurecerla dejaba el texto ilegible.
+- La regla es **sólo visual**: no bloquea ninguna acción sobre el contacto. El backend no valida ni deriva nada (feature 029 expone `situacion` cruda).
 
 **Detalle expandible (fila inline).** `expandedId` y `detalle` signals (`:340-341`). `toggle(id)` (`:343-352`) colapsa si ya está abierta, o abre y hace `svc.get(id)` para traer el `Contacto` completo y renderizar sus secciones: Datos personales, Contacto, Dirección, Laboral, Adhesion (sólo flag `adherente`), Otros (observaciones, fechas, activo) (`:132-207`). Helpers `fmt()` (`:354-357`) y `fmtDate()` (locale es-UY, `:359-367`).
 
@@ -163,7 +172,7 @@ Definidos en `contactos.service.ts` salvo indicación.
 **`Contacto`** (`:6-41`) — modelo canónico completo:
 `id:number`, `cortesia?`, `nombre`, `apellido`, `documento?` (cédula), `credencialCivica?`, `fechaNacimiento?`, `sexo?`, `estadoCivil?`, `telefono?`, `telefono2?`, `celular?`, `celular2?`, `email?`, `departamento?`, `departamentoCredencial?`, `localidad?`, `direccion?`, `situacion?`, `ocupacion?`, `empresa?`, `organismo?`, `cargoLaboral?`, `telefonoTrabajo?`, `telefonoTrabajo2?`, `interno?`, `datosSecretaria?`, `departamentoLaboral?`, `mailTrabajo?`, `observaciones?`, `fechaCreado?`, `fechaUltimaModificacion?`, `activo:boolean`, `adherente?`.
 
-**`ContactoListado`** (local, `agenda-listado.component.ts:13-17`) — forma de fila del listado: `id, nombre, apellido, cedula?, credencial?, departamento?, celular?, celular2?, email?, adhesion?, adherente?, tieneFicha?, tieneIntegranteOrganismo?`. Nótese que usa `cedula`/`credencial` (no `documento`/`credencialCivica`) y agrega flags y `adhesion` string que sólo provee el endpoint de listado.
+**`ContactoListado`** (`contactos.service.ts:115-121`) — forma de fila del listado: `id, nombre, apellido, cedula?, credencial?, departamento?, celular?, celular2?, email?, adhesion?, adherente?, tieneFicha?, tieneIntegranteOrganismo?, tieneReferenciaPartidaria?, situacion?`. Nótese que usa `cedula`/`credencial` (no `documento`/`credencialCivica`) y agrega flags y `adhesion` string que sólo provee el endpoint de listado. `situacion` es opcional a propósito: si el backend no la expone, llega `undefined` y la grilla simplemente no resalta.
 
 **`DuplicadoPar`** (`:115-119`): `{ a: Contacto; b: Contacto; matches: string[] }`.
 
