@@ -1,0 +1,239 @@
+{
+  "feature": "contactos-morosos-resaltado",
+  "local_config": {
+    "database": null
+  },
+  "stats": {
+    "total": 7,
+    "done": 7,
+    "by_layer": {
+      "1": 4,
+      "2": 3
+    }
+  },
+  "execution_strategy": "sequential",
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "Campo situacion en ContactoListado + helper esMoroso()",
+      "description": "Agregar 'situacion?: string' a la interfaz ContactoListado y un helper de módulo esMoroso() que centraliza el criterio de BR-1 (trim + case-insensitive). Lo consumen tanto la fila como el área desplegada.",
+      "status": "completed",
+      "layer": 1,
+      "depends_on": [],
+      "files": [
+        "src/app/features/agenda/contactos.service.ts",
+        "src/app/features/agenda/agenda-listado.component.ts"
+      ],
+      "acceptance_criteria": [
+        "BR-1: esMoroso() compara ignorando mayúsculas/minúsculas y espacios ('m', ' M ', 'm ' → true)",
+        "EC-1: null, undefined y '' → false",
+        "AC-2: 'SM', 'PC' y demás situaciones → false",
+        "D-1: un único helper para fila y card, no dos criterios paralelos",
+        "GATE: ng build pasa"
+      ],
+      "references": [
+        "BR-1",
+        "EC-1",
+        "EC-2",
+        "D-1"
+      ]
+    },
+    {
+      "id": "TASK-002",
+      "title": "Resaltado de la fila en la grilla",
+      "description": "Clase condicional [class.moroso] en la fila + estilos. El punto crítico es vencer 'tr.selected { background:#e6efff !important }' con mayor especificidad, y marcar la expansión con una barra lateral en vez de con el azul.",
+      "status": "completed",
+      "layer": 1,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "files": [
+        "src/app/features/agenda/agenda-listado.component.ts"
+      ],
+      "acceptance_criteria": [
+        "AC-1: fila con situacion 'M' usa fondo #FDECEA",
+        "AC-2: fila con otra situación o sin situación mantiene el fondo por defecto",
+        "AC-3: el hover de una fila morosa no la devuelve al celeste #f5f8ff",
+        "AC-4: fila morosa desplegada CONSERVA el rojo (tr.moroso.selected con !important y especificidad 0,2,1) y suma barra lateral",
+        "AC-5: fila no morosa desplegada sigue usando el azul de selección",
+        "AC-6: el resaltado no altera ancho, alto ni alineación de la fila",
+        "D-2: la barra va como box-shadow inset en el primer td, NO como border-left en el tr (requiere border-collapse:collapse)",
+        "D-4: variante html.dark propia",
+        "GATE: ng build pasa"
+      ],
+      "references": [
+        "US-1",
+        "BR-2",
+        "BR-3",
+        "EC-3",
+        "EC-4",
+        "EC-6",
+        "D-2",
+        "D-4"
+      ]
+    },
+    {
+      "id": "TASK-003",
+      "title": "Card desplegada teñida + cartel de suspensión",
+      "description": "Teñir las dos capas del área desplegada (tr.detalle-row > td y .detalle-section) y agregar el cartel de suspensión como primer hijo de .detalle-wrap, antes de las secciones de datos.",
+      "status": "completed",
+      "layer": 1,
+      "depends_on": [
+        "TASK-002"
+      ],
+      "files": [
+        "src/app/features/agenda/agenda-listado.component.ts"
+      ],
+      "acceptance_criteria": [
+        "AC-7: texto exacto '**** CONTACTO SUSPENDIDO POR MOROSIDAD, CONSULTAR CON CCH ANTES DE REALIZAR CUALQUIER GESTIÓN ****'",
+        "AC-8: el cartel es el primer elemento de .detalle-wrap, legible sin scrollear",
+        "AC-9: no aparece al desplegar un contacto no moroso",
+        "AC-10: se tiñen AMBAS capas — tr.detalle-row > td (#fafbfd) y .detalle-section (#fff); teñir una sola deja la card a parches",
+        "AC-11: contraste del texto ≥4.5:1 sobre el fondo rojo (WCAG AA)",
+        "D-5: el cartel es markup en el template, no alert() ni toast",
+        "GATE: ng build pasa"
+      ],
+      "references": [
+        "US-2",
+        "BR-4",
+        "D-3",
+        "D-5"
+      ]
+    },
+    {
+      "id": "TASK-004",
+      "title": "Spec de tests del componente (10 casos)",
+      "description": "Crear agenda-listado.component.spec.ts, que hoy no existe. Requiere montar el TestBed con mocks de ContactosService, Router, ActivatedRoute, PageTitleService y además HttpClient, porque reload() pega directo a GET /contactos sin pasar por el servicio.",
+      "status": "completed",
+      "layer": 1,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002",
+        "TASK-003"
+      ],
+      "files": [
+        "src/app/features/agenda/agenda-listado.component.spec.ts"
+      ],
+      "acceptance_criteria": [
+        "Test: esMoroso('M'), 'm', ' M ', 'm ' → true (BR-1, EC-2)",
+        "Test: esMoroso(undefined|null|''|'SM'|'PC') → false (AC-2, EC-1)",
+        "Test: fila con situacion 'M' recibe la clase moroso (AC-1)",
+        "Test: fila con otra situación no la recibe (AC-2)",
+        "Test: fila morosa desplegada conserva moroso junto a selected (AC-4, BR-3)",
+        "Test: fila no morosa desplegada recibe selected sin moroso (AC-5)",
+        "Test: al desplegar un moroso aparece el texto exacto del cartel (AC-7, BR-4)",
+        "Test: al desplegar un no moroso el cartel no está en el DOM (AC-9)",
+        "Test: el cartel es el PRIMER elemento de .detalle-wrap, verificado por posición (AC-8)",
+        "Test: sin situacion en el listado (backend viejo), ninguna fila tiene moroso (EC-5)",
+        "GATE: build+tests verdes (npx ng test --watch=false --browsers=ChromeHeadless)"
+      ],
+      "references": [
+        "US-1",
+        "US-2",
+        "EC-5"
+      ]
+    },
+    {
+      "id": "TASK-005",
+      "title": "Code Review",
+      "description": "Revisar que el criterio de moroso viva en un solo lugar, que los selectores CSS no dependan de orden de declaración sino de especificidad, y que no haya colores mágicos duplicados.",
+      "status": "completed",
+      "layer": 2,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002",
+        "TASK-003",
+        "TASK-004"
+      ],
+      "files": [
+        "src/app/features/agenda/agenda-listado.component.ts",
+        "src/app/features/agenda/agenda-listado.component.spec.ts",
+        "src/app/features/agenda/contactos.service.ts"
+      ],
+      "acceptance_criteria": [
+        "Un solo esMoroso(), sin criterio duplicado entre fila y card",
+        "El rojo gana por especificidad, no por orden de declaración",
+        "Los hex del resaltado están agrupados, no dispersos por el bloque de estilos",
+        "GATE: build+tests verdes"
+      ],
+      "references": [
+        "D-1",
+        "D-2",
+        "D-3"
+      ]
+    },
+    {
+      "id": "TASK-006",
+      "title": "Performance Review",
+      "description": "Verificar que esMoroso(), al evaluarse por fila en cada ciclo de change detection, no asigna ni recorre estructuras, y que el resaltado no fuerza reflows adicionales.",
+      "status": "completed",
+      "layer": 2,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002",
+        "TASK-003",
+        "TASK-004"
+      ],
+      "files": [
+        "src/app/features/agenda/agenda-listado.component.ts"
+      ],
+      "acceptance_criteria": [
+        "esMoroso() es una comparación de string sin asignaciones ni arrays intermedios",
+        "El resaltado usa background/box-shadow, no propiedades que fuercen layout",
+        "GATE: build+tests verdes"
+      ],
+      "references": [
+        "NFR-Performance"
+      ]
+    },
+    {
+      "id": "TASK-007",
+      "title": "Security Review",
+      "description": "Confirmar que el cartel se renderiza por interpolación o texto literal del template y no por innerHTML, y que no se expone información nueva del contacto en la grilla.",
+      "status": "completed",
+      "layer": 2,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002",
+        "TASK-003",
+        "TASK-004"
+      ],
+      "files": [
+        "src/app/features/agenda/agenda-listado.component.ts"
+      ],
+      "acceptance_criteria": [
+        "Sin innerHTML ni bypassSecurityTrust en el cartel",
+        "El campo situacion no expone información sensible nueva respecto de lo ya listado",
+        "GATE: build+tests verdes"
+      ],
+      "references": [
+        "NFR-Security"
+      ]
+    }
+  ],
+  "dependency_graph": {
+    "by_layer": {
+      "1": {
+        "level_0": [
+          "TASK-001"
+        ],
+        "level_1": [
+          "TASK-002"
+        ],
+        "level_2": [
+          "TASK-003"
+        ],
+        "level_3": [
+          "TASK-004"
+        ]
+      },
+      "2": {
+        "level_0": [
+          "TASK-005",
+          "TASK-006",
+          "TASK-007"
+        ]
+      }
+    }
+  }
+}
