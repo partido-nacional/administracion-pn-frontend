@@ -13,6 +13,23 @@ import { exportarCSV } from '../../core/exportar-csv';
 
 type Tab = 'todos' | 'duplicados';
 
+/** Situación que marca al contacto como suspendido por morosidad. */
+const SITUACION_MOROSO = 'M';
+
+/**
+ * Único criterio de morosidad, compartido por la fila de la grilla y la card desplegada.
+ * La comparación ignora mayúsculas y espacios a propósito: el backend normaliza con
+ * `.Trim().ToLower()` en su propio filtro de situaciones, señal de que el dato migrado
+ * no es consistente en formato. Comparar `=== 'M'` a secas dejaría morosos sin marcar.
+ */
+export function esMoroso(situacion?: string | null): boolean {
+  return (situacion ?? '').trim().toUpperCase() === SITUACION_MOROSO;
+}
+
+/** Texto exacto de la advertencia, tal cual el sistema de referencia del partido. */
+export const AVISO_MOROSIDAD =
+  '**** CONTACTO SUSPENDIDO POR MOROSIDAD, CONSULTAR CON CCH ANTES DE REALIZAR CUALQUIER GESTIÓN ****';
+
 @Component({
   selector: 'app-agenda-listado',
   standalone: true,
@@ -75,7 +92,8 @@ type Tab = 'todos' | 'duplicados';
             </thead>
             <tbody>
               @for (c of items(); track c.id) {
-                <tr class="clickable" [class.selected]="expandedId() === c.id" (click)="toggle(c.id)">
+                <tr class="clickable" [class.selected]="expandedId() === c.id"
+                    [class.moroso]="esMoroso(c.situacion)" (click)="toggle(c.id)">
                   <td>{{ c.id }}</td>
                   <td><strong>{{ c.nombre }}</strong></td>
                   <td><strong>{{ c.apellido }}</strong></td>
@@ -128,9 +146,12 @@ type Tab = 'todos' | 'duplicados';
                   </td>
                 </tr>
                 @if (expandedId() === c.id && detalle()) {
-                  <tr class="detalle-row">
+                  <tr class="detalle-row" [class.moroso]="esMoroso(detalle()!.situacion)">
                     <td colspan="10">
-                      <div class="detalle-wrap">
+                      <div class="detalle-wrap" [class.moroso]="esMoroso(detalle()!.situacion)">
+                        @if (esMoroso(detalle()!.situacion)) {
+                          <div class="aviso-morosidad">{{ AVISO_MOROSIDAD }}</div>
+                        }
                         <div class="detalle-section">
                           <div class="detalle-section-title">Datos personales</div>
                           <div class="detalle-grid">
@@ -302,6 +323,42 @@ type Tab = 'todos' | 'duplicados';
     tr.clickable { cursor:pointer; }
     tr.clickable:hover { background:#f5f8ff; }
     tr.selected { background:#e6efff !important; }
+
+    /* ── Contacto moroso (feature 026) ──────────────────────────────────────
+       El resaltado tiene que sobrevivir al estado "seleccionada": tr.selected
+       usa !important, así que se le gana con !important + mayor especificidad
+       (tr.moroso.selected = 0,2,1 contra tr.selected = 0,1,1). Sin esto el azul
+       tapa el rojo justo al desplegar, que es cuando el operador va a actuar.  */
+    tr.moroso { background:#fdecea; }
+    tr.clickable.moroso:hover { background:#fbdfdc; }
+    tr.moroso.selected { background:#fdecea !important; }
+    /* La expansión se marca con una barra lateral en vez de con el azul. Va como
+       box-shadow inset en el primer td: border-left sobre un <tr> sólo renderiza
+       de forma consistente con border-collapse:collapse, y no queremos que el
+       resaltado dependa de una propiedad de la tabla que otro cambio podría tocar. */
+    tr.moroso.selected > td:first-child { box-shadow: inset 3px 0 0 #e57373; }
+
+    tr.detalle-row.moroso > td { background:#fdecea; }
+    .detalle-wrap.moroso .detalle-section { background:#fff7f6; border-color:#f3d3cf; }
+
+    .aviso-morosidad {
+      background:#f9d7d3; border:1px solid #e9a9a2; border-radius:6px;
+      padding:10px 14px; color:#8c2f26; font-weight:700; font-size:13px;
+      letter-spacing:.3px; text-align:center;
+    }
+
+    /* El tema oscuro invierte el resaltado: el pastel claro sería una banda que
+       rompe el contraste del texto. Nota: hover/selected/detalle-row de esta grilla
+       siguen con colores claros hardcodeados sin variante dark — deuda preexistente,
+       fuera del alcance de esta feature. */
+    html.dark tr.moroso { background:#3b2422; }
+    html.dark tr.clickable.moroso:hover { background:#472b28; }
+    html.dark tr.moroso.selected { background:#3b2422 !important; }
+    html.dark tr.detalle-row.moroso > td { background:#3b2422; }
+    html.dark .detalle-wrap.moroso .detalle-section { background:#412826; border-color:#5c3a36; }
+    html.dark .aviso-morosidad {
+      background:#4d2a26; border-color:#7a4842; color:#f3b7b0;
+    }
     tr.detalle-row > td { padding:0; background:#fafbfd; }
     .detalle-wrap { padding:20px 24px; border-top:1px solid #d6dde6; display:flex; flex-direction:column; gap:18px; }
     .detalle-section { background:#fff; border:1px solid #e6eaf0; border-radius:6px; padding:14px 18px; }
@@ -322,6 +379,10 @@ type Tab = 'todos' | 'duplicados';
   `]
 })
 export class AgendaListadoComponent implements OnInit {
+  /** Expuestos al template: el criterio y el texto viven a nivel de módulo (feature 026). */
+  readonly esMoroso = esMoroso;
+  readonly AVISO_MOROSIDAD = AVISO_MOROSIDAD;
+
   private titleSvc = inject(PageTitleService);
   private svc = inject(ContactosService);
 
