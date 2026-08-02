@@ -347,18 +347,12 @@ export const AVISO_MOROSIDAD =
       letter-spacing:.3px; text-align:center;
     }
 
-    /* El tema oscuro invierte el resaltado: el pastel claro sería una banda que
-       rompe el contraste del texto. Nota: hover/selected/detalle-row de esta grilla
-       siguen con colores claros hardcodeados sin variante dark — deuda preexistente,
-       fuera del alcance de esta feature. */
-    html.dark tr.moroso { background:#3b2422; }
-    html.dark tr.clickable.moroso:hover { background:#472b28; }
-    html.dark tr.moroso.selected { background:#3b2422 !important; }
-    html.dark tr.detalle-row.moroso > td { background:#3b2422; }
-    html.dark .detalle-wrap.moroso .detalle-section { background:#412826; border-color:#5c3a36; }
-    html.dark .aviso-morosidad {
-      background:#4d2a26; border-color:#7a4842; color:#f3b7b0;
-    }
+    /* La variante de tema oscuro de este resaltado vive en src/styles.css: la
+       encapsulación emulada scopea también el elemento html (queda como
+       html.dark[_ngcontent-xxx], que ese elemento nunca lleva), así que una regla
+       html.dark declarada acá no matchea nunca.
+       Nota aparte: hover/selected/detalle-row de esta grilla siguen con colores
+       claros hardcodeados sin variante dark — deuda preexistente, fuera de alcance. */
     tr.detalle-row > td { padding:0; background:#fafbfd; }
     .detalle-wrap { padding:20px 24px; border-top:1px solid #d6dde6; display:flex; flex-direction:column; gap:18px; }
     .detalle-section { background:#fff; border:1px solid #e6eaf0; border-radius:6px; padding:14px 18px; }
