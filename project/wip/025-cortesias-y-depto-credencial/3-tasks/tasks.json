@@ -5,7 +5,7 @@
   },
   "stats": {
     "total": 6,
-    "done": 3,
+    "done": 6,
     "by_layer": {
       "1": 3,
       "2": 3
@@ -119,7 +119,7 @@
       "id": "TASK-004",
       "title": "Code Review",
       "description": "Revisar diseño, código muerto y naming del cambio. Verificar que no quedó lógica duplicada entre el getter de bloqueo y onCredencialInput(), y que el comentario obsoleto de la feature previa fue eliminado.",
-      "status": "pending",
+      "status": "completed",
       "layer": 2,
       "depends_on": [
         "TASK-001",
@@ -146,7 +146,7 @@
       "id": "TASK-005",
       "title": "Performance Review",
       "description": "Verificar que cortesiasVisibles() y depCredBloqueado(), al evaluarse en cada ciclo de change detection, no introducen costo perceptible ni asignaciones innecesarias en el render del formulario.",
-      "status": "pending",
+      "status": "completed",
       "layer": 2,
       "depends_on": [
         "TASK-001",
@@ -169,7 +169,7 @@
       "id": "TASK-006",
       "title": "Security Review",
       "description": "Confirmar que la feature no introduce superficie de riesgo. La regla es de UI: el backend sigue aceptando cualquier combinación de cortesía y departamento credencial (BR-6), lo cual está asumido y documentado como fuera de alcance.",
-      "status": "pending",
+      "status": "completed",
       "layer": 2,
       "depends_on": [
         "TASK-001",

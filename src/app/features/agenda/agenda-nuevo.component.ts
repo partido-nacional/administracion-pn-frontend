@@ -20,7 +20,7 @@ const FIELD_LABELS: Record<string, string> = {
 
 // Catálogo oficial de tratamientos del partido (28 valores, orden alfabético).
 // Lista cerrada: el selector no admite texto libre.
-const CORTESIAS = [
+const CORTESIAS: readonly string[] = [
   'Arq.', 'Cnel.', 'Cnel. (R)', 'Cr.', 'Cra.', 'Dr.', 'Dr. Esc.', 'Dra.', 'Dra. Esc.',
   'Ec.', 'Ec. Cr.', 'Esc.', 'Gral.', 'Gral. (R)', 'Ing.', 'Ing. Agr.', 'Ing. Agrim.',
   'Lic.', 'Mag.', 'Mtra.', 'Mtro.', 'Prof.', 'Psic.', 'QF.', 'Soc.', 'Sr.', 'Sra.',
@@ -258,7 +258,7 @@ export class AgendaNuevoComponent {
   // Contactos migrados pueden tener cortesías fuera del catálogo actual (ej. 'Srta.').
   // Se ofrecen como opción extra para no perder el dato al editar; desaparecen en
   // cuanto el operador elige un valor del catálogo.
-  cortesiasVisibles(): string[] {
+  cortesiasVisibles(): readonly string[] {
     const actual = this.c.cortesia;
     if (!actual || CORTESIAS.includes(actual)) return CORTESIAS;
     return [...CORTESIAS, actual];
