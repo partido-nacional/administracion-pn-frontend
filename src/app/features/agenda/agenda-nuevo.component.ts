@@ -18,6 +18,15 @@ const FIELD_LABELS: Record<string, string> = {
   depLab: 'Departamento laboral', mailLab: 'Email laboral', sec: 'Datos Secretaría'
 };
 
+// Catálogo oficial de tratamientos del partido (28 valores, orden alfabético).
+// Lista cerrada: el selector no admite texto libre.
+const CORTESIAS = [
+  'Arq.', 'Cnel.', 'Cnel. (R)', 'Cr.', 'Cra.', 'Dr.', 'Dr. Esc.', 'Dra.', 'Dra. Esc.',
+  'Ec.', 'Ec. Cr.', 'Esc.', 'Gral.', 'Gral. (R)', 'Ing.', 'Ing. Agr.', 'Ing. Agrim.',
+  'Lic.', 'Mag.', 'Mtra.', 'Mtro.', 'Prof.', 'Psic.', 'QF.', 'Soc.', 'Sr.', 'Sra.',
+  'Tte. Gral.'
+];
+
 function describeError(label: string, errors: any): string {
   if (errors.required) return `${label}: campo obligatorio`;
   if (errors.email) return `${label}: email inválido`;
@@ -39,9 +48,8 @@ function describeError(label: string, errors: any): string {
           <div class="form-grid">
             <div class="form-group"><label class="form-label">Cortesía</label>
               <select class="form-select" name="cortesia" [(ngModel)]="c.cortesia">
-                <option value="">—</option><option>Sr.</option><option>Sra.</option><option>Srta.</option>
-                <option>Dr.</option><option>Dra.</option><option>Ing.</option><option>Lic.</option>
-                <option>Esc.</option><option>Cr.</option><option>Cra.</option><option>Prof.</option>
+                <option value="">—</option>
+                @for (t of cortesiasVisibles(); track t) { <option>{{ t }}</option> }
               </select></div>
             <div class="form-group"><label class="form-label">Nombre *</label><input class="form-input" name="nombre" [(ngModel)]="c.nombre" required></div>
             <div class="form-group"><label class="form-label">Apellido *</label><input class="form-input" name="apellido" [(ngModel)]="c.apellido" required></div>
@@ -64,10 +72,14 @@ function describeError(label: string, errors: any): string {
               }
             </div>
             <div class="form-group"><label class="form-label">Departamento Credencial</label>
-              <select class="form-select" name="depCred" [(ngModel)]="c.departamentoCredencial">
+              <select class="form-select" name="depCred" [(ngModel)]="c.departamentoCredencial"
+                      [disabled]="depCredBloqueado()">
                 <option value="">—</option>
                 @for (d of departamentos; track d) { <option>{{ d }}</option> }
-              </select></div>
+              </select>
+              @if (depCredBloqueado()) {
+                <small style="color:#666; font-size:12px">Se toma de la credencial.</small>
+              }</div>
             <div class="form-group"><label class="form-label">Fecha Nacimiento</label><input class="form-input" type="date" name="fn" [(ngModel)]="c.fechaNacimiento"></div>
             <div class="form-group"><label class="form-label">Sexo</label>
               <select class="form-select" name="sexo" [(ngModel)]="c.sexo">
@@ -243,12 +255,29 @@ export class AgendaNuevoComponent {
 
   situaciones = ['F', 'M', 'R', 'V', 'S', 'SM', 'CEN', 'ICE', 'PC', 'CA', 'PI', 'FA', 'OOPP'];
 
+  // Contactos migrados pueden tener cortesías fuera del catálogo actual (ej. 'Srta.').
+  // Se ofrecen como opción extra para no perder el dato al editar; desaparecen en
+  // cuanto el operador elige un valor del catálogo.
+  cortesiasVisibles(): string[] {
+    const actual = this.c.cortesia;
+    if (!actual || CORTESIAS.includes(actual)) return CORTESIAS;
+    return [...CORTESIAS, actual];
+  }
+
   private credencialMap: Record<string, string> = {
     A: 'Montevideo', B: 'Montevideo', C: 'Canelones', D: 'Maldonado', E: 'Rocha',
     F: 'Treinta y Tres', G: 'Cerro Largo', H: 'Rivera', I: 'Artigas', J: 'Salto',
     K: 'Paysandu', L: 'Rio Negro', M: 'Soriano', N: 'Colonia', O: 'San Jose',
     P: 'Flores', Q: 'Florida', R: 'Durazno', S: 'Lavalleja', T: 'Tacuarembo'
   };
+
+  // El departamento credencial se deriva de la credencial, así que sólo es editable
+  // mientras no haya credencial cargada. Se calcula desde el modelo y no desde un flag
+  // seteado en onCredencialInput(): al editar, el contacto llega async (ver constructor)
+  // y el campo tiene que abrir ya bloqueado, sin esperar a que se toque la credencial.
+  depCredBloqueado(): boolean {
+    return !!(this.c.credencialCivica || '').trim();
+  }
 
   onCredencialInput(ev: Event) {
     const input = ev.target as HTMLInputElement;
@@ -258,11 +287,12 @@ export class AgendaNuevoComponent {
     v = letters + digits;
     input.value = v;
     this.c.credencialCivica = v;
-    // La primera letra de la credencial sugiere el departamento. No se limpia cuando
-    // no hay credencial: el depto credencial es editable de forma independiente (feature 025).
+    // Con credencial, el departamento se toma de su primera letra. Si la letra no está
+    // mapeada (U-Z, no usadas en Uruguay) se limpia: dejar el valor anterior produciría
+    // justo la inconsistencia que el bloqueo evita. Al borrar la credencial no se toca
+    // nada, así el campo se desbloquea conservando el último valor.
     if (letters.length >= 1) {
-      const dep = this.credencialMap[letters[0]];
-      if (dep) this.c.departamentoCredencial = dep;
+      this.c.departamentoCredencial = this.credencialMap[letters[0]] ?? '';
     }
   }
 
