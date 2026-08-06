@@ -1,0 +1,164 @@
+{
+  "feature": "adhesiones-acciones-y-detalle",
+  "local_config": {
+    "database": null
+  },
+  "stats": {
+    "total": 5,
+    "done": 5,
+    "by_layer": {
+      "1": 2,
+      "2": 3
+    }
+  },
+  "execution_strategy": "sequential",
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "Acciones como botones y eliminar Detalle",
+      "description": "Pestana Web: se elimina el elemento muerto Detalle y las dos acciones pasan a <button class='btn btn-sm'>. Pestana Locales: Eliminar pasa a boton. Eliminar usa btn-danger.",
+      "status": "completed",
+      "layer": 1,
+      "depends_on": [],
+      "files": [
+        "src/app/features/adhesiones/adhesiones-listado.component.ts"
+      ],
+      "acceptance_criteria": [
+        "AC-1: pestana Web usa <button> para Pasar a Local y Eliminar",
+        "AC-2: pestana Locales usa <button> para Eliminar",
+        "AC-3: Eliminar usa btn-danger",
+        "AC-4: los botones usan btn-sm",
+        "AC-5: mismos handlers que antes, sin cambio de comportamiento",
+        "AC-6: Detalle no existe en el DOM",
+        "D-3: no se toca la clase global .action-link, en uso por otras 3 pantallas",
+        "EC-2: el colspan=15 del estado vacio no cambia",
+        "GATE: ng build pasa"
+      ],
+      "references": [
+        "US-1",
+        "US-2",
+        "BR-1",
+        "BR-2",
+        "BR-3",
+        "D-1",
+        "D-2",
+        "D-3"
+      ]
+    },
+    {
+      "id": "TASK-002",
+      "title": "Spec de tests del componente",
+      "description": "Crear adhesiones-listado.component.spec.ts, que hoy no existe. TestBed con mocks del servicio de adhesiones.",
+      "status": "completed",
+      "layer": 1,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "files": [
+        "src/app/features/adhesiones/adhesiones-listado.component.spec.ts"
+      ],
+      "acceptance_criteria": [
+        "Test: la pestana Web renderiza acciones como <button> y no <a> (AC-1)",
+        "Test: Eliminar tiene btn-danger (AC-3)",
+        "Test: los botones usan btn-sm (AC-4)",
+        "Test: no existe ningun elemento con el texto Detalle (AC-6)",
+        "Test: ningun control de accion queda sin handler (AC-7, BR-1)",
+        "Test: click en Pasar a Local invoca pasar() con el id (AC-5)",
+        "Test: click en Eliminar invoca eliminarWeb() con el id (AC-5)",
+        "Test: pestana Locales renderiza Eliminar como button btn-danger (AC-2, BR-3)",
+        "GATE: build+tests verdes"
+      ],
+      "references": [
+        "US-1",
+        "US-2"
+      ]
+    },
+    {
+      "id": "TASK-003",
+      "title": "Verificacion visual",
+      "description": "Levantar la app y confirmar que la columna de acciones no empuja la tabla (EC-3) y que las dos pestanas quedan consistentes.",
+      "status": "completed",
+      "layer": 2,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002"
+      ],
+      "files": [
+        "src/app/features/adhesiones/adhesiones-listado.component.ts"
+      ],
+      "acceptance_criteria": [
+        "EC-3: la columna de acciones no genera scroll horizontal nuevo ni rompe el layout",
+        "BR-3: las dos pestanas se ven consistentes",
+        "GATE: build+tests verdes"
+      ],
+      "references": [
+        "EC-3",
+        "BR-3"
+      ]
+    },
+    {
+      "id": "TASK-004",
+      "title": "Code Review",
+      "description": "Revisar que no queden restos de action-link en esta pantalla, que .action-group siga sirviendo como contenedor y que no se haya tocado la clase global.",
+      "status": "completed",
+      "layer": 2,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002"
+      ],
+      "files": [
+        "src/app/features/adhesiones/adhesiones-listado.component.ts"
+      ],
+      "acceptance_criteria": [
+        "Sin action-link residual en adhesiones-listado",
+        "styles.css sin modificar (D-3)",
+        "GATE: build+tests verdes"
+      ],
+      "references": [
+        "D-3",
+        "D-4"
+      ]
+    },
+    {
+      "id": "TASK-005",
+      "title": "Security Review",
+      "description": "Confirmar que el cambio no altera handlers ni introduce markup dinamico.",
+      "status": "completed",
+      "layer": 2,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002"
+      ],
+      "files": [
+        "src/app/features/adhesiones/adhesiones-listado.component.ts"
+      ],
+      "acceptance_criteria": [
+        "Sin innerHTML ni bypassSecurityTrust",
+        "Los handlers invocados son los mismos de antes",
+        "GATE: build+tests verdes"
+      ],
+      "references": [
+        "NFR-Security"
+      ]
+    }
+  ],
+  "dependency_graph": {
+    "by_layer": {
+      "1": {
+        "level_0": [
+          "TASK-001"
+        ],
+        "level_1": [
+          "TASK-002"
+        ]
+      },
+      "2": {
+        "level_0": [
+          "TASK-003",
+          "TASK-004",
+          "TASK-005"
+        ]
+      }
+    }
+  }
+}

@@ -59,7 +59,7 @@ En el constructor (`:281-286`) fija el título `'Adhesiones'` y dispara `reloadW
 - Tabla de 15 columnas (ID, Nombre, Apellidos, Cedula, Cred. Civica, Email, Telefono, Celular, Departamento, Fecha Nac., Fecha en Sist., Sist. Contrib., Importe, Observaciones, acciones) iterando `web()` con `@for ... track a.id` (`:63`).
 - Badges: departamento con clase `dept` (`:75`); sistema de contribución con clase dinámica `badgeClass()` (`:82`).
 - Importe se muestra `'$' + a.importe` o `'—'` (`:85`).
-- Acciones por fila (`:88-92`): **"Detalle"** (link sin handler, no hace nada), **"Pasar a Local"** → `pasar(a.id)`, **"Eliminar"** → `eliminarWeb(a.id)`.
+- Acciones por fila (`:89-92`): **"Pasar a Local"** → `pasar(a.id)`, **"Eliminar"** → `eliminarWeb(a.id)`. Son `<button class="btn btn-sm">` (`btn-danger` para Eliminar) desde la feature 027, que además eliminó un tercer elemento **"Detalle"** que no tenía handler `(click)` y por lo tanto no hacía nada. Se verificó que no había dato que mostrar: el DTO devuelve 15 campos, la grilla renderiza 14, y el único ausente (`estado`) es constante porque el endpoint filtra `Estado == "Pendiente"`.
 - `@empty`: "No hay adhesiones pendientes" (`:96`).
 - Paginación: **estática/decorativa** — muestra `1–{{web().length}} de {{web().length}}` y botones `<`, `1`, `>` sin lógica (`:100-107`).
 - Botón **"Sincronizar Nube"** (`:111`): **sin handler `(click)`**, no hace nada.
