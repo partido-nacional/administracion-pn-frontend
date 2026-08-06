@@ -88,9 +88,8 @@ type Tab = 'web' | 'locales' | 'nuevo' | 'anuales';
                   <td>{{ a.observaciones || '' }}</td>
                   <td>
                     <div class="action-group">
-                      <a class="action-link">Detalle</a>
-                      <a class="action-link" (click)="pasar(a.id)">Pasar a Local</a>
-                      <a class="action-link" (click)="eliminarWeb(a.id)">Eliminar</a>
+                      <button type="button" class="btn btn-sm btn-primary" (click)="pasar(a.id)">Pasar a Local</button>
+                      <button type="button" class="btn btn-sm btn-danger" (click)="eliminarWeb(a.id)">Eliminar</button>
                     </div>
                   </td>
                 </tr>
@@ -173,7 +172,7 @@ type Tab = 'web' | 'locales' | 'nuevo' | 'anuales';
                   <td>{{ l.observaciones || '' }}</td>
                   <td>
                     <div class="action-group">
-                      <a class="action-link" (click)="eliminarLocal(l.id)">Eliminar</a>
+                      <button type="button" class="btn btn-sm btn-danger" (click)="eliminarLocal(l.id)">Eliminar</button>
                     </div>
                   </td>
                 </tr>
@@ -290,6 +289,14 @@ type Tab = 'web' | 'locales' | 'nuevo' | 'anuales';
     }
   `,
   styles: [`
+    /* El .action-group global usa gap:12px, pensado para los links de texto que esta
+       pantalla tenia antes. Entre botones queda holgado. Se ajusta acá y no en styles.css
+       porque esa clase sigue en uso con links en débitos, convencionales y productos.
+       nowrap evita que los dos botones de la fila Web se apilen: la grilla tiene 15
+       columnas y la de acciones es la última. */
+    .action-group { gap:6px; flex-wrap:nowrap; }
+    .action-group .btn { white-space:nowrap; }
+
     .topbar-inline { display:flex; justify-content:flex-end; margin-bottom:16px; }
     .sync-msg { font-size:13px; color:#2e7d32; }
     .sync-msg.error { color:#c62828; }
