@@ -126,6 +126,8 @@ export interface ContactoListado {
 export interface ReferenciaPartidaria {
   id: number;
   contactoId: number;
+  /** Lo exige PUT /organismos/referencias/{id}, que valida ámbito Partidario (feature 028). */
+  organismoId?: number | null;
   rol?: string;
   nombreOrganismo?: string;
   periodo?: string;
