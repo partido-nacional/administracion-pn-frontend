@@ -64,6 +64,28 @@ Tabla de info de organización: Id Info., Id Tipo, Id Org. Est., Id Org. Part., 
 
 Tabla: ID Contacto, Cred. Cívica, Apellidos, Nombres, Celular, Mail, Posición, Organismo, Depto. (badge). Filtros por columna (Depto. como `<select>`). Footer + empty-state. **Sin** columna de acción.
 
+### Vistas de referencias partidarias (editables desde feature 028)
+
+Dos pantallas muestran el mismo dato con distinto filtro, y **ambas permiten editar**:
+
+| Ruta | Componente | Se entra desde |
+|---|---|---|
+| `/agenda/:contactoId/referencias` | `ReferenciasContactoComponent` | botón "Ver referencias partidarias" de la grilla de Agenda |
+| `/organismos/:organismoId/referencias` | `ReferenciasOrganismoComponent` | botón de la grilla de Organismos |
+
+- Cada fila ofrece **Editar**, que abre un `<app-modal-form>` con `rol`, `periodo`,
+  `fechaDesignacion`, `fechaCese`, `art44` y `notas` — los campos que acepta
+  `PUT /organismos/referencias/{id}`.
+- Se edita sobre una **copia** de la fila: cancelar no toca la grilla. Un error del backend se muestra
+  en el modal **sin perder lo escrito**.
+- `aIsoDate()` (`core/fechas.ts`) convierte las fechas de `dd/MM/yyyy` (como las serializa el backend)
+  a `yyyy-MM-dd`, que es lo único que acepta `<input type="date">`. Sin eso el campo aparece vacío y
+  guardar borraría la fecha en silencio.
+- El `PUT` exige `contactoId` y `organismoId` y valida ámbito Partidario. La vista por **contacto** lo
+  toma del DTO (`organismoId`, agregado por la feature 031); la vista por **organismo**, de la ruta.
+- Antes de la feature 028 ambas vistas eran de **sólo lectura** (0 botones), aunque el endpoint de
+  edición ya existía en el backend.
+
 ### Tab "referencias" (`organismos.component.ts:199-226`)
 
 Tabla: Nombre, Cargo, Organismo, Período. Filtros por columna (todos inputs de texto). Footer + empty-state.

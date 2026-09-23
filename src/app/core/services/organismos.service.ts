@@ -7,8 +7,7 @@ import { buildPagedParams } from './paged';
 import {
   OrganismoDto, OrganismoInput, OrganismoUpdateInput,
   TipoOrganizacionDto, InfoOrganizacionDto, InfoOrganizacionInput,
-  ReferenteResumenDto, IntegranteOrg, ReferenciaOrganismo,
-} from '../models/organismos';
+  ReferenteResumenDto, IntegranteOrg, ReferenciaOrganismo, ReferenciaEditInput } from '../models/organismos';
 
 /**
  * Service por dominio para Organismos. Contrato unificado + paginado server-side
@@ -33,9 +32,19 @@ export class OrganismosService {
   getReferencias(query: GridQuery): Observable<PagedResult<ReferenteResumenDto>> {
     return this.http.get<PagedResult<ReferenteResumenDto>>(`${this.base}/referencias`, { params: buildPagedParams(query) });
   }
-  /** Referencias partidarias de un organismo puntual (solo lectura, feature 028). */
+  /** Referencias partidarias de un organismo puntual. */
   getReferenciasDeOrganismo(id: number): Observable<ReferenciaOrganismo[]> {
     return this.http.get<ReferenciaOrganismo[]>(`${this.base}/${id}/referencias`);
+  }
+
+  /**
+   * Edita una referencia partidaria (feature 028). El endpoint ya existia; lo que faltaba era
+   * la UI — las dos vistas de referencias eran solo lectura.
+   *
+   * El PUT exige contactoId y organismoId y valida que el organismo sea de ambito Partidario.
+   */
+  editarReferencia(id: number, input: ReferenciaEditInput): Observable<unknown> {
+    return this.http.put(`${this.base}/referencias/${id}`, input);
   }
 
   /** Integrantes de un organismo puntual, por id (paginado; el inline pide una página grande). */

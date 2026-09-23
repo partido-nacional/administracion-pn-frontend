@@ -114,7 +114,13 @@ La sección **Adhesion** (checkbox `adherente`, deshabilitado, "Calculado automa
 
 **Validaciones.**
 - `Nombre` y `Apellido`: `required` (`:46-47`).
-- `Cedula`: `pattern ^[0-9]{7,8}$` + `onlyDigits`/`blockNonDigit` (`:50-54`).
+- `Cedula`: `pattern ^[0-9]{7,8}$` + `onlyDigits`/`blockNonDigit`, **más validación del dígito
+  verificador** (`cedulaEsValida`, `core/cedula.ts`, feature 028). `errorCedula()` la aplica: en el
+  **alta** siempre; en la **edición sólo si el operador modificó el campo**, comparando contra el
+  documento capturado dentro del `subscribe` de `svc.get()` — hay 335 contactos (3,1%) con cédula
+  inválida ya cargados y validar siempre los dejaría imposibles de editar. El mensaje distingue
+  "dígito verificador" del genérico de formato. `guardar()` bloquea el submit antes de mirar
+  `form.invalid`.
 - `Credencial`: `pattern ^[A-Z]{3}[0-9]{1,6}$`; transformada en vivo por `onCredencialInput()` que mayúscula, quita espacios y limita a 3 letras + 6 dígitos (`:282-296`). Mensaje de error cuando `invalid && (dirty||touched)` (`:70-72`).
 - `Cortesía`: lista cerrada de 28 tratamientos (`CORTESIAS`, `:23-30`). `cortesiasVisibles()` (`:261-265`) appendea la cortesía guardada cuando cae fuera del catálogo (contactos migrados, ej. `Srta.`), para no perder el dato al editar; la opción extra desaparece en cuanto se elige un valor del catálogo.
 - `Departamento Credencial`: editable **si y sólo si** no hay credencial. `depCredBloqueado()` (`:278-280`) lo deriva del modelo —no de un flag del handler— para que en edición abra ya bloqueado, dado que el contacto llega async. Con credencial, `onCredencialInput()` asigna el departamento según la primera letra vía `credencialMap`, y lo limpia si la letra no está mapeada (`U`–`Z`). Al borrarse la credencial el campo se desbloquea **conservando** el último valor.

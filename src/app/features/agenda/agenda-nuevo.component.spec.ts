@@ -316,6 +316,98 @@ describe('AgendaNuevoComponent', () => {
     expect(cmp.errores()).toEqual(['No se pudo guardar el contacto.']);
   }));
 
+  // ── Feature 028: digito verificador de la cedula ──────────
+  //
+  // En el alta bloquea siempre. En la edicion SOLO si el operador toca el campo: hay 335
+  // contactos (3,1%) con cedula invalida ya cargados y validar siempre los dejaria imposibles
+  // de editar.
+
+  it('alta con DV inválido no llama a create()', fakeAsync(() => {
+    svcSpy.create.and.returnValue(of({} as Contacto));
+    const f = montar();
+    const cmp = f.componentInstance;
+    cmp.c = { ...base, id: undefined, documento: '46790555' };   // DV alterado
+    f.detectChanges();
+    tick();
+
+    cmp.guardar(formDe(f));
+    tick();
+
+    expect(svcSpy.create).not.toHaveBeenCalled();
+    expect(cmp.errores().join(' ')).toContain('dígito verificador');
+  }));
+
+  it('el mensaje distingue DV incorrecto de formato inválido', fakeAsync(() => {
+    const f = montar();
+    f.componentInstance.c = { ...base, id: undefined, documento: '46790555' };
+    f.detectChanges();
+    tick();
+
+    const err = f.componentInstance.errorCedula();
+
+    expect(err).toContain('dígito verificador');
+    expect(err).not.toContain('formato');
+  }));
+
+  it('alta con DV válido llama a create()', fakeAsync(() => {
+    svcSpy.create.and.returnValue(of({} as Contacto));
+    const f = montar();
+    const cmp = f.componentInstance;
+    cmp.c = { ...base, id: undefined, documento: '46790554' };
+    f.detectChanges();
+    tick();
+
+    cmp.guardar(formDe(f));
+    tick();
+
+    expect(svcSpy.create).toHaveBeenCalledTimes(1);
+  }));
+
+  it('alta sin cédula llama a create(): el campo es opcional', fakeAsync(() => {
+    svcSpy.create.and.returnValue(of({} as Contacto));
+    const f = montar();
+    const cmp = f.componentInstance;
+    cmp.c = { ...base, id: undefined, documento: '' };
+    f.detectChanges();
+    tick();
+
+    cmp.guardar(formDe(f));
+    tick();
+
+    expect(svcSpy.create).toHaveBeenCalledTimes(1);
+  }));
+
+  it('edición SIN tocar una cédula inválida sí llama a update()', fakeAsync(() => {
+    // El caso que protege a los 335 contactos. El documento original se captura en el subscribe
+    // de svc.get(): si se leyera antes quedaria undefined y esta edicion quedaria bloqueada.
+    svcSpy.update.and.returnValue(of(undefined));
+    const f = montar({ ...base, documento: '46790555' });        // invalida, ya cargada
+    tick();
+    f.detectChanges();
+
+    f.componentInstance.c.celular = '099123456';                 // lo que realmente quiere cambiar
+    f.detectChanges();
+    f.componentInstance.guardar(formDe(f));
+    tick();
+
+    expect(svcSpy.update).toHaveBeenCalledTimes(1);
+    expect(f.componentInstance.errorCedula()).toBeNull();
+  }));
+
+  it('edición que CAMBIA la cédula a una inválida no llama a update()', fakeAsync(() => {
+    svcSpy.update.and.returnValue(of(undefined));
+    const f = montar({ ...base, documento: '46790554' });        // valida
+    tick();
+    f.detectChanges();
+
+    f.componentInstance.c.documento = '46790555';                // la cambia a invalida
+    f.detectChanges();
+    f.componentInstance.guardar(formDe(f));
+    tick();
+
+    expect(svcSpy.update).not.toHaveBeenCalled();
+  }));
+
   it('AC-13: el departamento se envía al backend aunque el control esté deshabilitado', fakeAsync(() => {
     svcSpy.create.and.returnValue(of({} as Contacto));
     const f = montar();
