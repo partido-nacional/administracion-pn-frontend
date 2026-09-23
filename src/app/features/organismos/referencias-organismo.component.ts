@@ -6,6 +6,7 @@ import { ActivatedRoute } from '@angular/router';
 import { OrganismosService } from '../../core/services/organismos.service';
 import { ReferenciaOrganismo } from '../../core/models/organismos';
 import { PageTitleService } from '../../core/page-title.service';
+import { aIsoDate } from '../../core/fechas';
 import { ToastService } from '../../core/services/toast.service';
 import { ModalFormComponent } from '../../shared/components/modal-form/modal-form.component';
 
@@ -118,7 +119,7 @@ export class ReferenciasOrganismoComponent {
 
   abrirEdicion(r: ReferenciaOrganismo) {
     // Copia: si el operador cancela, la fila de la grilla queda intacta.
-    this.editando.set({ ...r, fechaDesignacion: aIso(r.fechaDesignacion), fechaCese: aIso(r.fechaCese) });
+    this.editando.set({ ...r, fechaDesignacion: aIsoDate(r.fechaDesignacion), fechaCese: aIsoDate(r.fechaCese) });
     this.error.set('');
   }
 
@@ -157,9 +158,3 @@ export class ReferenciasOrganismoComponent {
   }
 }
 
-/** El backend devuelve las fechas como dd/MM/yyyy; <input type="date"> necesita yyyy-MM-dd. */
-function aIso(fecha?: string): string | undefined {
-  if (!fecha) return undefined;
-  const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(fecha);
-  return m ? `${m[3]}-${m[2]}-${m[1]}` : fecha;
-}

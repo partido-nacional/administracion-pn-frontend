@@ -5,7 +5,7 @@
   },
   "stats": {
     "total": 7,
-    "done": 4,
+    "done": 7,
     "by_layer": {
       "1": 4,
       "2": 3
@@ -137,7 +137,7 @@
       "id": "TASK-005",
       "title": "Verificacion visual en la app",
       "description": "Levantar la app y probar contra datos reales, incluido un contacto de los 335 con cedula invalida. Los dos bugs de CSS de esta sesion solo aparecieron corriendo la app.",
-      "status": "pending",
+      "status": "completed",
       "layer": 2,
       "depends_on": [
         "TASK-001",
@@ -166,7 +166,7 @@
       "id": "TASK-006",
       "title": "Code Review",
       "description": "Revisar que el algoritmo de cedula viva en un solo lugar, que las dos vistas de referencias no dupliquen el formulario innecesariamente y que se use el modal compartido.",
-      "status": "pending",
+      "status": "completed",
       "layer": 2,
       "depends_on": [
         "TASK-001",
@@ -194,7 +194,7 @@
       "id": "TASK-007",
       "title": "Security Review",
       "description": "Confirmar que el formulario de edicion no introduce markup dinamico y que la validacion de cedula no es el unico control (el backend tambien valida).",
-      "status": "pending",
+      "status": "completed",
       "layer": 2,
       "depends_on": [
         "TASK-001",
