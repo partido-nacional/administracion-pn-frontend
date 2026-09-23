@@ -1,0 +1,242 @@
+{
+  "feature": "bugs-reportados-organismos-adhesiones",
+  "local_config": {
+    "database": null
+  },
+  "stats": {
+    "total": 7,
+    "done": 4,
+    "by_layer": {
+      "1": 4,
+      "2": 3
+    }
+  },
+  "execution_strategy": "sequential",
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "cedula.ts + validador bloqueante en el formulario",
+      "description": "Nuevo helper con el algoritmo uruguayo del DV y su aplicacion como validador de Angular en el campo cedula de agenda-nuevo. Bloquea el guardado en alta siempre; en edicion solo si el operador modifica la cedula.",
+      "status": "completed",
+      "layer": 1,
+      "depends_on": [],
+      "files": [
+        "src/app/core/cedula.ts",
+        "src/app/features/agenda/agenda-nuevo.component.ts"
+      ],
+      "acceptance_criteria": [
+        "AC-7: alta con DV invalido no persiste el contacto",
+        "AC-8: el mensaje distingue DV incorrecto de formato invalido, no un generico",
+        "AC-9: alta con DV valido funciona como hoy",
+        "AC-10: alta sin cedula funciona (la cedula es opcional)",
+        "AC-11: el error aparece al terminar de escribir, no recien al presionar Guardar",
+        "AC-12: en edicion SIN tocar la cedula, guarda aunque sea invalida (los 335 siguen editables)",
+        "AC-13: en edicion cambiando la cedula a invalida, no guarda",
+        "D-4 (RIESGO ALTO): el documento original se captura en el SUBSCRIBE de svc.get(), no antes. Si queda undefined el validador bloquea TODAS las ediciones — justo los 335 contactos que la regla protege",
+        "D-3: la validacion de DV convive con el pattern existente, no lo reemplaza",
+        "EC-2: no mostrar error mientras la cedula esta incompleta",
+        "GATE: ng build pasa"
+      ],
+      "references": [
+        "US-2",
+        "BR-1",
+        "BR-2",
+        "BR-3",
+        "BR-4",
+        "EC-1",
+        "EC-2",
+        "EC-3",
+        "EC-4",
+        "D-3",
+        "D-4"
+      ]
+    },
+    {
+      "id": "TASK-002",
+      "title": "Edicion de referencias partidarias por contacto",
+      "description": "La vista /agenda/:id/referencias es solo lectura (0 botones) aunque el PUT ya existe en el backend. Agregar accion Editar con modal, reutilizando el <app-modal-form> compartido de DEBT-014.",
+      "status": "completed",
+      "layer": 1,
+      "depends_on": [],
+      "files": [
+        "src/app/features/organismos/referencias-contacto.component.ts",
+        "src/app/core/services/organismos.service.ts"
+      ],
+      "acceptance_criteria": [
+        "AC-1: cada fila ofrece una accion Editar",
+        "AC-2: se editan rol, periodo, fechaDesignacion, fechaCese, art44 y notas",
+        "AC-3: guardar llama al PUT y la fila refleja los datos nuevos sin recargar la pagina",
+        "AC-4: cancelar descarta los cambios",
+        "AC-5: un error del backend se muestra sin perder lo escrito",
+        "D-1: reutilizar <app-modal-form> en vez de un cuarto estilo de modal",
+        "EC-5: el PUT valida EnsureOrganismoPartidario — contemplar referencias con organismo null",
+        "GATE: ng build pasa"
+      ],
+      "references": [
+        "US-1",
+        "BR-5",
+        "EC-5",
+        "EC-6",
+        "D-1"
+      ]
+    },
+    {
+      "id": "TASK-003",
+      "title": "Edicion de referencias por organismo",
+      "description": "La vista /organismos/:id/referencias muestra el mismo dato con otro filtro y tambien es solo lectura. BR-5 exige la misma capacidad en ambas: dejar una editable y la otra no seria peor que el estado actual.",
+      "status": "completed",
+      "layer": 1,
+      "depends_on": [
+        "TASK-002"
+      ],
+      "files": [
+        "src/app/features/organismos/referencias-organismo.component.ts"
+      ],
+      "acceptance_criteria": [
+        "AC-6: la vista por organismo ofrece la misma capacidad de edicion",
+        "D-6: decidir si el formulario se comparte o se replica, segun cuanto difieran las columnas",
+        "GATE: ng build pasa"
+      ],
+      "references": [
+        "US-1",
+        "AC-6",
+        "BR-5",
+        "D-6"
+      ]
+    },
+    {
+      "id": "TASK-004",
+      "title": "Tests: cedula.spec nuevo + extender agenda-nuevo + referencias",
+      "description": "cedula.spec.ts y referencias-contacto.component.spec.ts son nuevos; agenda-nuevo.component.spec.ts ya existe y se extiende con los casos del DV.",
+      "status": "completed",
+      "layer": 1,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002",
+        "TASK-003"
+      ],
+      "files": [
+        "src/app/core/cedula.spec.ts",
+        "src/app/features/agenda/agenda-nuevo.component.spec.ts",
+        "src/app/features/organismos/referencias-contacto.component.spec.ts"
+      ],
+      "acceptance_criteria": [
+        "cedula.spec: validas pasan, DV alterado falla, 7 digitos se normaliza, null/vacio valido",
+        "agenda-nuevo: 6 casos (AC-7 a AC-13)",
+        "OBLIGATORIO: test de edicion sin tocar la cedula invalida → llama a update() (AC-12, D-4)",
+        "referencias-contacto: 6 casos (AC-1 a AC-5)",
+        "Verificar que los tests fallan con el bug reintroducido, no asumirlo",
+        "GATE: build+tests verdes"
+      ],
+      "references": [
+        "US-1",
+        "US-2"
+      ]
+    },
+    {
+      "id": "TASK-005",
+      "title": "Verificacion visual en la app",
+      "description": "Levantar la app y probar contra datos reales, incluido un contacto de los 335 con cedula invalida. Los dos bugs de CSS de esta sesion solo aparecieron corriendo la app.",
+      "status": "pending",
+      "layer": 2,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002",
+        "TASK-003",
+        "TASK-004"
+      ],
+      "files": [
+        "src/app/features/agenda/agenda-nuevo.component.ts",
+        "src/app/features/organismos/referencias-contacto.component.ts"
+      ],
+      "acceptance_criteria": [
+        "Editar una referencia real y confirmar que persiste",
+        "Editar un contacto de los 335 con cedula invalida sin tocar la cedula → guarda",
+        "Intentar dar de alta con cedula invalida → bloquea con mensaje claro",
+        "El modal se ve bien en claro y oscuro",
+        "GATE: build+tests verdes"
+      ],
+      "references": [
+        "AC-3",
+        "AC-7",
+        "AC-12"
+      ]
+    },
+    {
+      "id": "TASK-006",
+      "title": "Code Review",
+      "description": "Revisar que el algoritmo de cedula viva en un solo lugar, que las dos vistas de referencias no dupliquen el formulario innecesariamente y que se use el modal compartido.",
+      "status": "pending",
+      "layer": 2,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002",
+        "TASK-003",
+        "TASK-004"
+      ],
+      "files": [
+        "src/app/core/cedula.ts",
+        "src/app/features/organismos/referencias-contacto.component.ts",
+        "src/app/features/organismos/referencias-organismo.component.ts"
+      ],
+      "acceptance_criteria": [
+        "Un solo algoritmo de DV en el front (D-5: la duplicacion con el backend es deliberada, la interna no)",
+        "Se usa <app-modal-form>, no un modal nuevo (D-1)",
+        "GATE: build+tests verdes"
+      ],
+      "references": [
+        "D-1",
+        "D-5",
+        "D-6"
+      ]
+    },
+    {
+      "id": "TASK-007",
+      "title": "Security Review",
+      "description": "Confirmar que el formulario de edicion no introduce markup dinamico y que la validacion de cedula no es el unico control (el backend tambien valida).",
+      "status": "pending",
+      "layer": 2,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002",
+        "TASK-003",
+        "TASK-004"
+      ],
+      "files": [
+        "src/app/features/organismos/referencias-contacto.component.ts",
+        "src/app/features/agenda/agenda-nuevo.component.ts"
+      ],
+      "acceptance_criteria": [
+        "Sin innerHTML ni bypassSecurityTrust",
+        "Queda registrado que la validacion de DV es de doble capa (front + backend)",
+        "GATE: build+tests verdes"
+      ],
+      "references": [
+        "NFR-Security"
+      ]
+    }
+  ],
+  "dependency_graph": {
+    "by_layer": {
+      "1": {
+        "level_0": [
+          "TASK-001",
+          "TASK-002"
+        ],
+        "level_1": [
+          "TASK-003"
+        ],
+        "level_2": [
+          "TASK-004"
+        ]
+      },
+      "2": {
+        "level_0": [
+          "TASK-005",
+          "TASK-006",
+          "TASK-007"
+        ]
+      }
+    }
+  }
+}

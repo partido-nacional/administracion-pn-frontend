@@ -1,10 +1,13 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ActivatedRoute } from '@angular/router';
 import { OrganismosService } from '../../core/services/organismos.service';
 import { ReferenciaOrganismo } from '../../core/models/organismos';
 import { PageTitleService } from '../../core/page-title.service';
+import { ToastService } from '../../core/services/toast.service';
+import { ModalFormComponent } from '../../shared/components/modal-form/modal-form.component';
 
 /**
  * Referencias partidarias de un organismo (feature 028, solo lectura).
@@ -13,7 +16,7 @@ import { PageTitleService } from '../../core/page-title.service';
 @Component({
   selector: 'app-referencias-organismo',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, ModalFormComponent],
   template: `
     <div class="topbar-inline">
       <a routerLink="/organismos" class="btn btn-secondary">← Volver a Organismos</a>
@@ -37,6 +40,7 @@ import { PageTitleService } from '../../core/page-title.service';
                 <th>Fecha Cese</th>
                 <th>Art. 44</th>
                 <th>Notas</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
@@ -49,6 +53,9 @@ import { PageTitleService } from '../../core/page-title.service';
                   <td>{{ r.fechaCese || '—' }}</td>
                   <td>{{ r.art44 ? 'Sí' : 'No' }}</td>
                   <td>{{ r.notas || '—' }}</td>
+                  <td>
+                    <button type="button" class="btn btn-sm btn-secondary" (click)="abrirEdicion(r)">Editar</button>
+                  </td>
                 </tr>
               }
             </tbody>
@@ -56,6 +63,30 @@ import { PageTitleService } from '../../core/page-title.service';
         }
       </div>
     </div>
+
+    @if (editando(); as e) {
+      <app-modal-form title="Editar referencia partidaria"
+                      [error]="error()" [busy]="busy()"
+                      (save)="guardar()" (cancel)="cancelar()">
+        <div class="nv-grid g3">
+          <div class="fg"><label>Rol / Cargo</label>
+            <input [(ngModel)]="e.rol" name="rol"></div>
+          <div class="fg"><label>Período</label>
+            <input [(ngModel)]="e.periodo" name="periodo"></div>
+          <div class="fg"><label>Art. 44</label>
+            <select [(ngModel)]="e.art44" name="art44">
+              <option [ngValue]="false">No</option>
+              <option [ngValue]="true">Sí</option>
+            </select></div>
+          <div class="fg"><label>Fecha designación</label>
+            <input type="date" [(ngModel)]="e.fechaDesignacion" name="fd"></div>
+          <div class="fg"><label>Fecha cese</label>
+            <input type="date" [(ngModel)]="e.fechaCese" name="fc"></div>
+        </div>
+        <div class="fg" style="margin-top:12px"><label>Notas</label>
+          <textarea [(ngModel)]="e.notas" name="notas" rows="3"></textarea></div>
+      </app-modal-form>
+    }
   `,
   styles: [`
     .topbar-inline { display:flex; justify-content:flex-start; margin-bottom:16px; }
@@ -65,13 +96,70 @@ export class ReferenciasOrganismoComponent {
   private route = inject(ActivatedRoute);
   private svc = inject(OrganismosService);
   private titleSvc = inject(PageTitleService);
+  private toast = inject(ToastService);
 
   organismoId!: number;
   items = signal<ReferenciaOrganismo[]>([]);
 
+  /** Copia editable de la fila abierta. null = modal cerrado. */
+  editando = signal<ReferenciaOrganismo | null>(null);
+  busy = signal(false);
+  error = signal('');
+
   constructor() {
     this.titleSvc.set('Referencias Partidarias del Organismo');
     this.organismoId = +this.route.snapshot.paramMap.get('organismoId')!;
+    this.cargar();
+  }
+
+  private cargar() {
     this.svc.getReferenciasDeOrganismo(this.organismoId).subscribe(x => this.items.set(x));
   }
+
+  abrirEdicion(r: ReferenciaOrganismo) {
+    // Copia: si el operador cancela, la fila de la grilla queda intacta.
+    this.editando.set({ ...r, fechaDesignacion: aIso(r.fechaDesignacion), fechaCese: aIso(r.fechaCese) });
+    this.error.set('');
+  }
+
+  cancelar() {
+    this.editando.set(null);
+    this.error.set('');
+  }
+
+  guardar() {
+    const e = this.editando();
+    if (!e) return;
+    this.busy.set(true);
+    this.error.set('');
+    // A diferencia de la vista por contacto, aca el organismoId viene de la ruta.
+    this.svc.editarReferencia(e.id, {
+      contactoId: e.contactoId,
+      organismoId: this.organismoId,
+      rol: e.rol || null,
+      periodo: e.periodo || null,
+      fechaDesignacion: e.fechaDesignacion || null,
+      fechaCese: e.fechaCese || null,
+      art44: e.art44,
+      notas: e.notas || null,
+    }).subscribe({
+      next: () => {
+        this.busy.set(false);
+        this.editando.set(null);
+        this.toast.success('Referencia actualizada.');
+        this.cargar();
+      },
+      error: (err) => {
+        this.busy.set(false);
+        this.error.set(err?.error?.message || 'No se pudo guardar la referencia.');
+      },
+    });
+  }
+}
+
+/** El backend devuelve las fechas como dd/MM/yyyy; <input type="date"> necesita yyyy-MM-dd. */
+function aIso(fecha?: string): string | undefined {
+  if (!fecha) return undefined;
+  const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(fecha);
+  return m ? `${m[3]}-${m[2]}-${m[1]}` : fecha;
 }

@@ -5,6 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { ContactosService, Contacto } from './contactos.service';
 import { PageTitleService } from '../../core/page-title.service';
+import { cedulaEsValida } from '../../core/cedula';
 
 const FIELD_LABELS: Record<string, string> = {
   cortesia: 'Cortesía', nombre: 'Nombre', apellido: 'Apellido', documento: 'Cedula',
@@ -59,7 +60,11 @@ function describeError(label: string, errors: any): string {
                      (input)="onlyDigits($event, 'documento')"
                      (keypress)="blockNonDigit($event)"
                      pattern="^[0-9]{7,8}$" inputmode="numeric" maxlength="8"
+                     [class.ng-invalid]="errorCedula()"
                      placeholder="Solo numeros, 7 u 8 digitos">
+              @if (errorCedula()) {
+                <small style="color:#c00; font-size:12px">{{ errorCedula() }}</small>
+              }
             </div>
             <div class="form-group">
               <label class="form-label">Credencial</label>
@@ -258,6 +263,26 @@ export class AgendaNuevoComponent {
   // Contactos migrados pueden tener cortesías fuera del catálogo actual (ej. 'Srta.').
   // Se ofrecen como opción extra para no perder el dato al editar; desaparecen en
   // cuanto el operador elige un valor del catálogo.
+  /** Documento tal como vino de la base al abrir la edicion. null en alta. */
+  private documentoOriginal: string | null = null;
+
+  /**
+   * Error de cedula a mostrar, o null si esta bien.
+   *
+   * En el ALTA valida siempre. En la EDICION solo si el operador toco el campo: hay 335
+   * contactos (3,1%) con cedula invalida ya cargados, y validar siempre los dejaria
+   * imposibles de editar — nadie podria corregirles el telefono sin saber la cedula real.
+   */
+  errorCedula(): string | null {
+    const doc = this.c.documento ?? '';
+    if (doc.trim() === '') return null;                       // la cedula es opcional
+    if (!/^[0-9]{7,8}$/.test(doc)) return null;               // ese caso ya lo cubre el pattern
+    if (this.editingId && doc === (this.documentoOriginal ?? '')) return null;  // no la toco
+    return cedulaEsValida(doc)
+      ? null
+      : 'El dígito verificador de la cédula no es correcto.';
+  }
+
   cortesiasVisibles(): readonly string[] {
     const actual = this.c.cortesia;
     if (!actual || CORTESIAS.includes(actual)) return CORTESIAS;
@@ -312,12 +337,27 @@ export class AgendaNuevoComponent {
     this.titleSvc.set(id ? 'Editar Contacto' : 'Nuevo Contacto');
     if (id) {
       this.editingId = +id;
-      this.svc.get(this.editingId).subscribe(x => this.c = x);
+      this.svc.get(this.editingId).subscribe(x => {
+        this.c = x;
+        // El documento original se captura ACA, dentro del subscribe: el contacto llega async.
+        // Si se leyera antes quedaria undefined y el validador creeria que TODA edicion cambio
+        // la cedula, bloqueando justo a los 335 contactos que la regla protege (feature 028).
+        this.documentoOriginal = x.documento ?? null;
+      });
     }
   }
 
   guardar(form: NgForm) {
     this.submitted.set(true);
+
+    // El DV se valida aparte del form: es una regla aritmetica que el pattern no cubre, y el
+    // mensaje tiene que distinguirse del generico de formato.
+    const errCedula = this.errorCedula();
+    if (errCedula) {
+      this.errores.set([`${FIELD_LABELS['documento']}: ${errCedula}`]);
+      return;
+    }
+
     if (form.invalid) {
       Object.values(form.controls).forEach(ctrl => ctrl.markAsTouched());
       const errs: string[] = [];

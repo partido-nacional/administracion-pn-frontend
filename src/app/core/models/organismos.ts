@@ -110,3 +110,15 @@ export interface InfoOrganizacionInput {
   email?: string | null;
   observaciones?: string | null;
 }
+
+/** Payload de PUT /organismos/referencias/{id} (feature 028). */
+export interface ReferenciaEditInput {
+  contactoId: number;
+  organismoId: number | null;
+  rol?: string | null;
+  periodo?: string | null;
+  fechaDesignacion?: string | null;
+  fechaCese?: string | null;
+  art44: boolean;
+  notas?: string | null;
+}
