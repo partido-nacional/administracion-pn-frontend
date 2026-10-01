@@ -11,7 +11,8 @@ vision_prompt_shown: true
 from_backlog: DEBT-015, DEBT-016
 mirror: administracion-pn-backend → 034-normalizar-departamentos
 
-Current Stage: implementation
+Current Stage: completed
+archived_at: 2026-09-30
 
 stages:
   functional:
@@ -26,6 +27,7 @@ stages:
     approved_at: 2026-09-30
     execution_strategy: batched
   implementation:
-    status: in-progress
-    completed_tasks: 0
+    status: completed
+    completed_at: 2026-09-30
+    completed_tasks: 7
     total_tasks: 7
