@@ -24,3 +24,12 @@
 ## Tests
 
 `imprimir-calendario.spec.ts` (11), `filtros-grillas.spec.ts` (11), `dashboard.component.spec.ts` (+4). Suite: 263/263.
+
+## Corrección pre-release (validación contra Postgres)
+
+`Agrupacion.Depto` guarda casi siempre la **letra de serie de la credencial** (`C` = Canelones, `A`/`B` = Montevideo …
+`T` = Tacuarembó, `X` = Nacional) y solo a veces el nombre. Con la semilla, Canelones son 744 `C` y 154 `CANELONES`.
+- El filtro comparaba solo por nombre: perdía la mayoría de las filas. Además, Por Período quedaba en 0, porque antes su dropdown listaba las letras crudas.
+- **Fix**: en Agrupaciones Todas, Pendientes y Por Período, `depto` acepta el nombre normalizado **o** las letras de ese departamento (`DepartamentosCredencial`, en Domain, la misma tabla que el `credencialMap` del alta de contactos).
+- Los dropdowns de agrupaciones suman **'Nacional'** (`X` / `NACIONAL`).
+- Verificado en Postgres: Canelones 154 → **898** (= 744 + 154, igual al conteo SQL directo); Por Período 0 → 1.369.

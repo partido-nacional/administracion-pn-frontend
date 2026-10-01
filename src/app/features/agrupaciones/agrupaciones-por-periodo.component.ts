@@ -614,8 +614,9 @@ export class AgrupacionesPorPeriodoComponent {
   fSublema = signal('');
 
   periodos = signal<string[]>([]);
-  // Lista canónica (feature 030): antes salía de la base (mayúsculas, duplicados, "Seleccione").
-  readonly deptos = DEPARTAMENTOS;
+  // Lista canónica + 'Nacional' (feature 030). Antes salía de la base: eran sobre todo letras de
+  // serie de credencial ("C"); el backend ahora mapea nombre ↔ letra al filtrar.
+  readonly deptos = [...DEPARTAMENTOS, 'Nacional'];
 
   // ── Editar período (sublemas) ──────────────────────────────
   modalEditar = signal<AgrupacionPeriodoRow | null>(null);

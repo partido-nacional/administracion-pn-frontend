@@ -451,7 +451,8 @@ export class AgrupacionesComponent {
 
   // Filtros de la grilla "Todas" (feature 030).
   fId = signal(''); fCod = signal(''); fNombre = signal(''); fDepto = signal('');
-  readonly deptosFiltro = DEPARTAMENTOS;
+  // + 'Nacional': las agrupaciones nacionales se guardan con Depto 'X'/'NACIONAL' (el backend mapea letras).
+  readonly deptosFiltro = [...DEPARTAMENTOS, 'Nacional'];
   private filtroTodas$ = new Subject<void>();
   hayFiltrosTodas = computed(() => !!(this.fId() || this.fCod() || this.fNombre() || this.fDepto()));
   onFiltroTodas() { this.filtroTodas$.next(); }

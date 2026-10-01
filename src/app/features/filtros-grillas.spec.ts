@@ -108,9 +108,9 @@ describe('Filtros de grillas (feature 030)', () => {
     expect(c.departamentos).toEqual([...DEPARTAMENTOS, 'Nacional']);
   });
 
-  it('Por Período: dropdown canónico y filtros Id / Id Agr. (AC-16)', fakeAsync(() => {
+  it('Por Período: dropdown canónico + Nacional y filtros Id / Id Agr. (AC-16)', fakeAsync(() => {
     const c = montar(AgrupacionesPorPeriodoComponent) as any;
-    expect(opcionesDepto()).toEqual(['Todos', ...DEPARTAMENTOS]);
+    expect(opcionesDepto()).toEqual(['Todos', ...DEPARTAMENTOS, 'Nacional']);
     c.fId.set('7'); c.fAgrId.set('12'); c.onFilter(); tick(300);
     const p = ultimoGet('/agrupaciones-periodos');
     expect(p.get('id')).toBe('7');
@@ -121,6 +121,7 @@ describe('Filtros de grillas (feature 030)', () => {
 
   it('Todas: filtros ID / Código / Nombre / Depto y la grilla sigue visible sin resultados (AC-14)', fakeAsync(() => {
     const c = montar(AgrupacionesComponent) as any;
+    expect(c.deptosFiltro).toEqual([...DEPARTAMENTOS, 'Nacional']);
     c.fId.set('5'); c.fCod.set('12'); c.fNombre.set('etica'); c.fDepto.set('Salto');
     c.onFiltroTodas(); tick(300);
     const p = ultimoGet('/agrupaciones');

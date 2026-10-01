@@ -370,10 +370,9 @@ export class AgrupacionesPendientesComponent {
   form: any = {};
   deptos = DEPARTAMENTOS;
 
-  // Filtros de la grilla (feature 030). El dropdown usa la lista canónica (sin 'Nacional',
-  // que es solo para el formulario de alta/aprobación).
+  // Filtros de la grilla (feature 030). Lista canónica + 'Nacional' (Depto 'X'/'NACIONAL').
   fId = signal(''); fCod = signal(''); fNombre = signal(''); fDepto = signal('');
-  readonly deptosFiltro = DEPTOS_CANONICOS;
+  readonly deptosFiltro = [...DEPTOS_CANONICOS, 'Nacional'];
   private filter$ = new Subject<void>();
   onFilter() { this.filter$.next(); }
   hayFiltros = computed(() => !!(this.fId() || this.fCod() || this.fNombre() || this.fDepto()));

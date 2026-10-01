@@ -294,3 +294,5 @@ Contacto directo al responsable de la ficha vía `wa.me` con mensaje plantilla p
 - Por Período: el dropdown de Depto. usa `DEPARTAMENTOS`. Antes salía de `/opciones` (valores crudos de la base); `/opciones` se sigue usando solo para los períodos.
 - **Estados vacíos/cargando**: con filtros activos, o después de la primera carga, la tabla queda visible para no perder la fila de filtros. "Sin resultados" se muestra dentro de la tabla. Aplica a `app-list-state` (Todas) y a los `@if (loading())` de Pendientes y Fichas.
 - Los dropdowns de departamento de los **formularios** (alta/aprobación) no cambian.
+
+- Los dropdowns de Depto. de las grillas de agrupaciones (Todas, Pendientes, Por Período) son `[...DEPARTAMENTOS, 'Nacional']`. El dato guarda letras de serie (`C`, `X`); el backend las mapea.

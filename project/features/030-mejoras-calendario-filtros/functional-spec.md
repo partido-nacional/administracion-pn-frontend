@@ -76,6 +76,7 @@ Mejoras reportadas por los usuarios:
 
 - BR-1: Lista canónica de departamentos: los 19 de Uruguay en Title Case con tildes (`core/departamentos.ts`). Ninguna grilla arma su propia lista.
 - BR-2: Comparación de departamento = `norm(trim(valor guardado)) == norm(trim(elegido))`. `norm` baja a minúsculas y quita tildes, y preserva la ñ.
+- BR-2b: En agrupaciones, `Depto` puede ser la letra de serie de la credencial (`C`, `A`/`B`, …, `X` = Nacional): el filtro acepta nombre o letra. Las grillas de agrupaciones ofrecen además 'Nacional'. *(Agregado en la validación pre-release.)*
 - BR-3: En los listados de organismos con fallback (Com. Departamentales, Intendencias, Alcaldes) se mantiene la regla vigente: el departamento del organismo, o el del contacto si el del organismo está vacío.
 - BR-4: Semana = lunes 00:00 a domingo 23:59 (hora Uruguay) de la semana que contiene la fecha de hoy.
 - BR-5: Un evento entra en el período si su **fecha de inicio** cae dentro del período (igual que la vista mensual de hoy).
