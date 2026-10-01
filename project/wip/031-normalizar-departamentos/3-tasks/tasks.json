@@ -5,7 +5,7 @@
   },
   "stats": {
     "total": 7,
-    "done": 4,
+    "done": 7,
     "by_layer": {
       "1": 4,
       "2": 3
@@ -114,7 +114,7 @@
         "technical-spec"
       ],
       "id": "TASK-005",
-      "status": "pending"
+      "status": "done"
     },
     {
       "title": "Performance review",
@@ -136,7 +136,7 @@
         "technical-spec"
       ],
       "id": "TASK-006",
-      "status": "pending"
+      "status": "done"
     },
     {
       "title": "Security review",
@@ -158,7 +158,7 @@
         "technical-spec"
       ],
       "id": "TASK-007",
-      "status": "pending"
+      "status": "done"
     }
   ],
   "dependency_graph": {
