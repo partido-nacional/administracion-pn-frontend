@@ -99,3 +99,66 @@ describe('DashboardComponent — editar evento', () => {
     expect(cmp.modalError()).toBe('El título es obligatorio.');
   });
 });
+
+/** Botón Imprimir del calendario (feature 030). */
+describe('DashboardComponent — imprimir calendario', () => {
+  let cmp: DashboardComponent;
+  let http: HttpTestingController;
+  let ventana: { document: any; onload: any; focus: jasmine.Spy; print: jasmine.Spy };
+  let html = '';
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      imports: [DashboardComponent],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+    });
+    cmp = TestBed.createComponent(DashboardComponent).componentInstance;
+    http = TestBed.inject(HttpTestingController);
+    http.expectOne(r => r.url.includes('/dashboard/resumen')).flush({});
+    http.expectOne(r => r.url.includes('/calendario/eventos')).flush([]);
+    html = '';
+    ventana = {
+      document: { open: () => {}, write: (h: string) => (html = h), close: () => {} },
+      onload: null, focus: jasmine.createSpy('focus'), print: jasmine.createSpy('print'),
+    };
+  });
+
+  afterEach(() => http.verify());
+
+  it('Mes usa los eventos ya cargados del mes visible, sin pedir nada al backend (AC-2)', () => {
+    spyOn(window, 'open').and.returnValue(ventana as any);
+    cmp.anio.set(2026); cmp.mes.set(9);
+    cmp.eventos.set([{ id: 1, titulo: 'Acto', fechaInicio: '2026-10-12T18:00:00Z', esPublico: true } as any]);
+
+    cmp.imprimir('mes');
+
+    expect(window.open).toHaveBeenCalled();
+    expect(html).toContain('Calendario — Octubre 2026');
+    expect(html).toContain('Acto');
+  });
+
+  it('Semana pide desde/hasta como hora de pared con Z y respeta Solo privados (AC-3, AC-6)', () => {
+    spyOn(window, 'open').and.returnValue(ventana as any);
+    jasmine.clock().install();
+    jasmine.clock().mockDate(new Date(2026, 8, 30, 10, 0)); // miércoles 30/09/2026
+    cmp.soloPrivados.set(true);
+
+    cmp.imprimir('semana');
+    const req = http.expectOne(r => r.url.includes('/calendario/eventos'));
+    jasmine.clock().uninstall();
+
+    expect(req.request.url).toContain('desde=2026-09-28T00:00:00Z');
+    expect(req.request.url).toContain('hasta=2026-10-05T00:00:00Z');
+    expect(req.request.url).toContain('soloPrivados=true');
+    req.flush([]);
+    expect(html).toContain('Semana del 28 de septiembre al 4 de octubre de 2026');
+    expect(html).toContain('Solo eventos privados');
+  });
+
+  it('avisa si el navegador bloquea la ventana (AC-8)', () => {
+    spyOn(window, 'open').and.returnValue(null);
+    const err = spyOn(cmp['toast'], 'error');
+    cmp.imprimir('mes');
+    expect(err).toHaveBeenCalled();
+  });
+});

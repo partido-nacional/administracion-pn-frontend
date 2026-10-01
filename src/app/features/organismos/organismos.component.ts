@@ -19,6 +19,8 @@ type Tab = 'todos' | 'info';
 type ModalKind = 'organismo' | 'info';
 type ModalMode = 'nueva' | 'editar';
 
+import { DEPARTAMENTOS } from '../../core/departamentos';
+
 @Component({
   selector: 'app-organismos',
   standalone: true,
@@ -293,11 +295,8 @@ export class OrganismosComponent {
   tab = signal<Tab>('todos');
   tipos = signal<TipoOrganizacionDto[]>([]);
 
-  departamentos = [
-    'Artigas','Canelones','Cerro Largo','Colonia','Durazno','Flores','Florida',
-    'Lavalleja','Maldonado','Montevideo','Paysandú','Río Negro','Rivera','Rocha',
-    'Salto','San José','Soriano','Tacuarembó','Treinta y Tres','Nacional'
-  ];
+  // Lista canónica + 'Nacional' para organismos de alcance nacional (feature 030, EC-5).
+  departamentos = [...DEPARTAMENTOS, 'Nacional'];
 
   // Tamaño de página "grande" para la sublista inline (sin paginador propio).
   private static readonly INLINE_PAGE_SIZE = 100;

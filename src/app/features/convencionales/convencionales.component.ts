@@ -19,6 +19,8 @@ type Tab = 'todos' | 'nacionales' | 'departamentales' | 'odn';
 type ModalKind = 'lista'; // Convencionales es solo lectura (feature 019); el modal solo edita Listas ODN.
 type ModalMode = 'nueva' | 'editar';
 
+import { DEPARTAMENTOS, normDepto } from '../../core/departamentos';
+
 @Component({
   selector: 'app-convencionales',
   standalone: true,
@@ -48,6 +50,10 @@ type ModalMode = 'nueva' | 'editar';
             <span class="search-icon">🔍</span>
             <input class="search-input" placeholder="Buscar por organismo, posición, departamento…" [(ngModel)]="q">
           </div>
+          <select class="form-select conv-depto" [(ngModel)]="fDepto" title="Filtrar por departamento">
+            <option value="">Todos los departamentos</option>
+            @for (d of departamentos; track d) { <option [value]="d">{{ d }}</option> }
+          </select>
         </div>
       </div>
 
@@ -84,6 +90,10 @@ type ModalMode = 'nueva' | 'editar';
             <span class="search-icon">🔍</span>
             <input class="search-input" placeholder="Buscar por nombre, lista, departamento, cargo…" [(ngModel)]="q">
           </div>
+          <select class="form-select conv-depto" [(ngModel)]="fDepto" title="Filtrar por departamento">
+            <option value="">Todos los departamentos</option>
+            @for (d of departamentos; track d) { <option [value]="d">{{ d }}</option> }
+          </select>
         </div>
       </div>
 
@@ -118,6 +128,10 @@ type ModalMode = 'nueva' | 'editar';
             <span class="search-icon">🔍</span>
             <input class="search-input" placeholder="Buscar por nombre de lista…" [(ngModel)]="q">
           </div>
+          <select class="form-select conv-depto" [(ngModel)]="fDepto" title="Filtrar por departamento">
+            <option value="">Todos los departamentos</option>
+            @for (d of departamentos; track d) { <option [value]="d">{{ d }}</option> }
+          </select>
         </div>
         <button class="btn btn-primary" (click)="abrirNuevaLista()">+ Nueva Lista ODN</button>
       </div>
@@ -215,8 +229,18 @@ export class ConvencionalesComponent {
   }
   private refreshStats() { this.svc.getStats().subscribe(s => this.stats.set(s)); }
 
+  // Filtro de departamento client-side (feature 030): estos endpoints no paginan, así que se
+  // filtra en el navegador con la misma normalización que el backend (trim, sin tildes ni mayúsculas).
+  fDepto = '';
+  readonly departamentos = DEPARTAMENTOS;
+  private porDepto<T extends { departamento?: string | null }>(arr: T[]): T[] {
+    if (!this.fDepto) return arr;
+    const d = normDepto(this.fDepto);
+    return arr.filter(x => normDepto(x.departamento) === d);
+  }
+
   filtrarNacionales() {
-    const arr = this.nacionales();
+    const arr = this.porDepto(this.nacionales());
     if (!this.q) return arr;
     const q = this.q.toLowerCase();
     return arr.filter(c =>
@@ -227,7 +251,7 @@ export class ConvencionalesComponent {
   }
 
   filtrarDepartamentales() {
-    const arr = this.departamentales();
+    const arr = this.porDepto(this.departamentales());
     if (!this.q) return arr;
     const q = this.q.toLowerCase();
     return arr.filter(c =>
@@ -239,7 +263,7 @@ export class ConvencionalesComponent {
   }
 
   filtrarListas() {
-    const arr = this.odn();
+    const arr = this.porDepto(this.odn());
     if (!this.q) return arr;
     const q = this.q.toLowerCase();
     return arr.filter(l =>

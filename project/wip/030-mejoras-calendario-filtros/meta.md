@@ -10,7 +10,7 @@ project_type:
 vision_prompt_shown: true
 mirror: administracion-pn-backend → 033-mejoras-calendario-filtros
 
-Current Stage: tasks
+Current Stage: implementation
 
 stages:
   functional:
@@ -21,8 +21,10 @@ stages:
     status: approved
     approved_at: 2026-09-30
   tasks:
-    status: pending
+    status: approved
+    approved_at: 2026-09-30
+    execution_strategy: batched
   implementation:
-    status: pending
+    status: in-progress
     completed_tasks: 0
-    total_tasks: 0
+    total_tasks: 10

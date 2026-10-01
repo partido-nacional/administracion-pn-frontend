@@ -239,3 +239,7 @@ Helpers (`organismos.component.ts:16-17`): `norm(s)` (lowercase) y `m(val, q)` (
 - **Vista real, datos reales**: consume endpoints DB-backed (no stub). Funcional para listar y dar de baja (lógica).
 - **No tiene alta ni edición** de integrantes desde aquí (solo listar, ver detalle y eliminar lógicamente).
 - No hay manejo explícito de estados de error HTTP.
+
+## Actualización feature 030
+
+El filtro y el formulario de departamento usan `[...DEPARTAMENTOS, 'Nacional']` (lista canónica + organismos de alcance nacional) en lugar de una copia hardcodeada.

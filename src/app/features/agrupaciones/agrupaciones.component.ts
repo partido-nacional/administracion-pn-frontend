@@ -34,6 +34,8 @@ interface PadronItem { serie: string; nro: string; primerNombre: string; segundo
 
 type Tab = 'todas' | 'pendientes' | 'fichas' | 'periodo' | 'padron';
 
+import { DEPARTAMENTOS } from '../../core/departamentos';
+
 @Component({
   selector: 'app-agrupaciones',
   standalone: true,
@@ -155,6 +157,15 @@ type Tab = 'todas' | 'pendientes' | 'fichas' | 'periodo' | 'padron';
       <div class="card"><div class="card-body" style="padding:0;overflow-x:auto">
         <table class="table">
           <thead>
+            <tr class="filter-row">
+              <th></th>
+              <th><input class="column-filter" [ngModel]="fId()" (ngModelChange)="fId.set($event); onFiltroTodas()" placeholder="Id"></th>
+              <th><input class="column-filter" [ngModel]="fCod()" (ngModelChange)="fCod.set($event); onFiltroTodas()" placeholder="Filtrar..."></th>
+              <th></th><th></th><th></th><th></th>
+              <th><input class="column-filter" [ngModel]="fNombre()" (ngModelChange)="fNombre.set($event); onFiltroTodas()" placeholder="Filtrar..."></th>
+              <th><select class="column-filter" [ngModel]="fDepto()" (ngModelChange)="fDepto.set($event); onFiltroTodas()"><option value="">Todos</option>@for (d of deptosFiltro; track d) { <option [ngValue]="d">{{ d }}</option> }</select></th>
+              <th></th>
+            </tr>
             <tr>
               <th style="width:34px"></th>
               <th class="sortable" (click)="onSort('id')">Id <span class="ind">{{ indicador('id') }}</span></th>
@@ -264,7 +275,7 @@ type Tab = 'todas' | 'pendientes' | 'fichas' | 'periodo' | 'padron';
                 </tr>
               }
             } @empty {
-              <tr><td colspan="10"><div class="empty-state"><div class="empty-state-text">Sin agrupaciones</div></div></td></tr>
+              <tr><td colspan="10"><div class="empty-state"><div class="empty-state-text">{{ hayFiltrosTodas() ? 'Sin resultados para los filtros' : 'Sin agrupaciones' }}</div></div></td></tr>
             }
           </tbody>
         </table>
@@ -438,6 +449,13 @@ export class AgrupacionesComponent {
   order = signal<SortOrder>('asc');
   todasState = signal<ListState>('loading');
 
+  // Filtros de la grilla "Todas" (feature 030).
+  fId = signal(''); fCod = signal(''); fNombre = signal(''); fDepto = signal('');
+  readonly deptosFiltro = DEPARTAMENTOS;
+  private filtroTodas$ = new Subject<void>();
+  hayFiltrosTodas = computed(() => !!(this.fId() || this.fCod() || this.fNombre() || this.fDepto()));
+  onFiltroTodas() { this.filtroTodas$.next(); }
+
   onSort(field: string) {
     toggleSort(this.sort, this.order, field);
     this.page.set(1);
@@ -458,6 +476,7 @@ export class AgrupacionesComponent {
   constructor() {
     this.titleSvc.set('Agrupaciones');
     this.padFilter$.pipe(debounceTime(300)).subscribe(() => { this.padPage.set(1); this.loadPadron(); });
+    this.filtroTodas$.pipe(debounceTime(300)).subscribe(() => { this.page.set(1); this.loadTodas(); });
     this.loadTodas();
   }
 
@@ -609,13 +628,19 @@ export class AgrupacionesComponent {
   }
 
   loadTodas() {
-    this.todasState.set('loading');
-    const q: GridQuery = { page: this.page(), pageSize: this.pageSize(), sort: this.sort(), order: this.order() };
+    // Con la grilla ya visible no se pasa a 'loading' ni a 'empty': app-list-state la
+    // ocultaría y con ella la fila de filtros (se perdería el foco al tipear, o no habría
+    // cómo borrar un filtro sin resultados). 'empty' queda solo para "no hay agrupaciones".
+    if (this.todasState() !== 'ready') this.todasState.set('loading');
+    const q: GridQuery = {
+      page: this.page(), pageSize: this.pageSize(), sort: this.sort(), order: this.order(),
+      filters: { id: this.fId(), cod: this.fCod(), nombre: this.fNombre(), depto: this.fDepto() },
+    };
     this.http.get<PagedResult<Agrupacion>>(`${environment.apiUrl}/agrupaciones`, { params: buildPagedParams(q) })
       .subscribe({
         next: r => {
           this.agrupaciones.set(r.items); this.total.set(r.total);
-          this.todasState.set(r.total === 0 ? 'empty' : 'ready');
+          this.todasState.set(r.total === 0 && !this.hayFiltrosTodas() ? 'empty' : 'ready');
         },
         error: () => this.todasState.set('error'),
       });

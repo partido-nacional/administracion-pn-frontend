@@ -12,13 +12,13 @@ Angular 17 standalone. Sin librerías nuevas.
 ### 1. Imprimir calendario
 - Nuevo helper `features/dashboard/imprimir-calendario.ts`, con el mismo patrón que `agrupaciones/imprimir-agrupacion.ts`: arma un HTML autónomo con `<style>` y `@media print`, lo abre con `window.open('', '_blank')` → `document.write` → `onload` → `print()`. Si la ventana emergente está bloqueada, avisa (AC-8).
 - Funciones puras y testeables:
-  - `rangoSemana(hoy): {desde, hasta}`: de lunes 00:00 local al lunes siguiente 00:00 (BR-4).
+  - `rangoSemana(hoy): {desde, hasta}`: fechas ISO del lunes de la semana de hoy y del lunes siguiente (BR-4).
   - `agruparPorDia(eventos, rango, incluirVacios)`.
   - `htmlCalendario(...)`.
   - Todo texto de usuario se escapa en el HTML.
 - `dashboard.component.ts`: botón "🖨 Imprimir" en la barra del calendario, con un menú chico de **Mes** / **Semana**.
   - **Mes**: reusa los eventos del mes visible que ya están cargados.
-  - **Semana**: `GET /calendario/eventos?desde=&hasta=&soloPrivados=` con ISO + offset local.
+  - **Semana**: `GET /calendario/eventos?desde=&hasta=&soloPrivados=` con los límites como hora de pared + `Z` (`YYYY-MM-DDT00:00:00Z`). Así se respeta cómo se guardan los eventos (hora de pared marcada UTC) y la misma convención que el filtro mensual. *Corregido durante el build: originalmente decía offset local.*
 - Columnas (AC-4): Hora · Hasta (`HH:mm`, o `dd/MM HH:mm` si termina otro día — EC-2) · Título (con 🔒 si es privado) · Tipo · Creador · Descripción.
 
 ### 2. Departamentos (`DEPARTAMENTOS` de `core/departamentos.ts` en todas partes)
