@@ -210,7 +210,21 @@
         "technical-spec"
       ],
       "id": "TASK-008",
-      "status": "done"
+      "status": "done",
+      "findings": [
+        {
+          "issue": "Menú Imprimir ilegible en modo oscuro (--white no existe como variable)",
+          "resolution": "Regla html.dark .cal-print-menu en styles.css (la encapsulación no matchea html.dark)"
+        },
+        {
+          "issue": "Menú Imprimir no se cerraba con click afuera",
+          "resolution": "@HostListener('document:click') + stopPropagation en el wrapper; test 'se cierra con un click fuera del menú'"
+        },
+        {
+          "issue": "Test flaky: afterEach usaba http sin inicializar cuando el test de normDepto corría primero",
+          "resolution": "Reset de http en beforeEach y guard en afterEach; 5 corridas estables"
+        }
+      ]
     },
     {
       "title": "Performance review",
