@@ -10,7 +10,8 @@ project_type:
 vision_prompt_shown: true
 mirror: administracion-pn-backend → 033-mejoras-calendario-filtros
 
-Current Stage: implementation
+Current Stage: completed
+archived_at: 2026-09-30
 
 stages:
   functional:
