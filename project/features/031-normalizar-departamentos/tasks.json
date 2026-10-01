@@ -1,0 +1,185 @@
+{
+  "feature": "normalizar-departamentos",
+  "local_config": {
+    "database": "container"
+  },
+  "stats": {
+    "total": 7,
+    "done": 7,
+    "by_layer": {
+      "1": 4,
+      "2": 3
+    }
+  },
+  "execution_strategy": "batched",
+  "tasks": [
+    {
+      "title": "canonDepto + DEPARTAMENTOS_CON_NACIONAL",
+      "description": "Helpers en core/departamentos.ts.",
+      "layer": 1,
+      "depends_on": [],
+      "files": [
+        "src/app/core/departamentos.ts"
+      ],
+      "acceptance_criteria": [
+        "BR-1",
+        "GATE: ng test"
+      ],
+      "references": [
+        "US-2",
+        "US-3"
+      ],
+      "id": "TASK-001",
+      "status": "done"
+    },
+    {
+      "title": "Formularios con lista canónica (DEBT-015)",
+      "description": "agenda-nuevo (+credencialMap y canon al editar), agrupaciones, pendientes, ficha-adhesion.constants; valor no reconocido como opción extra.",
+      "layer": 1,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "files": [
+        "src/app/features/agenda/agenda-nuevo.component.ts",
+        "src/app/features/agrupaciones/agrupaciones.component.ts",
+        "src/app/features/agrupaciones/agrupaciones-pendientes.component.ts",
+        "src/app/shared/adhesiones/ficha-adhesion.constants.ts"
+      ],
+      "acceptance_criteria": [
+        "AC-6",
+        "AC-7",
+        "GATE: ng test + ng build"
+      ],
+      "references": [
+        "US-2"
+      ],
+      "id": "TASK-002",
+      "status": "done"
+    },
+    {
+      "title": "nueva-ficha precarga departamento (DEBT-016)",
+      "description": "canonDepto en lugar de includes exacto.",
+      "layer": 1,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "files": [
+        "src/app/features/adhesiones/nueva-ficha.component.ts"
+      ],
+      "acceptance_criteria": [
+        "AC-8",
+        "AC-9",
+        "GATE: ng test"
+      ],
+      "references": [
+        "US-3"
+      ],
+      "id": "TASK-003",
+      "status": "done"
+    },
+    {
+      "title": "Reescribir spec viva de listados (DEBT-024)",
+      "description": "listados.md del front contra los componentes actuales.",
+      "layer": 1,
+      "depends_on": [],
+      "files": [
+        "project/specs/features/listados.md"
+      ],
+      "acceptance_criteria": [
+        "AC-10"
+      ],
+      "references": [
+        "US-4"
+      ],
+      "id": "TASK-004",
+      "status": "done"
+    },
+    {
+      "title": "Code review",
+      "description": "Code review de los cambios de la feature.",
+      "layer": 2,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002",
+        "TASK-003",
+        "TASK-004"
+      ],
+      "files": [
+        "src/app"
+      ],
+      "acceptance_criteria": [
+        "GATE: sin código muerto ni listas de departamentos duplicadas"
+      ],
+      "references": [
+        "technical-spec"
+      ],
+      "id": "TASK-005",
+      "status": "done"
+    },
+    {
+      "title": "Performance review",
+      "description": "Performance review de los cambios de la feature.",
+      "layer": 2,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002",
+        "TASK-003",
+        "TASK-004"
+      ],
+      "files": [
+        "src/app"
+      ],
+      "acceptance_criteria": [
+        "GATE: migración sobre tablas chicas; override SaveChanges solo recorre entradas modificadas"
+      ],
+      "references": [
+        "technical-spec"
+      ],
+      "id": "TASK-006",
+      "status": "done"
+    },
+    {
+      "title": "Security review",
+      "description": "Security review de los cambios de la feature.",
+      "layer": 2,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002",
+        "TASK-003",
+        "TASK-004"
+      ],
+      "files": [
+        "src/app"
+      ],
+      "acceptance_criteria": [
+        "GATE: SQL de migración sin input externo; backup Neon como requisito de release"
+      ],
+      "references": [
+        "technical-spec"
+      ],
+      "id": "TASK-007",
+      "status": "done"
+    }
+  ],
+  "dependency_graph": {
+    "by_layer": {
+      "1": {
+        "level_0": [
+          "TASK-001",
+          "TASK-004"
+        ],
+        "level_1": [
+          "TASK-002",
+          "TASK-003"
+        ]
+      },
+      "2": {
+        "level_0": [
+          "TASK-005",
+          "TASK-006",
+          "TASK-007"
+        ]
+      }
+    }
+  }
+}
