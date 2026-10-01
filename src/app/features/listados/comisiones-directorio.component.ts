@@ -4,63 +4,52 @@ import { FormsModule } from '@angular/forms';
 import { Subject, debounceTime } from 'rxjs';
 import { PageTitleService } from '../../core/page-title.service';
 import { PaginatorComponent } from '../../shared/components/paginator/paginator.component';
-import { ListadosService, Alcalde } from '../../core/services/listados.service';
+import { ListadosService, ComisionDirEntry } from '../../core/services/listados.service';
 import { GridQuery, SortOrder, DEFAULT_PAGE_SIZE } from '../../core/models/paged';
 import { exportarCSV } from '../../core/exportar-csv';
-import { DEPARTAMENTOS } from '../../core/departamentos';
 
+/**
+ * Listado de integrantes activos de las comisiones del Directorio (feature 032 backend /
+ * 029 frontend). El backend identifica las comisiones por compañía + nombre.
+ */
 @Component({
-  selector: 'app-listados-alcaldes',
+  selector: 'app-listados-comisiones-directorio',
   standalone: true,
   imports: [CommonModule, FormsModule, PaginatorComponent],
   template: `
     <div class="card">
       <div class="card-body" style="padding:0; overflow-x:auto">
-        <table class="table" style="min-width:1300px">
+        <table class="table">
           <thead>
             <tr class="filter-row">
-              <th></th>
+              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fComision" (ngModelChange)="onFilter()"></th>
               <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fApellidos" (ngModelChange)="onFilter()"></th>
               <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fNombres" (ngModelChange)="onFilter()"></th>
               <th></th>
               <th></th>
-              <th></th>
               <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fPos" (ngModelChange)="onFilter()"></th>
-              <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fOrg" (ngModelChange)="onFilter()"></th>
-              <th>
-                <select class="column-filter" [(ngModel)]="fDepto" (ngModelChange)="onFilter()">
-                  <option value="">Todos</option>
-                  @for (d of departamentos; track d) { <option [value]="d">{{ d }}</option> }
-                </select>
-              </th>
             </tr>
             <tr>
-              <th style="width:60px">Cortesia</th>
-              <th style="min-width:110px" class="sortable" (click)="sortBy('apellidos')">Apellidos {{ arrow('apellidos') }}</th>
-              <th style="min-width:90px" class="sortable" (click)="sortBy('nombres')">Nombres {{ arrow('nombres') }}</th>
-              <th style="min-width:95px">Tel. Trabajo</th>
-              <th style="min-width:95px">Celular</th>
-              <th style="min-width:150px">Mail</th>
-              <th style="min-width:130px">Posicion Organismo</th>
-              <th style="min-width:140px">Nombre Organismo</th>
-              <th style="min-width:100px">Departamento</th>
+              <th style="min-width:200px" class="sortable" (click)="sortBy('comision')">Comisión {{ arrow('comision') }}</th>
+              <th style="min-width:130px" class="sortable" (click)="sortBy('apellidos')">Apellidos {{ arrow('apellidos') }}</th>
+              <th style="min-width:110px" class="sortable" (click)="sortBy('nombres')">Nombres {{ arrow('nombres') }}</th>
+              <th style="min-width:110px">Celular</th>
+              <th style="min-width:180px">Mail</th>
+              <th style="min-width:150px">Posicion Organismo</th>
             </tr>
           </thead>
           <tbody>
-            @for (a of items(); track $index) {
+            @for (d of items(); track $index) {
               <tr>
-                <td>{{ a.cortesia }}</td>
-                <td><strong>{{ a.apellidos }}</strong></td>
-                <td><strong>{{ a.nombres }}</strong></td>
-                <td>{{ a.telTrabajo }}</td>
-                <td>{{ a.celular }}</td>
-                <td>{{ a.mail }}</td>
-                <td>{{ a.posOrganismo }}</td>
-                <td>{{ a.nombreOrganismo }}</td>
-                <td><span class="badge dept">{{ a.departamento }}</span></td>
+                <td>{{ d.comision }}</td>
+                <td><strong>{{ d.apellidos }}</strong></td>
+                <td><strong>{{ d.nombres }}</strong></td>
+                <td>{{ d.celular }}</td>
+                <td>{{ d.mail }}</td>
+                <td>{{ d.posOrganismo }}</td>
               </tr>
             } @empty {
-              <tr><td colspan="9" style="text-align:center; padding:24px; color:var(--gray-500)">
+              <tr><td colspan="6" style="text-align:center; padding:24px; color:var(--gray-500)">
                 {{ loading() ? 'Cargando…' : 'Sin resultados' }}
               </td></tr>
             }
@@ -79,11 +68,11 @@ import { DEPARTAMENTOS } from '../../core/departamentos';
   `,
   styles: [`.sortable { cursor: pointer; user-select: none; }`]
 })
-export class AlcaldesComponent implements OnInit {
+export class ComisionesDirectorioComponent implements OnInit {
   private svc = inject(ListadosService);
   private titleSvc = inject(PageTitleService);
 
-  items = signal<Alcalde[]>([]);
+  items = signal<ComisionDirEntry[]>([]);
   total = signal(0);
   page = signal(1);
   pageSize = signal(DEFAULT_PAGE_SIZE);
@@ -92,14 +81,12 @@ export class AlcaldesComponent implements OnInit {
   loading = signal(false);
   exporting = signal(false);
 
-  fApellidos = ''; fNombres = ''; fPos = ''; fOrg = ''; fDepto = '';
-
-  readonly departamentos = DEPARTAMENTOS;
+  fComision = ''; fApellidos = ''; fNombres = ''; fPos = '';
 
   private filter$ = new Subject<void>();
 
   constructor() {
-    this.titleSvc.set('Listados — Alcaldes');
+    this.titleSvc.set('Listados — Comisiones Directorio');
     this.filter$.pipe(debounceTime(300)).subscribe(() => { this.page.set(1); this.load(); });
   }
 
@@ -109,15 +96,15 @@ export class AlcaldesComponent implements OnInit {
     return {
       page: this.page(), pageSize: this.pageSize(), sort: this.sort(), order: this.order(), all,
       filters: {
-        apellidos: this.fApellidos, nombres: this.fNombres, pos: this.fPos,
-        org: this.fOrg, depto: this.fDepto,
+        comision: this.fComision, apellidos: this.fApellidos, nombres: this.fNombres,
+        pos: this.fPos,
       },
     };
   }
 
   private load() {
     this.loading.set(true);
-    this.svc.alcaldes(this.query()).subscribe({
+    this.svc.comisionesDirectorio(this.query()).subscribe({
       next: r => { this.items.set(r.items); this.total.set(r.total); this.loading.set(false); },
       error: () => this.loading.set(false),
     });
@@ -137,15 +124,14 @@ export class AlcaldesComponent implements OnInit {
 
   exportar() {
     this.exporting.set(true);
-    this.svc.alcaldes(this.query(true)).subscribe({
+    this.svc.comisionesDirectorio(this.query(true)).subscribe({
       next: r => {
         exportarCSV(r.items, [
-          { get: 'cortesia', label: 'Cortesia' }, { get: 'apellidos', label: 'Apellidos' },
-          { get: 'nombres', label: 'Nombres' }, { get: 'telTrabajo', label: 'Tel. Trabajo' },
+          { get: 'comision', label: 'Comisión' },
+          { get: 'apellidos', label: 'Apellidos' }, { get: 'nombres', label: 'Nombres' },
           { get: 'celular', label: 'Celular' }, { get: 'mail', label: 'Mail' },
-          { get: 'posOrganismo', label: 'Posicion Organismo' }, { get: 'nombreOrganismo', label: 'Nombre Organismo' },
-          { get: 'departamento', label: 'Departamento' },
-        ], 'alcaldes.csv');
+          { get: 'posOrganismo', label: 'Posicion Organismo' },
+        ], 'comisiones-directorio.csv');
         this.exporting.set(false);
       },
       error: () => this.exporting.set(false),

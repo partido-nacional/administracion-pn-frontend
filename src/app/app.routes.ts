@@ -33,6 +33,7 @@ export const routes: Routes = [
       { path: 'listados/jovenes', canActivate: [rolesGuard('Secretaria','Hacienda','IT')], loadComponent: () => import('./features/listados/jovenes.component').then(m => m.JovenesComponent) },
       { path: 'listados/convencionales', canActivate: [rolesGuard('Secretaria','Hacienda','IT')], loadComponent: () => import('./features/convencionales/convencionales.component').then(m => m.ConvencionalesComponent) },
       { path: 'listados/directorio', canActivate: [rolesGuard('Secretaria','Hacienda','IT')], loadComponent: () => import('./features/listados/directorio.component').then(m => m.DirectorioComponent) },
+      { path: 'listados/comisiones-directorio', canActivate: [rolesGuard('Secretaria','Hacienda','IT')], loadComponent: () => import('./features/listados/comisiones-directorio.component').then(m => m.ComisionesDirectorioComponent) },
       { path: 'debitos', canActivate: [rolesGuard('Hacienda','IT')], loadComponent: () => import('./features/debitos/debitos.component').then(m => m.DebitosComponent) },
       { path: 'organismos', canActivate: [rolesGuard('Secretaria','Hacienda','IT')], loadComponent: () => import('./features/organismos/organismos.component').then(m => m.OrganismosComponent) },
       { path: 'organismos/:organismoId/referencias', canActivate: [rolesGuard('Secretaria','Hacienda','IT')], loadComponent: () => import('./features/organismos/referencias-organismo.component').then(m => m.ReferenciasOrganismoComponent) },
