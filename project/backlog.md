@@ -282,3 +282,27 @@
 - **Affected Files**: src/app/shared/components/modal-form/modal-form.component.ts (nuevo), src/styles.css, src/app/features/{agrupaciones,convencionales,organismos}/*.component.ts
 - **Complexity**: M
 - **Follow-up (opcional)**: otros 5 modales usan su propio `.modal-backdrop` con clases distintas (`agenda-listado`, `agenda-nuevo`, `agrupaciones-pendientes`, `fichas-agrupacion`, `dashboard`); podrían adoptar `<app-modal-form>` en el futuro (fuera de alcance de este ítem).
+
+### DEBT-015: Formularios guardan departamentos sin tilde / con listas duplicadas
+- **Priority**: Medium
+- **Status**: pending
+- **Created**: 2026-09-30
+- **Origin**: feature 030 (mejoras-calendario-filtros), fuera de alcance
+- **Context**: `agenda-nuevo.component.ts` (~:255) tiene una lista propia **sin tildes** (`Paysandu`, `Rio Negro`,
+  `San Jose`, `Tacuarembo`): los contactos nuevos se guardan así. `agrupaciones.component.ts`,
+  `agrupaciones-pendientes.component.ts` (const local) y `shared/adhesiones/ficha-adhesion.constants.ts` tienen
+  copias propias de los 19 + 'Nacional'. Los filtros ya toleran la diferencia (norm/trim), pero se ensucia el dato.
+- **Fix propuesto**: todos los formularios usan `DEPARTAMENTOS` (+ 'Nacional' donde aplique) de `core/departamentos.ts`.
+  Coordinar con backend DEBT-023 (normalizar datos existentes).
+- **Complexity**: S
+
+### DEBT-016: `nueva-ficha` pierde el departamento de contactos migrados
+- **Priority**: Medium
+- **Status**: pending
+- **Created**: 2026-09-30
+- **Origin**: auditoría de la feature 030
+- **Context**: `features/adhesiones/nueva-ficha.component.ts:63` hace `DEPARTAMENTOS.includes(c.departamento)`, exacto y
+  case-sensitive contra la lista Title Case. Los contactos guardados como `PAYSANDÚ`/`MONTEVIDEO` nunca matchean →
+  `departamentoAgrupacion` queda vacío al pasar a ficha de adhesión.
+- **Fix propuesto**: buscar con `normDepto` y precargar el valor canónico: `DEPARTAMENTOS.find(d => normDepto(d) === normDepto(c.departamento))`.
+- **Complexity**: S

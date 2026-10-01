@@ -72,6 +72,8 @@ interface AgrupacionPeriodoRow {
   integrantes: IntegranteRow[];
 }
 
+import { DEPARTAMENTOS } from '../../core/departamentos';
+
 @Component({
   selector: 'app-agrupaciones-por-periodo',
   standalone: true,
@@ -85,7 +87,7 @@ interface AgrupacionPeriodoRow {
         <thead>
           <tr class="filter-row">
             <th></th>
-            <th></th>
+            <th><input class="column-filter" [ngModel]="fId()" (ngModelChange)="fId.set($event); onFilter()" placeholder="Id"></th>
             <th>
               <select class="column-filter" [ngModel]="fPeriodo()" (ngModelChange)="fPeriodo.set($event); onFilter()">
                 <option value="">Todos</option>
@@ -99,7 +101,7 @@ interface AgrupacionPeriodoRow {
                 <option value="no">Aprobada</option>
               </select>
             </th>
-            <th></th>
+            <th><input class="column-filter" [ngModel]="fAgrId()" (ngModelChange)="fAgrId.set($event); onFilter()" placeholder="Id"></th>
             <th><input class="column-filter" [ngModel]="fCod()"    (ngModelChange)="fCod.set($event); onFilter()"    placeholder="Filtrar..."></th>
             <th></th>
             <th>
@@ -115,7 +117,7 @@ interface AgrupacionPeriodoRow {
             <th>
               <select class="column-filter" [ngModel]="fDepto()" (ngModelChange)="fDepto.set($event); onFilter()">
                 <option value="">Todos</option>
-                @for (d of deptos(); track d) { <option [ngValue]="d">{{ d }}</option> }
+                @for (d of deptos; track d) { <option [ngValue]="d">{{ d }}</option> }
               </select>
             </th>
             <th></th>
@@ -605,13 +607,16 @@ export class AgrupacionesPorPeriodoComponent {
   onPageSize(size: number) { this.pageSize.set(size); this.page.set(1); this.load(); }
   onFilter() { this.filter$.next(); }
 
+  fId = signal(''); fAgrId = signal('');
   fPeriodo = signal(''); fPend = signal('');
   fCod = signal('');
   fTipo = signal(''); fNombre = signal(''); fDepto = signal('');
   fSublema = signal('');
 
   periodos = signal<string[]>([]);
-  deptos = signal<string[]>([]);
+  // Lista canónica + 'Nacional' (feature 030). Antes salía de la base: eran sobre todo letras de
+  // serie de credencial ("C"); el backend ahora mapea nombre ↔ letra al filtrar.
+  readonly deptos = [...DEPARTAMENTOS, 'Nacional'];
 
   // ── Editar período (sublemas) ──────────────────────────────
   modalEditar = signal<AgrupacionPeriodoRow | null>(null);
@@ -716,6 +721,7 @@ export class AgrupacionesPorPeriodoComponent {
     return {
       page: this.page(), pageSize: this.pageSize(), sort: this.sort(), order: this.order(),
       filters: {
+        id: this.fId(), agrId: this.fAgrId(),
         periodo: this.fPeriodo(), pend: this.fPend(),
         cod: this.fCod(),
         tipo: this.fTipo(), nombre: this.fNombre(), depto: this.fDepto(),
@@ -735,7 +741,7 @@ export class AgrupacionesPorPeriodoComponent {
   constructor() {
     this.filter$.pipe(debounceTime(300)).subscribe(() => { this.page.set(1); this.load(); });
     this.http.get<{ periodos: string[]; deptos: string[] }>(`${this.base}/opciones`)
-      .subscribe(o => { this.periodos.set(o.periodos ?? []); this.deptos.set(o.deptos ?? []); });
+      .subscribe(o => this.periodos.set(o.periodos ?? []));
     // Autocomplete de contacto para el alta de integrante (feature 023).
     this.buscarContacto$.pipe(debounceTime(250)).subscribe(q => {
       if (!q.trim()) { this.resultados.set([]); return; }

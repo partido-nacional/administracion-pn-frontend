@@ -7,6 +7,7 @@ import { PaginatorComponent } from '../../shared/components/paginator/paginator.
 import { ListadosService, Parlamentario } from '../../core/services/listados.service';
 import { GridQuery, SortOrder, DEFAULT_PAGE_SIZE } from '../../core/models/paged';
 import { exportarCSV } from '../../core/exportar-csv';
+import { DEPARTAMENTOS } from '../../core/departamentos';
 
 @Component({
   selector: 'app-listados-parlamentarias',
@@ -26,8 +27,7 @@ import { exportarCSV } from '../../core/exportar-csv';
               <th>
                 <select class="column-filter" [(ngModel)]="fDepartamento" (ngModelChange)="onFilter()">
                   <option value="">Todos</option>
-                  <option>Montevideo</option><option>Canelones</option><option>Maldonado</option>
-                  <option>Salto</option><option>Colonia</option><option>Paysandu</option>
+                  @for (d of departamentos; track d) { <option [value]="d">{{ d }}</option> }
                 </select>
               </th>
               <th></th>
@@ -109,6 +109,8 @@ import { exportarCSV } from '../../core/exportar-csv';
 export class ParlamentariasComponent implements OnInit {
   private svc = inject(ListadosService);
   private titleSvc = inject(PageTitleService);
+
+  readonly departamentos = DEPARTAMENTOS;
 
   items = signal<Parlamentario[]>([]);
   total = signal(0);

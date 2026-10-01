@@ -25,7 +25,7 @@ export interface IntPN {
 }
 
 export interface Joven {
-  apellidos: string; nombres: string; celular: string; mail: string; posOrganismo: string;
+  apellidos: string; nombres: string; celular: string; mail: string; posOrganismo: string; departamento: string;
 }
 
 export interface Gobierno {

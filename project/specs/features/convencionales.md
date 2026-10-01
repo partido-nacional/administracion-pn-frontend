@@ -146,3 +146,9 @@ type Tab = 'nacionales' | 'departamentales' | 'odn' | 'odd' | 'integrantes'; // 
 - **Acciones de navegación inertes**: "Detalle" (`:62`), "Ver Integrantes" (`:116`) y el contacto `{{ c.contacto }}` (`:60, 92, 159`) son enlaces sin `routerLink`/handler.
 - **Tab "departamentales" no usa `filtrar()`**: la tabla itera `departamentales()` directo (`:84`) y el search-box ni siquiera se renderiza en ese tab.
 - Sin alta/edición/baja, sin paginación, sin manejo de errores HTTP.
+
+## Actualización feature 030
+
+Dropdown de departamento junto al buscador en las 3 pestañas (Todos/Nacionales, Departamentales, Listas ODN).
+- Filtra **en el cliente**, porque esos endpoints no paginan: `normDepto(x.departamento) === normDepto(elegido)`.
+- Se combina con la búsqueda de texto existente.

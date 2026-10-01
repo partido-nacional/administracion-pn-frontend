@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, HostListener, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -8,6 +8,7 @@ import { PageTitleService } from '../../core/page-title.service';
 import { AuthService } from '../../core/auth.service';
 import { ToastService } from '../../core/services/toast.service';
 import { skipErrorToast } from '../../core/http/skip-error-toast';
+import { rangoSemana, agruparPorDia, htmlCalendario, imprimirCalendario, tituloPeriodo } from './imprimir-calendario';
 
 interface Resumen {
   contactos: number;
@@ -75,6 +76,16 @@ const DIAS_SEM = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
           <span class="cal-month">{{ tituloMes() }}</span>
           <button class="btn btn-sm btn-secondary" (click)="nextMes()">›</button>
           <button class="btn btn-sm btn-secondary" (click)="hoy()" style="margin-left:8px">Hoy</button>
+          <div class="cal-print" (click)="$event.stopPropagation()">
+            <button class="btn btn-sm btn-secondary" (click)="menuImprimir.set(!menuImprimir())"
+                    [disabled]="imprimiendo()" title="Imprimir calendario">🖨 Imprimir</button>
+            @if (menuImprimir()) {
+              <div class="cal-print-menu">
+                <button (click)="imprimir('mes')">Mes ({{ tituloMes() }})</button>
+                <button (click)="imprimir('semana')">Semana actual</button>
+              </div>
+            }
+          </div>
         </div>
       </div>
       <div class="card-body" style="padding:0">
@@ -190,6 +201,17 @@ const DIAS_SEM = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
     @media (prefers-reduced-motion:reduce) { a.stat-card { transition:none; } a.stat-card:hover { transform:none; } }
     .cal-header { display:flex; justify-content:space-between; align-items:center; }
     .cal-nav { display:flex; align-items:center; gap:6px; }
+    .cal-print { position:relative; margin-left:8px; }
+    .cal-print-menu {
+      position:absolute; right:0; top:calc(100% + 4px); z-index:20; min-width:170px;
+      background:#fff; border:1px solid var(--gray-200, #e2e8f0); border-radius:6px;
+      box-shadow:0 6px 18px rgba(0,0,0,.12); display:flex; flex-direction:column; overflow:hidden;
+    }
+    .cal-print-menu button {
+      background:none; border:none; text-align:left; padding:8px 12px; cursor:pointer;
+      font:inherit; font-size:13px; color:inherit;
+    }
+    .cal-print-menu button:hover { background:var(--gray-50, #f7fafc); }
     .cal-month { font-weight:600; min-width:160px; text-align:center; text-transform:capitalize; }
     .cal-grid {
       display:grid; grid-template-columns:repeat(7, 1fr);
@@ -364,6 +386,47 @@ export class DashboardComponent {
   cargarEventos() {
     const params = `?anio=${this.anio()}&mes=${this.mes() + 1}&soloPrivados=${this.soloPrivados()}`;
     this.http.get<Evento[]>(`${environment.apiUrl}/calendario/eventos${params}`).subscribe(x => this.eventos.set(x));
+  }
+
+  menuImprimir = signal(false);
+  imprimiendo = signal(false);
+
+  /** Cierra el menú de impresión al hacer click fuera de él (el wrapper corta la propagación). */
+  @HostListener('document:click')
+  cerrarMenuImprimir() { this.menuImprimir.set(false); }
+
+  /**
+   * Imprime el calendario como listado por día (feature 030). Mes = el mes visible, con los
+   * eventos ya cargados; Semana = lunes a domingo de hoy, pedida aparte porque puede cruzar
+   * de mes. Ambos respetan el filtro Todos / Solo privados.
+   */
+  imprimir(modo: 'mes' | 'semana') {
+    this.menuImprimir.set(false);
+    const filtro = this.soloPrivados() ? 'Solo eventos privados' : 'Todos los eventos';
+    const emitir = (eventos: Evento[], desde: string, hasta: string) => {
+      const html = htmlCalendario({
+        periodo: tituloPeriodo(modo, desde, hasta), filtro,
+        dias: agruparPorDia(eventos, desde, hasta, modo === 'semana'),
+      });
+      if (!imprimirCalendario(html))
+        this.toast.error('El navegador bloqueó la ventana de impresión. Permitila para este sitio y volvé a intentar.');
+    };
+
+    if (modo === 'mes') {
+      const desde = this.toIso(new Date(this.anio(), this.mes(), 1));
+      const hasta = this.toIso(new Date(this.anio(), this.mes() + 1, 1));
+      emitir(this.eventos(), desde, hasta);
+      return;
+    }
+
+    // Los eventos guardan la hora de pared marcada UTC: los bordes van como fecha + 'T00:00:00Z'.
+    const { desde, hasta } = rangoSemana(new Date());
+    const params = `?desde=${desde}T00:00:00Z&hasta=${hasta}T00:00:00Z&soloPrivados=${this.soloPrivados()}`;
+    this.imprimiendo.set(true);
+    this.http.get<Evento[]>(`${environment.apiUrl}/calendario/eventos${params}`, { context: skipErrorToast() }).subscribe({
+      next: evs => { this.imprimiendo.set(false); emitir(evs, desde, hasta); },
+      error: () => { this.imprimiendo.set(false); this.toast.error('No se pudieron cargar los eventos de la semana.'); },
+    });
   }
 
   setSoloPrivados(v: boolean) {

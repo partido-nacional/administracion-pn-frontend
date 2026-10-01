@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -31,19 +31,31 @@ const DEPARTAMENTOS = [
   'Salto', 'San José', 'Soriano', 'Tacuarembó', 'Treinta y Tres', 'Nacional'
 ];
 
+import { DEPARTAMENTOS as DEPTOS_CANONICOS } from '../../core/departamentos';
+import { Subject, debounceTime } from 'rxjs';
+
 @Component({
   selector: 'app-agrupaciones-pendientes',
   standalone: true,
   imports: [CommonModule, FormsModule, PaginatorComponent],
   template: `
-    @if (loading()) {
+    @if (loading() && !cargado()) {
       <div class="card"><div class="card-body"><div class="empty-state"><div class="empty-state-text">Cargando agrupaciones pendientes…</div></div></div></div>
-    } @else if (items().length === 0) {
+    } @else if (items().length === 0 && !hayFiltros()) {
       <div class="card"><div class="card-body"><div class="empty-state"><div class="empty-state-text">No hay agrupaciones pendientes. Promové una desde la pestaña Fichas de Agrupación Web.</div></div></div></div>
     } @else {
       <div class="card"><div class="card-body" style="padding:0; overflow-x:auto">
         <table class="table">
           <thead>
+            <tr class="filter-row">
+              <th></th>
+              <th><input class="column-filter" [ngModel]="fId()" (ngModelChange)="fId.set($event); onFilter()" placeholder="Id"></th>
+              <th><input class="column-filter" [ngModel]="fCod()" (ngModelChange)="fCod.set($event); onFilter()" placeholder="Filtrar..."></th>
+              <th></th><th></th>
+              <th><input class="column-filter" [ngModel]="fNombre()" (ngModelChange)="fNombre.set($event); onFilter()" placeholder="Filtrar..."></th>
+              <th><select class="column-filter" [ngModel]="fDepto()" (ngModelChange)="fDepto.set($event); onFilter()"><option value="">Todos</option>@for (d of deptosFiltro; track d) { <option [ngValue]="d">{{ d }}</option> }</select></th>
+              <th></th><th></th>
+            </tr>
             <tr>
               <th style="width:34px"></th>
               <th class="sortable" (click)="sortBy('id')">Id {{ arrow('id') }}</th>
@@ -149,6 +161,8 @@ const DEPARTAMENTOS = [
                   </td>
                 </tr>
               }
+            } @empty {
+              <tr><td colspan="9" style="text-align:center; padding:24px; color:var(--gray-500)">{{ loading() ? 'Cargando…' : 'Sin resultados' }}</td></tr>
             }
           </tbody>
         </table>
@@ -356,16 +370,32 @@ export class AgrupacionesPendientesComponent {
   form: any = {};
   deptos = DEPARTAMENTOS;
 
+  // Filtros de la grilla (feature 030). Lista canónica + 'Nacional' (Depto 'X'/'NACIONAL').
+  fId = signal(''); fCod = signal(''); fNombre = signal(''); fDepto = signal('');
+  readonly deptosFiltro = [...DEPTOS_CANONICOS, 'Nacional'];
+  private filter$ = new Subject<void>();
+  onFilter() { this.filter$.next(); }
+  hayFiltros = computed(() => !!(this.fId() || this.fCod() || this.fNombre() || this.fDepto()));
+  // El aviso de "cargando"/"vacío" reemplaza la tabla entera: con filtros activos (o tras la
+  // primera carga) se mantiene la tabla para no perder la fila de filtros (feature 030).
+  cargado = signal(false);
+
   req(): string { return this.modal() === 'aprobar' ? '*' : ''; }
 
-  constructor() { this.cargar(); }
+  constructor() {
+    this.filter$.pipe(debounceTime(300)).subscribe(() => { this.page.set(1); this.cargar(); });
+    this.cargar();
+  }
 
   cargar() {
     this.loading.set(true);
-    const q: GridQuery = { page: this.page(), pageSize: this.pageSize(), sort: this.sort(), order: this.order() };
+    const q: GridQuery = {
+      page: this.page(), pageSize: this.pageSize(), sort: this.sort(), order: this.order(),
+      filters: { id: this.fId(), cod: this.fCod(), nombre: this.fNombre(), depto: this.fDepto() },
+    };
     this.http.get<PagedResult<AgrupacionPendiente>>(this.base, { params: buildPagedParams(q) }).subscribe({
-      next: (r) => { this.items.set(r.items); this.total.set(r.total); this.loading.set(false); },
-      error: () => { this.items.set([]); this.loading.set(false); }
+      next: (r) => { this.items.set(r.items); this.total.set(r.total); this.loading.set(false); this.cargado.set(true); },
+      error: () => { this.items.set([]); this.loading.set(false); this.cargado.set(true); }
     });
   }
 

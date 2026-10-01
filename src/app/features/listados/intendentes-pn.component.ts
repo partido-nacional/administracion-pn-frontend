@@ -6,6 +6,8 @@ import { PaginatorComponent } from '../../shared/components/paginator/paginator.
 import { ListadosService, IntPN } from '../../core/services/listados.service';
 import { GridQuery, SortOrder, DEFAULT_PAGE_SIZE } from '../../core/models/paged';
 import { exportarCSV } from '../../core/exportar-csv';
+import { DEPARTAMENTOS } from '../../core/departamentos';
+import { Subject, debounceTime } from 'rxjs';
 
 @Component({
   selector: 'app-listados-int-pn',
@@ -16,6 +18,16 @@ import { exportarCSV } from '../../core/exportar-csv';
       <div class="card-body" style="padding:0; overflow-x:auto">
         <table class="table" style="min-width:1300px">
           <thead>
+            <tr class="filter-row">
+              <th></th><th></th><th></th><th></th><th></th>
+              <th>
+                <select class="column-filter" [(ngModel)]="fDepto" (ngModelChange)="onFilter()">
+                  <option value="">Todos</option>
+                  @for (d of departamentos; track d) { <option [value]="d">{{ d }}</option> }
+                </select>
+              </th>
+              <th></th><th></th>
+            </tr>
             <tr>
               <th style="min-width:110px" class="sortable" (click)="sortBy('apellidos')">Apellidos {{ arrow('apellidos') }}</th>
               <th style="min-width:90px" class="sortable" (click)="sortBy('nombres')">Nombres {{ arrow('nombres') }}</th>
@@ -72,8 +84,14 @@ export class IntendentesPnComponent implements OnInit {
   loading = signal(false);
   exporting = signal(false);
 
+  fDepto = '';
+  readonly departamentos = DEPARTAMENTOS;
+
+  private filter$ = new Subject<void>();
+
   constructor() {
     this.titleSvc.set('Listados — Intendentes PN');
+    this.filter$.pipe(debounceTime(300)).subscribe(() => { this.page.set(1); this.load(); });
   }
 
   ngOnInit() { this.load(); }
@@ -81,7 +99,7 @@ export class IntendentesPnComponent implements OnInit {
   private query(all = false): GridQuery {
     return {
       page: this.page(), pageSize: this.pageSize(), sort: this.sort(), order: this.order(), all,
-      filters: {},
+      filters: { depto: this.fDepto },
     };
   }
 
@@ -93,6 +111,7 @@ export class IntendentesPnComponent implements OnInit {
     });
   }
 
+  onFilter() { this.filter$.next(); }
   onPage(p: number) { this.page.set(p); this.load(); }
   onPageSize(size: number) { this.pageSize.set(size); this.page.set(1); this.load(); }
 

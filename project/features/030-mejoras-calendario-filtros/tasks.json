@@ -1,0 +1,306 @@
+{
+  "feature": "mejoras-calendario-filtros",
+  "local_config": {
+    "database": "container"
+  },
+  "stats": {
+    "total": 10,
+    "done": 10,
+    "by_layer": {
+      "1": 7,
+      "2": 3
+    }
+  },
+  "execution_strategy": "batched",
+  "tasks": [
+    {
+      "title": "Helper imprimir-calendario",
+      "description": "rangoSemana, agruparPorDia, htmlCalendario (escapado) e imprimirCalendario con window.print.",
+      "layer": 1,
+      "depends_on": [],
+      "files": [
+        "src/app/features/dashboard/imprimir-calendario.ts",
+        "src/app/features/dashboard/imprimir-calendario.spec.ts"
+      ],
+      "acceptance_criteria": [
+        "AC-4",
+        "AC-5",
+        "AC-6",
+        "AC-7",
+        "AC-8",
+        "BR-4",
+        "EC-2",
+        "EC-3",
+        "GATE: ng test"
+      ],
+      "references": [
+        "US-1"
+      ],
+      "id": "TASK-001",
+      "status": "done"
+    },
+    {
+      "title": "Botón Imprimir Mes/Semana",
+      "description": "Menú en la barra del calendario; Mes usa eventos cargados, Semana pide desde/hasta.",
+      "layer": 1,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "files": [
+        "src/app/features/dashboard/dashboard.component.ts"
+      ],
+      "acceptance_criteria": [
+        "AC-1",
+        "AC-2",
+        "AC-3",
+        "GATE: ng test + ng build"
+      ],
+      "references": [
+        "US-1"
+      ],
+      "id": "TASK-002",
+      "status": "done"
+    },
+    {
+      "title": "normDepto + Listados",
+      "description": "Parlamentarias con DEPARTAMENTOS; Jóvenes con columna y filtro; Intendentes PN con filtro.",
+      "layer": 1,
+      "depends_on": [],
+      "files": [
+        "src/app/core/departamentos.ts",
+        "src/app/features/listados/parlamentarias.component.ts",
+        "src/app/features/listados/jovenes.component.ts",
+        "src/app/features/listados/intendentes-pn.component.ts",
+        "src/app/core/services/listados.service.ts"
+      ],
+      "acceptance_criteria": [
+        "AC-9",
+        "AC-11",
+        "AC-12",
+        "GATE: ng test"
+      ],
+      "references": [
+        "US-2"
+      ],
+      "id": "TASK-003",
+      "status": "done"
+    },
+    {
+      "title": "Organismos y Por Período",
+      "description": "Dropdowns canónicos (+Nacional en Organismos) y filtros Id / Id Agr. en Por Período.",
+      "layer": 1,
+      "depends_on": [
+        "TASK-003"
+      ],
+      "files": [
+        "src/app/features/organismos/organismos.component.ts",
+        "src/app/features/agrupaciones/agrupaciones-por-periodo.component.ts"
+      ],
+      "acceptance_criteria": [
+        "AC-9",
+        "AC-16",
+        "EC-5",
+        "GATE: ng test"
+      ],
+      "references": [
+        "US-2",
+        "US-3"
+      ],
+      "id": "TASK-004",
+      "status": "done"
+    },
+    {
+      "title": "Agrupaciones Todas/Pendientes/Fichas",
+      "description": "Fila de filtros ID/Código/Nombre/Depto con debounce.",
+      "layer": 1,
+      "depends_on": [
+        "TASK-003"
+      ],
+      "files": [
+        "src/app/features/agrupaciones/agrupaciones.component.ts",
+        "src/app/features/agrupaciones/agrupaciones-pendientes.component.ts",
+        "src/app/features/agrupaciones/fichas-agrupacion.component.ts"
+      ],
+      "acceptance_criteria": [
+        "AC-9",
+        "AC-14",
+        "AC-15",
+        "AC-17",
+        "AC-18",
+        "GATE: ng test"
+      ],
+      "references": [
+        "US-2",
+        "US-3"
+      ],
+      "id": "TASK-005",
+      "status": "done"
+    },
+    {
+      "title": "Adhesiones web + Convencionales",
+      "description": "Filtro depto server-side en adhesiones web; client-side con normDepto en las 3 pestañas de convencionales.",
+      "layer": 1,
+      "depends_on": [
+        "TASK-003"
+      ],
+      "files": [
+        "src/app/features/adhesiones/adhesiones-listado.component.ts",
+        "src/app/features/convencionales/convencionales.component.ts"
+      ],
+      "acceptance_criteria": [
+        "AC-9",
+        "AC-10",
+        "GATE: ng test"
+      ],
+      "references": [
+        "US-2"
+      ],
+      "id": "TASK-006",
+      "status": "done"
+    },
+    {
+      "title": "Actualizar specs vivas",
+      "description": "Reflejar cambios en project/specs/features.",
+      "layer": 1,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002",
+        "TASK-003",
+        "TASK-004",
+        "TASK-005",
+        "TASK-006"
+      ],
+      "files": [
+        "project/specs/features/dashboard.md",
+        "project/specs/features/listados.md",
+        "project/specs/features/agrupaciones.md",
+        "project/specs/features/organismos.md",
+        "project/specs/features/adhesiones.md",
+        "project/specs/features/convencionales.md"
+      ],
+      "acceptance_criteria": [
+        "GATE: specs ↔ código consistentes"
+      ],
+      "references": [
+        "technical-spec"
+      ],
+      "id": "TASK-007",
+      "status": "done"
+    },
+    {
+      "title": "Code review",
+      "description": "Code review de los cambios de la feature.",
+      "layer": 2,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002",
+        "TASK-003",
+        "TASK-004",
+        "TASK-005",
+        "TASK-006",
+        "TASK-007"
+      ],
+      "files": [
+        "src/app"
+      ],
+      "acceptance_criteria": [
+        "GATE: sin código muerto, nombres consistentes con el resto del archivo"
+      ],
+      "references": [
+        "technical-spec"
+      ],
+      "id": "TASK-008",
+      "status": "done",
+      "findings": [
+        {
+          "issue": "Menú Imprimir ilegible en modo oscuro (--white no existe como variable)",
+          "resolution": "Regla html.dark .cal-print-menu en styles.css (la encapsulación no matchea html.dark)"
+        },
+        {
+          "issue": "Menú Imprimir no se cerraba con click afuera",
+          "resolution": "@HostListener('document:click') + stopPropagation en el wrapper; test 'se cierra con un click fuera del menú'"
+        },
+        {
+          "issue": "Test flaky: afterEach usaba http sin inicializar cuando el test de normDepto corría primero",
+          "resolution": "Reset de http en beforeEach y guard en afterEach; 5 corridas estables"
+        }
+      ]
+    },
+    {
+      "title": "Performance review",
+      "description": "Performance review de los cambios de la feature.",
+      "layer": 2,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002",
+        "TASK-003",
+        "TASK-004",
+        "TASK-005",
+        "TASK-006",
+        "TASK-007"
+      ],
+      "files": [
+        "src/app"
+      ],
+      "acceptance_criteria": [
+        "GATE: sin N+1; filtros antes de Count/paginado"
+      ],
+      "references": [
+        "technical-spec"
+      ],
+      "id": "TASK-009",
+      "status": "done"
+    },
+    {
+      "title": "Security review",
+      "description": "Security review de los cambios de la feature.",
+      "layer": 2,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002",
+        "TASK-003",
+        "TASK-004",
+        "TASK-005",
+        "TASK-006",
+        "TASK-007"
+      ],
+      "files": [
+        "src/app"
+      ],
+      "acceptance_criteria": [
+        "GATE: params solo vía EF/HttpParams; HTML de impresión escapado; sin cambios de auth"
+      ],
+      "references": [
+        "technical-spec"
+      ],
+      "id": "TASK-010",
+      "status": "done"
+    }
+  ],
+  "dependency_graph": {
+    "by_layer": {
+      "1": {
+        "level_0": [
+          "TASK-001",
+          "TASK-003"
+        ],
+        "level_1": [
+          "TASK-002",
+          "TASK-004",
+          "TASK-005",
+          "TASK-006"
+        ],
+        "level_2": [
+          "TASK-007"
+        ]
+      },
+      "2": {
+        "level_0": [
+          "TASK-008",
+          "TASK-009",
+          "TASK-010"
+        ]
+      }
+    }
+  }
+}
