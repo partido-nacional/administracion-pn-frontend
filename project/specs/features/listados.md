@@ -180,3 +180,9 @@ Observaciones de modelado:
 - **Filtro por departamento** de Alcaldes, Com. Departamentales e Intendencias Nacionalistas: el front ya mandaba `depto`; el bug estaba en el backend (comparación exacta contra data en mayúsculas). Corregido en backend feature 032.
 - **Nuevo listado "Comisiones Directorio"**: ruta `listados/comisiones-directorio` (roles Secretaria/Hacienda/IT), ítem de sidebar debajo de "Directorio", componente `ComisionesDirectorioComponent` (`comisiones-directorio.component.ts`), método `ListadosService.comisionesDirectorio()` → `GET /listados/comisiones-directorio`, modelo `ComisionDirEntry` (`comision`, `apellidos`, `nombres`, `celular`, `mail`, `posOrganismo`). Columnas: Comisión, Apellidos, Nombres, Celular, Mail, Posición; filtros de texto por comisión, apellidos, nombres y posición; orden server-side por comisión/apellidos/nombres; export CSV.
 
+## Actualización feature 030 — departamentos
+
+- **Parlamentarias**: el dropdown usa `DEPARTAMENTOS` (19; antes 6 hardcodeados).
+- **Jóvenes**: nueva columna Departamento (`Joven.departamento`), con el dropdown debajo de ella. El filtro `departamento` ahora lo aplica el backend (antes se ignoraba). El CSV suma la columna.
+- **Intendentes PN**: nueva fila de filtros con dropdown de departamento → param `depto` (debounce 300 ms).
+- `core/departamentos.ts` suma `normDepto()` (trim + minúsculas + sin tildes, con la ñ preservada), con la misma lógica que el backend.

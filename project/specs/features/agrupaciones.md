@@ -280,3 +280,19 @@ Contacto directo al responsable de la ficha vía `wa.me` con mensaje plantilla p
 8. **Modal del host (editar) no incluye Sublemas:** los sublemas se editan sólo desde "Por Período" (nota explícita, `agrupaciones.component.ts:53-55`; `@if modoModal==='nueva'` envuelve los sublemas, `:108`).
 9. **`sigla`/`descripcion` en forms pero parcialmente fuera del modelo de tabla:** el form de Nueva tiene `sigla`/`descripcion` (`:534`), pero la interface `Agrupacion` no los lista; se mandan al backend sin tipado.
 10. **Sin manejo de error en cargas iniciales del host:** `loadTodas`/`loadPadron` (`:652-653`) no tienen rama `error` (a diferencia de los hijos), por lo que un fallo deja la tabla vacía sin feedback.
+
+## Actualización feature 030 — filtros Nombre / Código / ID / Depto
+
+| Pestaña | Filtros (fila `.filter-row`) | Params |
+|---|---|---|
+| Todas | ID, Cod. Agrup., Nombre, Depto. | `id`, `cod`, `nombre`, `depto` |
+| Pendientes | ID, Cod. Agrup., Nombre, Depto. | `id`, `cod`, `nombre`, `depto` |
+| Fichas Web | ID, Nombre Agrupación, Departamento | `id`, `nombre`, `departamento` |
+| Por Período | se suman Id e Id Agr. | `id`, `agrId` |
+
+- Debounce de 300 ms y vuelta a la página 1.
+- Por Período: el dropdown de Depto. usa `DEPARTAMENTOS`. Antes salía de `/opciones` (valores crudos de la base); `/opciones` se sigue usando solo para los períodos.
+- **Estados vacíos/cargando**: con filtros activos, o después de la primera carga, la tabla queda visible para no perder la fila de filtros. "Sin resultados" se muestra dentro de la tabla. Aplica a `app-list-state` (Todas) y a los `@if (loading())` de Pendientes y Fichas.
+- Los dropdowns de departamento de los **formularios** (alta/aprobación) no cambian.
+
+- Los dropdowns de Depto. de las grillas de agrupaciones (Todas, Pendientes, Por Período) son `[...DEPARTAMENTOS, 'Nacional']`. El dato guarda letras de serie (`C`, `X`); el backend las mapea.

@@ -983,6 +983,10 @@ html.dark .topbar {
     border-color: var(--gray-200);
 }
 
+/* Menú "Imprimir" del calendario (feature 030): va acá porque la encapsulación del
+   componente no matchea html.dark. */
+html.dark .cal-print-menu { background: #1e2536; border-color: #2a2f3e; }
+
 html.dark .card,
 html.dark .stat-card {
     background: #1e2536;

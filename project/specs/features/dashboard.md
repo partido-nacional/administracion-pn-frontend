@@ -180,3 +180,16 @@ eventos: Evento[]
 - **`confirm`/`alert` nativos** para eliminar (`:412`, `:416`), no modales propios de la app.
 - El filtro `soloPrivados` se manda al backend pero no hay control de rol en el front: la separación público/privado depende del API.
 - **`architecture.md` referenciada no existe aún** en `project/` (no se encontró el archivo al redactar esta spec).
+
+## Actualización feature 030 — imprimir calendario
+
+- Botón **🖨 Imprimir** en la barra del calendario, con menú **Mes** / **Semana actual**.
+  - **Mes**: el mes visible, con los eventos ya cargados.
+  - **Semana**: de lunes a domingo, la semana de hoy. Pide `GET /calendario/eventos?desde=YYYY-MM-DDT00:00:00Z&hasta=…&soloPrivados=` porque puede cruzar de mes.
+  - Los bordes van como hora de pared con `Z`, porque los eventos se guardan así.
+- Helper `features/dashboard/imprimir-calendario.ts`:
+  - Funciones puras: `rangoSemana`, `agruparPorDia`, `htmlCalendario`, `horaFin`, `tituloDia`, `tituloPeriodo`.
+  - `imprimirCalendario` abre una ventana nueva y llama a `window.print()`. Devuelve `false` si la ventana está bloqueada, y en ese caso se muestra un toast de error.
+- Listado agrupado por día: Hora · Hasta (`dd/MM HH:mm` si termina otro día) · Título (🔒 si es privado) · Tipo · Creador · Descripción.
+  - En la semanal se listan los 7 días ("(sin eventos)" en los vacíos); en la mensual, solo los días con eventos.
+  - Respeta el filtro Todos / Solo privados. Escapa todo el texto de usuario.

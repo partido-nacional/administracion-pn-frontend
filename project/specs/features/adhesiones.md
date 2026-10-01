@@ -269,3 +269,7 @@ Catálogos como **constantes de módulo** (`:9-22`): `SISTEMAS`, `DEPARTAMENTOS`
 - **Solapa de stats**: las tarjetas de estadísticas viven dentro de la solapa "locales" (`:116-134`), no en una vista de stats independiente; "Posibles Duplicados" se muestra pero el listado no ofrece acción de des-duplicar (eso vive en Contactos).
 - **`FichaAdhesionDetalle` sin validación de obligatorios** al crear: `NuevaFicha.guardar()` no valida campos requeridos (ej. `sistContrib`, `aporte`); delega toda la validación al backend.
 - **Eliminar/editar fichas por contacto**: `FichasContacto` permite editar (PUT) pero **no** eliminar fichas; la eliminación de adhesiones locales solo existe en el listado global (`:185`), que opera por `id` de adhesión.
+
+## Actualización feature 030
+
+Pestaña **Adhesiones Pendientes en Web**: nueva fila de filtros con dropdown de departamento (`DEPARTAMENTOS`) → param `departamento` en `GET /adhesiones/web`; al cambiarlo vuelve a la página 1.

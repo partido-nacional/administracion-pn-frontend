@@ -21,16 +21,17 @@ import { DEPARTAMENTOS } from '../../core/departamentos';
             <tr class="filter-row">
               <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fApellidos" (ngModelChange)="onFilter()"></th>
               <th><input type="text" class="column-filter" placeholder="Filtrar..." [(ngModel)]="fNombres" (ngModelChange)="onFilter()"></th>
+              <th></th>
+              <th></th>
+              <th></th>
               <th>
                 <select class="column-filter" [(ngModel)]="fDepartamento" (ngModelChange)="onFilter()">
-                  <option value="">Todos los departamentos</option>
+                  <option value="">Todos</option>
                   @for (d of departamentos; track d) {
                     <option [value]="d">{{ d }}</option>
                   }
                 </select>
               </th>
-              <th></th>
-              <th></th>
             </tr>
             <tr>
               <th style="min-width:130px" class="sortable" (click)="sortBy('apellidos')">Apellidos {{ arrow('apellidos') }}</th>
@@ -38,6 +39,7 @@ import { DEPARTAMENTOS } from '../../core/departamentos';
               <th style="min-width:110px">Celular</th>
               <th style="min-width:180px">Mail</th>
               <th style="min-width:150px">Posicion Organismo</th>
+              <th style="min-width:110px">Departamento</th>
             </tr>
           </thead>
           <tbody>
@@ -48,9 +50,10 @@ import { DEPARTAMENTOS } from '../../core/departamentos';
                 <td>{{ j.celular }}</td>
                 <td>{{ j.mail }}</td>
                 <td>{{ j.posOrganismo }}</td>
+                <td>@if (j.departamento) { <span class="badge dept">{{ j.departamento }}</span> }</td>
               </tr>
             } @empty {
-              <tr><td colspan="5" style="text-align:center; padding:24px; color:var(--gray-500)">
+              <tr><td colspan="6" style="text-align:center; padding:24px; color:var(--gray-500)">
                 {{ loading() ? 'Cargando…' : 'Sin resultados' }}
               </td></tr>
             }
@@ -132,7 +135,7 @@ export class JovenesComponent implements OnInit {
         exportarCSV(r.items, [
           { get: 'apellidos', label: 'Apellidos' }, { get: 'nombres', label: 'Nombres' },
           { get: 'celular', label: 'Celular' }, { get: 'mail', label: 'Mail' },
-          { get: 'posOrganismo', label: 'Posicion Organismo' },
+          { get: 'posOrganismo', label: 'Posicion Organismo' }, { get: 'departamento', label: 'Departamento' },
         ], 'jovenes.csv');
         this.exporting.set(false);
       },

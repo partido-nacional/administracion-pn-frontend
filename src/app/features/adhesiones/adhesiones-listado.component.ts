@@ -15,6 +15,8 @@ interface StatsDto { locales: number; web: number; total: number; }
 
 type Tab = 'web' | 'locales' | 'nuevo' | 'anuales';
 
+import { DEPARTAMENTOS } from '../../core/departamentos';
+
 @Component({
   selector: 'app-adhesiones',
   standalone: true,
@@ -43,6 +45,16 @@ type Tab = 'web' | 'locales' | 'nuevo' | 'anuales';
         <div class="card-body" style="padding:0; overflow-x:auto">
           <table class="table" style="min-width:1400px">
             <thead>
+              <tr class="filter-row">
+                <th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th>
+                <th>
+                  <select class="column-filter" [ngModel]="fDeptoWeb()" (ngModelChange)="fDeptoWeb.set($event); webPage.set(1); reloadWeb()">
+                    <option value="">Todos</option>
+                    @for (d of departamentos; track d) { <option [ngValue]="d">{{ d }}</option> }
+                  </select>
+                </th>
+                <th></th><th></th><th></th><th></th><th></th><th></th>
+              </tr>
               <tr>
                 <th style="width:45px">ID</th>
                 <th class="sortable" (click)="sortWeb('nombre')">Nombre {{ arrowWeb('nombre') }}</th>
@@ -338,6 +350,9 @@ export class AdhesionesListadoComponent {
   webSort = signal<string | undefined>(undefined);
   webOrder = signal<SortOrder>('asc');
   loadingWeb = signal(false);
+  // Filtro de departamento (feature 030).
+  fDeptoWeb = signal('');
+  readonly departamentos = DEPARTAMENTOS;
 
   // Paginación locales
   localesTotal = signal(0);
@@ -370,7 +385,10 @@ export class AdhesionesListadoComponent {
   }
 
   private webQuery(): GridQuery {
-    return { page: this.webPage(), pageSize: this.webPageSize(), sort: this.webSort(), order: this.webOrder() };
+    return {
+      page: this.webPage(), pageSize: this.webPageSize(), sort: this.webSort(), order: this.webOrder(),
+      filters: { departamento: this.fDeptoWeb() },
+    };
   }
   private localesQuery(): GridQuery {
     return { page: this.localesPage(), pageSize: this.localesPageSize(), sort: this.localesSort(), order: this.localesOrder() };
