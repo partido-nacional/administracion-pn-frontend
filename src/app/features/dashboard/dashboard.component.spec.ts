@@ -162,3 +162,20 @@ describe('DashboardComponent — imprimir calendario', () => {
     expect(err).toHaveBeenCalled();
   });
 });
+
+describe('DashboardComponent — menú imprimir', () => {
+  it('se cierra con un click fuera del menú', () => {
+    TestBed.configureTestingModule({
+      imports: [DashboardComponent],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+    });
+    const f = TestBed.createComponent(DashboardComponent);
+    const http = TestBed.inject(HttpTestingController);
+    http.match(() => true).forEach(r => r.flush(r.request.url.includes('resumen') ? {} : []));
+    f.componentInstance.menuImprimir.set(true);
+    f.detectChanges();
+    document.body.click();
+    expect(f.componentInstance.menuImprimir()).toBeFalse();
+    http.verify();
+  });
+});

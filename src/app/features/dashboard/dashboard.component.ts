@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, HostListener, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -76,7 +76,7 @@ const DIAS_SEM = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
           <span class="cal-month">{{ tituloMes() }}</span>
           <button class="btn btn-sm btn-secondary" (click)="nextMes()">›</button>
           <button class="btn btn-sm btn-secondary" (click)="hoy()" style="margin-left:8px">Hoy</button>
-          <div class="cal-print">
+          <div class="cal-print" (click)="$event.stopPropagation()">
             <button class="btn btn-sm btn-secondary" (click)="menuImprimir.set(!menuImprimir())"
                     [disabled]="imprimiendo()" title="Imprimir calendario">🖨 Imprimir</button>
             @if (menuImprimir()) {
@@ -204,7 +204,7 @@ const DIAS_SEM = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
     .cal-print { position:relative; margin-left:8px; }
     .cal-print-menu {
       position:absolute; right:0; top:calc(100% + 4px); z-index:20; min-width:170px;
-      background:var(--white, #fff); border:1px solid var(--gray-200, #e2e8f0); border-radius:6px;
+      background:#fff; border:1px solid var(--gray-200, #e2e8f0); border-radius:6px;
       box-shadow:0 6px 18px rgba(0,0,0,.12); display:flex; flex-direction:column; overflow:hidden;
     }
     .cal-print-menu button {
@@ -390,6 +390,10 @@ export class DashboardComponent {
 
   menuImprimir = signal(false);
   imprimiendo = signal(false);
+
+  /** Cierra el menú de impresión al hacer click fuera de él (el wrapper corta la propagación). */
+  @HostListener('document:click')
+  cerrarMenuImprimir() { this.menuImprimir.set(false); }
 
   /**
    * Imprime el calendario como listado por día (feature 030). Mes = el mes visible, con los
