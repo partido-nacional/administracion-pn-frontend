@@ -25,13 +25,8 @@ interface AgrupacionPendiente {
   sublema1?: string; sublema2?: string; sublema3?: string; sublema4?: string; sublema5?: string;
 }
 
-const DEPARTAMENTOS = [
-  'Artigas', 'Canelones', 'Cerro Largo', 'Colonia', 'Durazno', 'Flores', 'Florida',
-  'Lavalleja', 'Maldonado', 'Montevideo', 'Paysandú', 'Río Negro', 'Rivera', 'Rocha',
-  'Salto', 'San José', 'Soriano', 'Tacuarembó', 'Treinta y Tres', 'Nacional'
-];
 
-import { DEPARTAMENTOS as DEPTOS_CANONICOS } from '../../core/departamentos';
+import { DEPARTAMENTOS_CON_NACIONAL, opcionesDepto } from '../../core/departamentos';
 import { Subject, debounceTime } from 'rxjs';
 
 @Component({
@@ -206,7 +201,7 @@ import { Subject, debounceTime } from 'rxjs';
                 <label>Departamento {{ req() }}</label>
                 <select [(ngModel)]="form.depto" name="depto">
                   <option value="">—</option>
-                  @for (d of deptos; track d) { <option [ngValue]="d">{{ d }}</option> }
+                  @for (d of opcionesDepto(deptos, form.depto); track d) { <option [ngValue]="d">{{ d }}</option> }
                 </select>
               </div>
               <div class="fg"><label>Clasificación {{ req() }}</label><input [(ngModel)]="form.clasificacion" name="clasificacion"></div>
@@ -368,11 +363,12 @@ export class AgrupacionesPendientesComponent {
   busy = signal(false);
   modalError = signal<string>('');
   form: any = {};
-  deptos = DEPARTAMENTOS;
+  deptos = DEPARTAMENTOS_CON_NACIONAL;
+  readonly opcionesDepto = opcionesDepto;
 
   // Filtros de la grilla (feature 030). Lista canónica + 'Nacional' (Depto 'X'/'NACIONAL').
   fId = signal(''); fCod = signal(''); fNombre = signal(''); fDepto = signal('');
-  readonly deptosFiltro = [...DEPTOS_CANONICOS, 'Nacional'];
+  readonly deptosFiltro = DEPARTAMENTOS_CON_NACIONAL;
   private filter$ = new Subject<void>();
   onFilter() { this.filter$.next(); }
   hayFiltros = computed(() => !!(this.fId() || this.fCod() || this.fNombre() || this.fDepto()));

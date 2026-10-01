@@ -37,6 +37,8 @@ function describeError(label: string, errors: any): string {
   return `${label}: valor inválido`;
 }
 
+import { DEPARTAMENTOS, canonDepto, opcionesDepto } from '../../core/departamentos';
+
 @Component({
   selector: 'app-agenda-nuevo',
   standalone: true,
@@ -80,7 +82,7 @@ function describeError(label: string, errors: any): string {
               <select class="form-select" name="depCred" [(ngModel)]="c.departamentoCredencial"
                       [disabled]="depCredBloqueado()">
                 <option value="">—</option>
-                @for (d of departamentos; track d) { <option>{{ d }}</option> }
+                @for (d of opcionesDepto(departamentos, c.departamentoCredencial); track d) { <option>{{ d }}</option> }
               </select>
               @if (depCredBloqueado()) {
                 <small style="color:#666; font-size:12px">Se toma de la credencial.</small>
@@ -132,7 +134,7 @@ function describeError(label: string, errors: any): string {
             <div class="form-group"><label class="form-label">Departamento de la dirección</label>
               <select class="form-select" name="dep" [(ngModel)]="c.departamento">
                 <option value="">—</option>
-                @for (d of departamentos; track d) { <option>{{ d }}</option> }
+                @for (d of opcionesDepto(departamentos, c.departamento); track d) { <option>{{ d }}</option> }
               </select></div>
             <div class="form-group"><label class="form-label">Ciudad</label><input class="form-input" name="ciudad" [(ngModel)]="c.ciudad"></div>
             <div class="form-group full-width"><label class="form-label">Dirección</label><input class="form-input" name="dir" [(ngModel)]="c.direccion"></div>
@@ -162,7 +164,7 @@ function describeError(label: string, errors: any): string {
             <div class="form-group"><label class="form-label">Departamento</label>
               <select class="form-select" name="depLab" [(ngModel)]="c.departamentoLaboral">
                 <option value="">—</option>
-                @for (d of departamentos; track d) { <option>{{ d }}</option> }
+                @for (d of opcionesDepto(departamentos, c.departamentoLaboral); track d) { <option>{{ d }}</option> }
               </select></div>
             <div class="form-group"><label class="form-label">Email</label><input class="form-input" type="email" name="mailLab" [(ngModel)]="c.mailTrabajo"></div>
             <div class="form-group full-width"><label class="form-label">Datos Secretaría</label><input class="form-input" name="sec" [(ngModel)]="c.datosSecretaria"></div>
@@ -252,11 +254,11 @@ export class AgendaNuevoComponent {
   submitted = signal(false);
   errores = signal<string[]>([]);
 
-  departamentos = [
-    'Artigas', 'Canelones', 'Cerro Largo', 'Colonia', 'Durazno', 'Flores',
-    'Florida', 'Lavalleja', 'Maldonado', 'Montevideo', 'Paysandu', 'Rio Negro',
-    'Rivera', 'Rocha', 'Salto', 'San Jose', 'Soriano', 'Tacuarembo', 'Treinta y Tres'
-  ];
+  // Lista canónica (DEBT-015, feature 031): antes era una copia propia sin tildes y los
+  // contactos nuevos se guardaban "Paysandu". En edición, un valor guardado que no está en la
+  // lista (dato viejo, otro país) se agrega como opción para no perderlo.
+  readonly departamentos = DEPARTAMENTOS;
+  readonly opcionesDepto = opcionesDepto;
 
   situaciones = ['F', 'M', 'R', 'V', 'S', 'SM', 'CEN', 'ICE', 'PC', 'CA', 'PI', 'FA', 'OOPP'];
 
@@ -292,8 +294,8 @@ export class AgendaNuevoComponent {
   private credencialMap: Record<string, string> = {
     A: 'Montevideo', B: 'Montevideo', C: 'Canelones', D: 'Maldonado', E: 'Rocha',
     F: 'Treinta y Tres', G: 'Cerro Largo', H: 'Rivera', I: 'Artigas', J: 'Salto',
-    K: 'Paysandu', L: 'Rio Negro', M: 'Soriano', N: 'Colonia', O: 'San Jose',
-    P: 'Flores', Q: 'Florida', R: 'Durazno', S: 'Lavalleja', T: 'Tacuarembo'
+    K: 'Paysandú', L: 'Río Negro', M: 'Soriano', N: 'Colonia', O: 'San José',
+    P: 'Flores', Q: 'Florida', R: 'Durazno', S: 'Lavalleja', T: 'Tacuarembó'
   };
 
   // El departamento credencial se deriva de la credencial, así que sólo es editable
@@ -339,6 +341,9 @@ export class AgendaNuevoComponent {
       this.editingId = +id;
       this.svc.get(this.editingId).subscribe(x => {
         this.c = x;
+        // Datos históricos en MAYÚSCULAS o sin tilde: se muestran ya canónicos en el select.
+        for (const k of ['departamento', 'departamentoCredencial', 'departamentoLaboral'] as const)
+          this.c[k] = canonDepto(x[k]) || x[k];
         // El documento original se captura ACA, dentro del subscribe: el contacto llega async.
         // Si se leyera antes quedaria undefined y el validador creeria que TODA edicion cambio
         // la cedula, bloqueando justo a los 335 contactos que la regla protege (feature 028).

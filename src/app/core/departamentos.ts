@@ -23,3 +23,24 @@ export function normDepto(s: string | null | undefined): string {
     .map(ch => { const i = ACENTOS.indexOf(ch); return i >= 0 ? PLANAS[i] : ch; })
     .join('');
 }
+
+/** Lista canónica + 'Nacional' (organismos y agrupaciones de alcance nacional). Feature 031. */
+export const DEPARTAMENTOS_CON_NACIONAL: readonly string[] = [...DEPARTAMENTOS, 'Nacional'];
+
+/**
+ * Forma canónica de un departamento ("PAYSANDÚ" / "Paysandu" → "Paysandú"), o '' si no se
+ * reconoce. Misma regla que DepartamentoCanonico del backend (feature 034).
+ */
+export function canonDepto(valor: string | null | undefined): string {
+  const n = normDepto(valor);
+  return n ? DEPARTAMENTOS_CON_NACIONAL.find(d => normDepto(d) === n) ?? '' : '';
+}
+
+/**
+ * Opciones de un <select> de departamento en un formulario de edición: la lista + el valor
+ * guardado si no está en ella (una letra de serie "C", "ARGENTINA"), para mostrarlo en vez de
+ * dejar el select en blanco y perderlo al guardar.
+ */
+export function opcionesDepto(lista: readonly string[], actual: string | null | undefined): readonly string[] {
+  return actual && !lista.includes(actual) ? [...lista, actual] : lista;
+}

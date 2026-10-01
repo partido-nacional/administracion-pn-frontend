@@ -5,7 +5,7 @@
   },
   "stats": {
     "total": 7,
-    "done": 0,
+    "done": 4,
     "by_layer": {
       "1": 4,
       "2": 3
@@ -30,7 +30,7 @@
         "US-3"
       ],
       "id": "TASK-001",
-      "status": "pending"
+      "status": "done"
     },
     {
       "title": "Formularios con lista canónica (DEBT-015)",
@@ -54,7 +54,7 @@
         "US-2"
       ],
       "id": "TASK-002",
-      "status": "pending"
+      "status": "done"
     },
     {
       "title": "nueva-ficha precarga departamento (DEBT-016)",
@@ -75,7 +75,7 @@
         "US-3"
       ],
       "id": "TASK-003",
-      "status": "pending"
+      "status": "done"
     },
     {
       "title": "Reescribir spec viva de listados (DEBT-024)",
@@ -92,7 +92,7 @@
         "US-4"
       ],
       "id": "TASK-004",
-      "status": "pending"
+      "status": "done"
     },
     {
       "title": "Code review",

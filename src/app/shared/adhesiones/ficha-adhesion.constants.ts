@@ -1,4 +1,5 @@
 import { FichaAdhesionDetalle } from '../../features/agenda/contactos.service';
+import { DEPARTAMENTOS_CON_NACIONAL } from '../../core/departamentos';
 
 /**
  * Fuente de verdad única para las constantes y reglas del formulario de ficha de
@@ -12,11 +13,8 @@ import { FichaAdhesionDetalle } from '../../features/agenda/contactos.service';
 
 export const SISTEMAS = ['Antel', 'OCA', 'VISA', 'MASTER', 'EBROU', 'ANUAL', 'Otro'];
 
-export const DEPARTAMENTOS = [
-  'Artigas', 'Canelones', 'Cerro Largo', 'Colonia', 'Durazno', 'Flores', 'Florida',
-  'Lavalleja', 'Maldonado', 'Montevideo', 'Paysandú', 'Río Negro', 'Rivera', 'Rocha',
-  'Salto', 'San José', 'Soriano', 'Tacuarembó', 'Treinta y Tres', 'Nacional'
-];
+/** Departamentos del formulario de ficha: la lista canónica + 'Nacional' (feature 031). */
+export const DEPARTAMENTOS = DEPARTAMENTOS_CON_NACIONAL;
 
 export const APORTES_SEC_AGR = [
   'Agrupacion', 'SAS', 'CNJ', 'Centro Josefa Oribe', 'CEPN',
