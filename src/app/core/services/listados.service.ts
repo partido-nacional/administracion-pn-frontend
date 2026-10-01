@@ -57,6 +57,10 @@ export interface DirEntry {
   apellidos: string; nombres: string; celular: string; mail: string; posOrganismo: string;
 }
 
+export interface ComisionDirEntry {
+  apellidos: string; nombres: string; celular: string; mail: string; posOrganismo: string; comision: string;
+}
+
 /**
  * Service por dominio para los listados (feature `listados`).
  * Todas las llamadas devuelven PagedResult<T> (paginado/orden server-side).
@@ -86,4 +90,5 @@ export class ListadosService {
   alcaldes(query: GridQuery)       { return this.paged<Alcalde>('alcaldes', query); }
   convencionales(query: GridQuery) { return this.paged<ConvL>('convencionales', query); }
   directorio(query: GridQuery)     { return this.paged<DirEntry>('directorio', query); }
+  comisionesDirectorio(query: GridQuery) { return this.paged<ComisionDirEntry>('comisiones-directorio', query); }
 }
