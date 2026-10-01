@@ -34,7 +34,7 @@ interface PadronItem { serie: string; nro: string; primerNombre: string; segundo
 
 type Tab = 'todas' | 'pendientes' | 'fichas' | 'periodo' | 'padron';
 
-import { DEPARTAMENTOS } from '../../core/departamentos';
+import { DEPARTAMENTOS_CON_NACIONAL } from '../../core/departamentos';
 
 @Component({
   selector: 'app-agrupaciones',
@@ -451,8 +451,8 @@ export class AgrupacionesComponent {
 
   // Filtros de la grilla "Todas" (feature 030).
   fId = signal(''); fCod = signal(''); fNombre = signal(''); fDepto = signal('');
-  // + 'Nacional': las agrupaciones nacionales se guardan con Depto 'X'/'NACIONAL' (el backend mapea letras).
-  readonly deptosFiltro = [...DEPARTAMENTOS, 'Nacional'];
+  // Incluye 'Nacional': las agrupaciones nacionales se guardan con Depto 'X'/'Nacional' (el backend mapea letras).
+  readonly deptosFiltro = DEPARTAMENTOS_CON_NACIONAL;
   private filtroTodas$ = new Subject<void>();
   hayFiltrosTodas = computed(() => !!(this.fId() || this.fCod() || this.fNombre() || this.fDepto()));
   onFiltroTodas() { this.filtroTodas$.next(); }
@@ -500,11 +500,7 @@ export class AgrupacionesComponent {
   nuevoBusy = signal(false);
   nuevoError = signal('');
   nuevoForm: any = {};
-  departamentos = [
-    'Artigas','Canelones','Cerro Largo','Colonia','Durazno','Flores','Florida',
-    'Lavalleja','Maldonado','Montevideo','Paysandú','Río Negro','Rivera','Rocha',
-    'Salto','San José','Soriano','Tacuarembó','Treinta y Tres','Nacional'
-  ];
+  departamentos = DEPARTAMENTOS_CON_NACIONAL;
 
   private formVacio() {
     return {

@@ -285,7 +285,8 @@
 
 ### DEBT-015: Formularios guardan departamentos sin tilde / con listas duplicadas
 - **Priority**: Medium
-- **Status**: pending
+- **Status**: resolved
+- **Resolution**: feature 031-normalizar-departamentos (2026-09-30)
 - **Created**: 2026-09-30
 - **Origin**: feature 030 (mejoras-calendario-filtros), fuera de alcance
 - **Context**: `agenda-nuevo.component.ts` (~:255) tiene una lista propia **sin tildes** (`Paysandu`, `Rio Negro`,
@@ -298,7 +299,8 @@
 
 ### DEBT-016: `nueva-ficha` pierde el departamento de contactos migrados
 - **Priority**: Medium
-- **Status**: pending
+- **Status**: resolved
+- **Resolution**: feature 031-normalizar-departamentos (2026-09-30)
 - **Created**: 2026-09-30
 - **Origin**: auditoría de la feature 030
 - **Context**: `features/adhesiones/nueva-ficha.component.ts:63` hace `DEPARTAMENTOS.includes(c.departamento)`, exacto y

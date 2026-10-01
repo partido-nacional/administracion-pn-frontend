@@ -4,7 +4,8 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ContactosService, FichaAdhesionDetalle } from '../agenda/contactos.service';
 import { AdhesionesService } from './adhesiones.service';
 import { PageTitleService } from '../../core/page-title.service';
-import { DEPARTAMENTOS, IMPORTE_DEFAULT, sanitizarFichaParaGuardar } from '../../shared/adhesiones/ficha-adhesion.constants';
+import { IMPORTE_DEFAULT, sanitizarFichaParaGuardar } from '../../shared/adhesiones/ficha-adhesion.constants';
+import { canonDepto } from '../../core/departamentos';
 import { hoyISO, normalizarFechaSalida } from '../../shared/adhesiones/confirmado-baja.util';
 import { FichaAdhesionFormComponent } from '../../shared/adhesiones/ficha-adhesion-form.component';
 
@@ -60,7 +61,8 @@ export class NuevaFichaComponent {
     this.contactosSvc.get(this.contactoId).subscribe(c => {
       this.contactoNombre.set(`${c.apellido}, ${c.nombre}`);
       const today = hoyISO();
-      const dep = c.departamento && DEPARTAMENTOS.includes(c.departamento) ? c.departamento : undefined;
+      // Canónico aunque el contacto lo tenga en MAYÚSCULAS o sin tilde (DEBT-016, feature 031).
+      const dep = canonDepto(c.departamento) || undefined;
       this.ficha.set({
         id: 0,
         contactoId: this.contactoId,
