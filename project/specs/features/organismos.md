@@ -81,7 +81,7 @@ Dos pantallas muestran el mismo dato con distinto filtro, y **ambas permiten edi
 - `aIsoDate()` (`core/fechas.ts`) convierte las fechas de `dd/MM/yyyy` (como las serializa el backend)
   a `yyyy-MM-dd`, que es lo único que acepta `<input type="date">`. Sin eso el campo aparece vacío y
   guardar borraría la fecha en silencio.
-- El `PUT` exige `contactoId` y `organismoId` y valida ámbito Partidario. La vista por **contacto** lo
+- El `PUT` exige `contactoId` y `organismoId`; si el organismo cambia, valida que sea partidario (que tenga organización partidaria, backend 035). La vista por **contacto** lo
   toma del DTO (`organismoId`, agregado por la feature 031); la vista por **organismo**, de la ruta.
 - Antes de la feature 028 ambas vistas eran de **sólo lectura** (0 botones), aunque el endpoint de
   edición ya existía en el backend.
@@ -243,3 +243,22 @@ Helpers (`organismos.component.ts:16-17`): `norm(s)` (lowercase) y `m(val, q)` (
 ## Actualización feature 030
 
 El filtro y el formulario de departamento usan `[...DEPARTAMENTOS, 'Nacional']` (lista canónica + organismos de alcance nacional) en lugar de una copia hardcodeada.
+
+## Actualización feature 032 (espejo backend 035) — 2026-10-02
+
+> Esta sección manda sobre lo anterior en lo que respecta al modelo de organismo.
+
+- **Modelo**: un organismo por cada uno del sistema viejo. `ambito` dejó de existir; cada organismo tiene
+  `organizacionEstatalId/Nombre` y `organizacionPartidariaId/Nombre` (opcionales, no excluyentes: AFE tiene
+  ambas), `infoOrganizacionId` (info compartida) y `tipoOrganizacionId` opcional
+  (`core/models/organismos.ts`).
+- **Grilla "Todos"**: la columna **Clasificación** muestra un badge por organización (estatal azul,
+  partidaria naranja) o "—". No es ordenable. El filtro de la columna (Todos / Estatal / Partidario) manda
+  `?ambito=`, que en el backend significa "tiene esa organización" (un organismo con ambas aparece en los dos).
+- **Formulario de organismo**: selects **Organización estatal** y **Organización partidaria** (con
+  "— Ninguna —", catálogos `GET /organismos/organizaciones-estatales|partidarias`, cargados una vez en el
+  constructor), **Info de organización (Id)** numérico, tipo de organización opcional. Alta y edición mandan
+  el mismo `OrganismoInput` (sin ámbito); solo el nombre es obligatorio.
+- **Info de organización**: sin "Id Organismo" en grilla, formulario ni CSV (la relación va del organismo a
+  la info).
+- **CSV de organismos**: "Org. estatal" y "Org. partidaria" en lugar de "Ámbito".

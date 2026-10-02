@@ -5,7 +5,7 @@ import { environment } from '../../../environments/environment';
 import { GridQuery, PagedResult } from '../models/paged';
 import { buildPagedParams } from './paged';
 import {
-  OrganismoDto, OrganismoInput, OrganismoUpdateInput,
+  OrganismoDto, OrganismoInput, OrganizacionDto,
   TipoOrganizacionDto, InfoOrganizacionDto, InfoOrganizacionInput,
   ReferenteResumenDto, IntegranteOrg, ReferenciaOrganismo, ReferenciaEditInput } from '../models/organismos';
 
@@ -20,7 +20,10 @@ export class OrganismosService {
   private base = `${environment.apiUrl}/organismos`;
 
   // ── Grillas paginadas ─────────────────────────────────────
-  /** Lista paginada; el ámbito (si aplica) viaja como filtro dentro del GridQuery. */
+  /**
+   * Lista paginada. El filtro `ambito` (Estatal|Partidario) viaja dentro del GridQuery y significa
+   * "tiene esa organización": un organismo con ambas aparece en los dos (backend 035).
+   */
   getOrganismos(query: GridQuery): Observable<PagedResult<OrganismoDto>> {
     return this.http.get<PagedResult<OrganismoDto>>(this.base, { params: buildPagedParams(query) });
   }
@@ -41,7 +44,8 @@ export class OrganismosService {
    * Edita una referencia partidaria (feature 028). El endpoint ya existia; lo que faltaba era
    * la UI — las dos vistas de referencias eran solo lectura.
    *
-   * El PUT exige contactoId y organismoId y valida que el organismo sea de ambito Partidario.
+   * El PUT exige contactoId; si el organismo cambia, valida que sea partidario (tenga
+   * organización partidaria, backend 035).
    */
   editarReferencia(id: number, input: ReferenciaEditInput): Observable<unknown> {
     return this.http.put(`${this.base}/referencias/${id}`, input);
@@ -56,12 +60,22 @@ export class OrganismosService {
     return this.http.get<TipoOrganizacionDto[]>(`${this.base}/tipos`);
   }
 
+  /** Catálogo de organizaciones estatales (solo lectura, backend 035). */
+  getOrganizacionesEstatales(): Observable<OrganizacionDto[]> {
+    return this.http.get<OrganizacionDto[]>(`${this.base}/organizaciones-estatales`);
+  }
+
+  /** Catálogo de organizaciones partidarias (solo lectura, backend 035). */
+  getOrganizacionesPartidarias(): Observable<OrganizacionDto[]> {
+    return this.http.get<OrganizacionDto[]>(`${this.base}/organizaciones-partidarias`);
+  }
+
   // ── Organismo: alta / edición ─────────────────────────────
   createOrganismo(input: OrganismoInput): Observable<OrganismoDto> {
     return this.http.post<OrganismoDto>(this.base, input);
   }
 
-  updateOrganismo(id: number, input: OrganismoUpdateInput): Observable<OrganismoDto> {
+  updateOrganismo(id: number, input: OrganismoInput): Observable<OrganismoDto> {
     return this.http.put<OrganismoDto>(`${this.base}/${id}`, input);
   }
 

@@ -2,17 +2,16 @@ import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { OrganismosService } from './organismos.service';
-import { OrganismoInput, OrganismoUpdateInput, InfoOrganizacionInput } from '../models/organismos';
+import { OrganismoInput, InfoOrganizacionInput } from '../models/organismos';
 import { GridQuery, PagedResult } from '../models/paged';
 
 const BASE = 'http://localhost:5000/api/organismos';
 
 const organismo = (): OrganismoInput => ({
-  ambito: 'Estatal', nombre: 'Org 1', tipoOrganizacionId: 3, art44: false, ordenDpto: 0,
+  nombre: 'AFE', tipoOrganizacionId: 3, organizacionEstatalId: 4, organizacionPartidariaId: 6,
+  infoOrganizacionId: 131, art44: false, ordenDpto: 0,
 });
-const organismoUpd = (): OrganismoUpdateInput => ({
-  nombre: 'Org 1', tipoOrganizacionId: 3, art44: false, ordenDpto: 0,
-});
+const organismoUpd = organismo;
 const q = (filters?: GridQuery['filters']): GridQuery => ({ page: 1, pageSize: 25, filters });
 const paged = <T>(items: T[]): PagedResult<T> => ({ items, total: items.length, page: 1, pageSize: 25 });
 
@@ -37,7 +36,7 @@ describe('OrganismosService', () => {
     req.flush(paged([]));
   });
 
-  it('getOrganismos con filtro ámbito → ?ambito=Partidario', () => {
+  it('getOrganismos con filtro ámbito ("tiene organización partidaria") → ?ambito=Partidario', () => {
     svc.getOrganismos(q({ ambito: 'Partidario' })).subscribe();
     const req = http.expectOne((r) => r.url === BASE && r.params.get('ambito') === 'Partidario');
     expect(req.request.method).toBe('GET');
@@ -52,6 +51,20 @@ describe('OrganismosService', () => {
   it('getReferencias(query) → GET /referencias', () => {
     svc.getReferencias(q()).subscribe();
     expect(http.expectOne((r) => r.url === `${BASE}/referencias`).request.method).toBe('GET');
+  });
+
+  it('getOrganizacionesEstatales() → GET /organizaciones-estatales', () => {
+    let recibido: any[] = [];
+    svc.getOrganizacionesEstatales().subscribe((x) => (recibido = x));
+    const req = http.expectOne(`${BASE}/organizaciones-estatales`);
+    expect(req.request.method).toBe('GET');
+    req.flush([{ id: 4, tipoOrganizacionId: 2, nombre: 'Entes Autónomos' }]);
+    expect(recibido[0].nombre).toBe('Entes Autónomos');
+  });
+
+  it('getOrganizacionesPartidarias() → GET /organizaciones-partidarias', () => {
+    svc.getOrganizacionesPartidarias().subscribe();
+    expect(http.expectOne(`${BASE}/organizaciones-partidarias`).request.method).toBe('GET');
   });
 
   it('getTipos() → GET /tipos', () => {
@@ -77,24 +90,27 @@ describe('OrganismosService', () => {
     expect(recibido!.items[0].idContacto).toBe(99);
   });
 
-  it('createOrganismo() → POST /organismos (ámbito en el body)', () => {
+  it('createOrganismo() → POST /organismos con clasificaciones e info (sin ámbito)', () => {
     svc.createOrganismo(organismo()).subscribe();
     const req = http.expectOne(BASE);
     expect(req.request.method).toBe('POST');
-    expect(req.request.body.ambito).toBe('Estatal');
+    expect(req.request.body.ambito).toBeUndefined();
+    expect(req.request.body.organizacionEstatalId).toBe(4);
+    expect(req.request.body.organizacionPartidariaId).toBe(6);
+    expect(req.request.body.infoOrganizacionId).toBe(131);
     req.flush({ id: 1, ...organismo() });
   });
 
-  it('updateOrganismo(id) → PUT /organismos/{id} (sin ámbito)', () => {
+  it('updateOrganismo(id) → PUT /organismos/{id} con el mismo payload que el alta', () => {
     svc.updateOrganismo(5, organismoUpd()).subscribe();
     const req = http.expectOne(`${BASE}/5`);
     expect(req.request.method).toBe('PUT');
-    expect(req.request.body.ambito).toBeUndefined();
-    req.flush({ id: 5, ambito: 'Estatal', ...organismoUpd() });
+    expect(req.request.body).toEqual(organismo());
+    req.flush({ id: 5, ...organismoUpd() });
   });
 
   it('createInfo() → POST /info', () => {
-    const input: InfoOrganizacionInput = { tipoOrganizacionId: 1, organismoId: 4, direccion: 'x' };
+    const input: InfoOrganizacionInput = { tipoOrganizacionId: 1, direccion: 'x' };
     svc.createInfo(input).subscribe();
     const req = http.expectOne(`${BASE}/info`);
     expect(req.request.method).toBe('POST');

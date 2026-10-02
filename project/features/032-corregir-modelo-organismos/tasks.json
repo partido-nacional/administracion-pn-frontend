@@ -1,0 +1,120 @@
+{
+  "feature": "corregir-modelo-organismos",
+  "local_config": {
+    "database": null
+  },
+  "stats": {
+    "total": 4,
+    "done": 4,
+    "by_layer": {
+      "1": 2,
+      "2": 2
+    }
+  },
+  "execution_strategy": "batched",
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "Modelos y servicio",
+      "description": "Contrato nuevo de OrganismoDto/Input e Info; endpoints de catálogos en OrganismosService.",
+      "status": "done",
+      "layer": 1,
+      "depends_on": [],
+      "files": [
+        "src/app/core/models/organismos.ts",
+        "src/app/core/services/organismos.service.ts",
+        "src/app/core/services/organismos.service.spec.ts"
+      ],
+      "acceptance_criteria": [
+        "BR-1",
+        "GATE: ng test"
+      ],
+      "references": [
+        "US-1",
+        "US-2",
+        "US-3"
+      ]
+    },
+    {
+      "id": "TASK-002",
+      "title": "Vista Organismos",
+      "description": "Columna Clasificación, filtro ambito, form con organizaciones e info, tipo opcional, Info sin organismo, CSV.",
+      "status": "done",
+      "layer": 1,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "files": [
+        "src/app/features/organismos/organismos.component.ts",
+        "src/app/features/organismos/organismos.component.spec.ts"
+      ],
+      "acceptance_criteria": [
+        "AC-1..AC-8",
+        "GATE: ng test + ng build"
+      ],
+      "references": [
+        "US-1",
+        "US-2",
+        "US-3"
+      ]
+    },
+    {
+      "id": "TASK-003",
+      "title": "Code/security/performance review",
+      "description": "Revisión de la capa 1 (sin N+1 de catálogos: se cargan una vez).",
+      "status": "done",
+      "layer": 2,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002"
+      ],
+      "files": [],
+      "acceptance_criteria": [
+        "Sin hallazgos"
+      ],
+      "references": [
+        "US-2"
+      ],
+      "result": "Sin hallazgos: catálogos cargados una sola vez en el constructor; sin HTML dinámico inseguro (interpolación Angular); payloads tipados."
+    },
+    {
+      "id": "TASK-004",
+      "title": "Specs vivas",
+      "description": "Actualizar la spec viva de organismos del front.",
+      "status": "done",
+      "layer": 2,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002"
+      ],
+      "files": [
+        "project/specs/"
+      ],
+      "acceptance_criteria": [
+        "Spec alineada"
+      ],
+      "references": [
+        "US-1"
+      ],
+      "result": "Línea de validación de referencias corregida + sección 'Actualización feature 032'. Reescritura completa → DEBT-017."
+    }
+  ],
+  "dependency_graph": {
+    "by_layer": {
+      "1": {
+        "level_0": [
+          "TASK-001"
+        ],
+        "level_1": [
+          "TASK-002"
+        ]
+      },
+      "2": {
+        "level_0": [
+          "TASK-003",
+          "TASK-004"
+        ]
+      }
+    }
+  }
+}
