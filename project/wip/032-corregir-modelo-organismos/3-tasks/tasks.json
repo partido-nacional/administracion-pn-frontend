@@ -5,7 +5,7 @@
   },
   "stats": {
     "total": 4,
-    "done": 0,
+    "done": 4,
     "by_layer": {
       "1": 2,
       "2": 2
@@ -17,7 +17,7 @@
       "id": "TASK-001",
       "title": "Modelos y servicio",
       "description": "Contrato nuevo de OrganismoDto/Input e Info; endpoints de catálogos en OrganismosService.",
-      "status": "pending",
+      "status": "done",
       "layer": 1,
       "depends_on": [],
       "files": [
@@ -39,7 +39,7 @@
       "id": "TASK-002",
       "title": "Vista Organismos",
       "description": "Columna Clasificación, filtro ambito, form con organizaciones e info, tipo opcional, Info sin organismo, CSV.",
-      "status": "pending",
+      "status": "done",
       "layer": 1,
       "depends_on": [
         "TASK-001"
@@ -62,7 +62,7 @@
       "id": "TASK-003",
       "title": "Code/security/performance review",
       "description": "Revisión de la capa 1 (sin N+1 de catálogos: se cargan una vez).",
-      "status": "pending",
+      "status": "done",
       "layer": 2,
       "depends_on": [
         "TASK-001",
@@ -74,13 +74,14 @@
       ],
       "references": [
         "US-2"
-      ]
+      ],
+      "result": "Sin hallazgos: catálogos cargados una sola vez en el constructor; sin HTML dinámico inseguro (interpolación Angular); payloads tipados."
     },
     {
       "id": "TASK-004",
       "title": "Specs vivas",
       "description": "Actualizar la spec viva de organismos del front.",
-      "status": "pending",
+      "status": "done",
       "layer": 2,
       "depends_on": [
         "TASK-001",
@@ -94,7 +95,8 @@
       ],
       "references": [
         "US-1"
-      ]
+      ],
+      "result": "Línea de validación de referencias corregida + sección 'Actualización feature 032'. Reescritura completa → DEBT-017."
     }
   ],
   "dependency_graph": {
