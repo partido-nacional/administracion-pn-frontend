@@ -10,7 +10,8 @@ project_type:
 vision_prompt_shown: true
 mirror: administracion-pn-backend → 035-corregir-modelo-organismos
 
-Current Stage: implementation
+Current Stage: completed
+archived_at: 2026-10-02
 
 stages:
   functional:
