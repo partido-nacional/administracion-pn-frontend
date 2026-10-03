@@ -10,7 +10,7 @@ import { GridQuery, SortOrder, DEFAULT_PAGE_SIZE } from '../../core/models/paged
 import { toggleSort, sortArrow } from '../../shared/grid/grid-sort';
 import { RouterLink } from '@angular/router';
 import {
-  Ambito, OrganismoDto, OrganismoUpdateInput,
+  OrganismoDto, OrganismoInput, OrganizacionDto,
   TipoOrganizacionDto, InfoOrganizacionDto, InfoOrganizacionInput,
   IntegranteOrg,
 } from '../../core/models/organismos';
@@ -74,7 +74,7 @@ import { DEPARTAMENTOS } from '../../core/departamentos';
             </tr>
             <tr>
               <th class="sortable" (click)="sortTodos('id')">Id {{ arrowTodos('id') }}</th>
-              <th class="sortable" (click)="sortTodos('ambito')">Ámbito {{ arrowTodos('ambito') }}</th>
+              <th title="Organización estatal y/o partidaria (un organismo puede tener ambas)">Clasificación</th>
               <th class="sortable" (click)="sortTodos('nombre')">Nombre {{ arrowTodos('nombre') }}</th>
               <th>Descripción</th><th>Dirección</th>
               <th>Ciudad</th>
@@ -88,7 +88,11 @@ import { DEPARTAMENTOS } from '../../core/departamentos';
             @for (o of organismos(); track o.id) {
               <tr class="clickable" [class.selected]="isExpanded(o)" (click)="toggleOrg(o)">
                 <td>{{ isExpanded(o) ? '▾' : '▸' }} {{ o.id }}</td>
-                <td><span class="badge" [class.amb-est]="o.ambito==='Estatal'" [class.amb-part]="o.ambito==='Partidario'">{{ o.ambito }}</span></td>
+                <td class="clasif">
+                  @if (o.organizacionEstatalNombre) { <span class="badge amb-est" title="Organización estatal">{{ o.organizacionEstatalNombre }}</span> }
+                  @if (o.organizacionPartidariaNombre) { <span class="badge amb-part" title="Organización partidaria">{{ o.organizacionPartidariaNombre }}</span> }
+                  @if (!o.organizacionEstatalNombre && !o.organizacionPartidariaNombre) { — }
+                </td>
                 <td><strong>{{ o.nombre }}</strong></td>
                 <td>{{ o.descripcion }}</td>
                 <td>{{ o.direccion }}</td>
@@ -169,7 +173,6 @@ import { DEPARTAMENTOS } from '../../core/departamentos';
           <thead>
             <tr class="filter-row">
               <th></th>
-              <th></th>
               <th><input class="column-filter" [ngModel]="fInfDir()" (ngModelChange)="setInfoFilter(fInfDir, $event)" placeholder="Filtrar..."></th>
               <th></th>
               <th><input class="column-filter" [ngModel]="fInfMail()" (ngModelChange)="setInfoFilter(fInfMail, $event)" placeholder="Filtrar..."></th>
@@ -177,7 +180,7 @@ import { DEPARTAMENTOS } from '../../core/departamentos';
               <th></th>
             </tr>
             <tr>
-              <th>Id Info.</th><th>Id Tipo</th><th>Id Organismo</th>
+              <th>Id Info.</th><th>Id Tipo</th>
               <th>Dirección</th><th>Teléfono</th><th>Email</th><th>Observaciones</th><th></th>
             </tr>
           </thead>
@@ -186,7 +189,6 @@ import { DEPARTAMENTOS } from '../../core/departamentos';
               <tr>
                 <td>{{ i.id }}</td>
                 <td>{{ i.tipoOrganizacionId ?? '—' }}</td>
-                <td>{{ i.organismoId ?? '—' }}</td>
                 <td>{{ i.direccion || '—' }}</td>
                 <td>{{ i.telefono || '—' }}</td>
                 <td>{{ i.email || '—' }}</td>
@@ -201,7 +203,7 @@ import { DEPARTAMENTOS } from '../../core/departamentos';
                 </td>
               </tr>
             } @empty {
-              <tr><td colspan="8"><div class="empty-state"><div class="empty-state-text">Sin resultados</div></div></td></tr>
+              <tr><td colspan="7"><div class="empty-state"><div class="empty-state-text">Sin resultados</div></div></td></tr>
             }
           </tbody>
         </table>
@@ -220,19 +222,26 @@ import { DEPARTAMENTOS } from '../../core/departamentos';
         (save)="guardar()" (cancel)="cerrarModal()">
             @if (modalKind()==='organismo') {
               <div class="nv-grid">
-                <div class="fg"><label>Ámbito *</label>
-                  <select [(ngModel)]="form.ambito" name="o-amb" [disabled]="modalMode()==='editar'">
-                    <option value="Estatal">Estatal</option>
-                    <option value="Partidario">Partidario</option>
+                <div class="fg"><label>Organización estatal</label>
+                  <select [(ngModel)]="form.organizacionEstatalId" name="o-est">
+                    <option [ngValue]="null">— Ninguna —</option>
+                    @for (x of orgEstatales(); track x.id) { <option [ngValue]="x.id">{{ x.nombre }}</option> }
                   </select>
                 </div>
-                <div class="fg"><label>Tipo de Organización *</label>
+                <div class="fg"><label>Organización partidaria</label>
+                  <select [(ngModel)]="form.organizacionPartidariaId" name="o-par">
+                    <option [ngValue]="null">— Ninguna —</option>
+                    @for (x of orgPartidarias(); track x.id) { <option [ngValue]="x.id">{{ x.nombre }}</option> }
+                  </select>
+                </div>
+                <div class="fg"><label>Tipo de Organización</label>
                   <select [(ngModel)]="form.tipoOrganizacionId" name="o-tipo">
-                    <option [ngValue]="null">— Seleccioná —</option>
+                    <option [ngValue]="null">—</option>
                     @for (t of tipos(); track t.id) { <option [ngValue]="t.id">{{ t.nombre }}</option> }
                   </select>
                 </div>
                 <div class="fg full"><label>Nombre *</label><input [(ngModel)]="form.nombre" name="o-nombre"></div>
+                <div class="fg"><label>Info de organización (Id)</label><input type="number" [(ngModel)]="form.infoOrganizacionId" name="o-info"></div>
                 <div class="fg"><label>Nombre Compañía</label><input [(ngModel)]="form.nombreCompania" name="o-comp"></div>
                 <div class="fg"><label>Categoría</label><input [(ngModel)]="form.categoria" name="o-cat"></div>
                 <div class="fg full"><label>Descripción</label><input [(ngModel)]="form.descripcion" name="o-desc"></div>
@@ -257,7 +266,6 @@ import { DEPARTAMENTOS } from '../../core/departamentos';
                     @for (t of tipos(); track t.id) { <option [ngValue]="t.id">{{ t.nombre }}</option> }
                   </select>
                 </div>
-                <div class="fg"><label>Organismo ID</label><input type="number" [(ngModel)]="form.organismoId" name="i-org"></div>
                 <div class="fg full"><label>Dirección</label><input [(ngModel)]="form.direccion" name="i-dir"></div>
                 <div class="fg"><label>Teléfono</label><input [(ngModel)]="form.telefono" name="i-tel"></div>
                 <div class="fg"><label>Email</label><input [(ngModel)]="form.email" name="i-mail"></div>
@@ -271,6 +279,8 @@ import { DEPARTAMENTOS } from '../../core/departamentos';
     .topbar-inline { display:flex; justify-content:flex-end; gap:8px; margin-bottom:16px; }
     .badge.amb-est { background:#e6f0ff; color:#1a4f8a; }
     .badge.amb-part { background:#fdeede; color:#8a5a1a; }
+    td.clasif { white-space:nowrap; }
+    td.clasif .badge + .badge { margin-left:4px; }
     th.sortable { cursor:pointer; user-select:none; white-space:nowrap; }
     th.sortable:hover { color:var(--primary, #1a4f8a); }
     tr.clickable { cursor:pointer; }
@@ -294,6 +304,8 @@ export class OrganismosComponent {
 
   tab = signal<Tab>('todos');
   tipos = signal<TipoOrganizacionDto[]>([]);
+  orgEstatales = signal<OrganizacionDto[]>([]);
+  orgPartidarias = signal<OrganizacionDto[]>([]);
 
   // Lista canónica + 'Nacional' para organismos de alcance nacional (feature 030, EC-5).
   departamentos = [...DEPARTAMENTOS, 'Nacional'];
@@ -343,6 +355,8 @@ export class OrganismosComponent {
   constructor() {
     this.titleSvc.set('Organismos');
     this.svc.getTipos().subscribe(x => this.tipos.set(x));
+    this.svc.getOrganizacionesEstatales().subscribe(x => this.orgEstatales.set(x));
+    this.svc.getOrganizacionesPartidarias().subscribe(x => this.orgPartidarias.set(x));
     this.loadTodos();
   }
 
@@ -443,15 +457,17 @@ export class OrganismosComponent {
 
   // ── Organismo (alta/edición) ─────────────────────────────
   abrirNuevoOrganismo() {
-    this.form = { ambito: 'Estatal', tipoOrganizacionId: null, nombre: '', nombreCompania: '', categoria: '', descripcion: '', direccion: '', ciudad: '', departamento: '', pais: '', ordenDpto: 0, observaciones: '', art44: false };
+    this.form = { tipoOrganizacionId: null, organizacionEstatalId: null, organizacionPartidariaId: null, infoOrganizacionId: null, nombre: '', nombreCompania: '', categoria: '', descripcion: '', direccion: '', ciudad: '', departamento: '', pais: '', ordenDpto: 0, observaciones: '', art44: false };
     this.modalError.set(''); this.editId.set(null);
     this.modalMode.set('nueva'); this.modalKind.set('organismo');
   }
 
   abrirEditarOrganismo(o: OrganismoDto) {
     this.form = {
-      ambito: o.ambito,
       tipoOrganizacionId: o.tipoOrganizacionId ?? null,
+      organizacionEstatalId: o.organizacionEstatalId ?? null,
+      organizacionPartidariaId: o.organizacionPartidariaId ?? null,
+      infoOrganizacionId: o.infoOrganizacionId ?? null,
       nombre: o.nombre || '',
       nombreCompania: o.nombreCompania || '',
       categoria: o.categoria || '',
@@ -470,7 +486,7 @@ export class OrganismosComponent {
 
   // ── Info (alta/edición) ──────────────────────────────────
   abrirNuevaInfo() {
-    this.form = { tipoOrganizacionId: null, organismoId: null, direccion: '', telefono: '', email: '', observaciones: '' };
+    this.form = { tipoOrganizacionId: null, direccion: '', telefono: '', email: '', observaciones: '' };
     this.modalError.set(''); this.editId.set(null);
     this.modalMode.set('nueva'); this.modalKind.set('info');
   }
@@ -478,7 +494,6 @@ export class OrganismosComponent {
   abrirEditarInfo(i: InfoOrganizacionDto) {
     this.form = {
       tipoOrganizacionId: i.tipoOrganizacionId ?? null,
-      organismoId: i.organismoId ?? null,
       direccion: i.direccion || '',
       telefono: i.telefono || '',
       email: i.email || '',
@@ -501,11 +516,14 @@ export class OrganismosComponent {
 
   private guardarOrganismo() {
     if (!this.form.nombre?.trim()) { this.modalError.set('El nombre es obligatorio.'); return; }
-    if (this.form.tipoOrganizacionId == null) { this.modalError.set('El tipo de organización es obligatorio.'); return; }
-    const comun: OrganismoUpdateInput = {
+    // Mismo payload para alta y edición (backend 035): sin ámbito; clasificaciones, tipo e info opcionales.
+    const input: OrganismoInput = {
       nombre: this.form.nombre.trim(),
       nombreCompania: this.form.nombreCompania || null,
-      tipoOrganizacionId: Number(this.form.tipoOrganizacionId),
+      tipoOrganizacionId: this.num(this.form.tipoOrganizacionId),
+      organizacionEstatalId: this.num(this.form.organizacionEstatalId),
+      organizacionPartidariaId: this.num(this.form.organizacionPartidariaId),
+      infoOrganizacionId: this.num(this.form.infoOrganizacionId),
       categoria: this.form.categoria || null,
       descripcion: this.form.descripcion || null,
       direccion: this.form.direccion || null,
@@ -519,8 +537,8 @@ export class OrganismosComponent {
     this.modalBusy.set(true); this.modalError.set('');
     const id = this.editId();
     const req = this.modalMode() === 'editar' && id != null
-      ? this.svc.updateOrganismo(id, comun)
-      : this.svc.createOrganismo({ ambito: this.form.ambito as Ambito, ...comun });
+      ? this.svc.updateOrganismo(id, input)
+      : this.svc.createOrganismo(input);
     req.subscribe({
       next: () => { this.modalBusy.set(false); this.cerrarModal(); this.loadTodos(); },
       error: (err) => { this.modalBusy.set(false); this.modalError.set(this.extractError(err, 'No se pudo guardar el organismo.')); },
@@ -530,7 +548,6 @@ export class OrganismosComponent {
   private guardarInfo() {
     const input: InfoOrganizacionInput = {
       tipoOrganizacionId: this.num(this.form.tipoOrganizacionId),
-      organismoId: this.num(this.form.organismoId),
       direccion: this.form.direccion || null,
       telefono: this.form.telefono || null,
       email: this.form.email || null,
@@ -553,7 +570,8 @@ export class OrganismosComponent {
     const t = this.tab();
     if (t === 'todos') {
       const cols: CsvColumn<OrganismoDto>[] = [
-        { get: 'id', label: 'ID' }, { get: 'ambito', label: 'Ámbito' }, { get: 'nombre', label: 'Nombre' },
+        { get: 'id', label: 'ID' }, { get: 'organizacionEstatalNombre', label: 'Org. estatal' },
+        { get: 'organizacionPartidariaNombre', label: 'Org. partidaria' }, { get: 'nombre', label: 'Nombre' },
         { get: 'descripcion', label: 'Descripción' }, { get: 'direccion', label: 'Dirección' },
         { get: 'ciudad', label: 'Ciudad' }, { get: 'departamento', label: 'Departamento' },
         { get: 'pais', label: 'País' }, { get: 'art44', label: 'Art. 44' },
@@ -563,7 +581,7 @@ export class OrganismosComponent {
     } else if (t === 'info') {
       const cols: CsvColumn<InfoOrganizacionDto>[] = [
         { get: 'id', label: 'Id Info.' }, { get: 'tipoOrganizacionId', label: 'Id Tipo' },
-        { get: 'organismoId', label: 'Id Organismo' }, { get: 'direccion', label: 'Dirección' },
+        { get: 'direccion', label: 'Dirección' },
         { get: 'telefono', label: 'Teléfono' }, { get: 'email', label: 'Email' },
         { get: 'observaciones', label: 'Observaciones' }
       ];

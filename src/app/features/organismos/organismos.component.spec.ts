@@ -15,17 +15,23 @@ describe('OrganismosComponent', () => {
   let cmp: OrganismosComponent;
   let svc: jasmine.SpyObj<OrganismosService>;
 
-  const orgEstatal: OrganismoDto = { id: 3, ambito: 'Estatal', nombre: 'Min. X', tipoOrganizacionId: 2, art44: false, ordenDpto: 1 };
-  const orgPart: OrganismoDto = { id: 4, ambito: 'Partidario', nombre: 'Comité Y', tipoOrganizacionId: 5, art44: true, ordenDpto: 0 };
-  const info: InfoOrganizacionDto = { id: 8, tipoOrganizacionId: 2, organismoId: 3, direccion: 'Calle 1', telefono: '099', email: 'a@b.com', observaciones: null };
+  const orgEstatal: OrganismoDto = { id: 3, nombre: 'Min. X', tipoOrganizacionId: 2, organizacionEstatalId: 1, organizacionEstatalNombre: 'Presidencia', art44: false, ordenDpto: 1 };
+  const orgPart: OrganismoDto = { id: 4, nombre: 'Comité Y', tipoOrganizacionId: 5, organizacionPartidariaId: 9, organizacionPartidariaNombre: 'Comisión Departamental', art44: true, ordenDpto: 0 };
+  const orgAmbas: OrganismoDto = { id: 40, nombre: 'AFE', tipoOrganizacionId: 2, organizacionEstatalId: 4, organizacionEstatalNombre: 'Entes Autónomos',
+    organizacionPartidariaId: 6, organizacionPartidariaNombre: 'Agrupación de Gobierno', infoOrganizacionId: 131, art44: true, ordenDpto: 0 };
+  const orgSinClasif: OrganismoDto = { id: 583, nombre: 'Seccional de Atlántida', tipoOrganizacionId: null, art44: false, ordenDpto: 0 };
+  const info: InfoOrganizacionDto = { id: 8, tipoOrganizacionId: 2, direccion: 'Calle 1', telefono: '099', email: 'a@b.com', observaciones: null };
   const integrante: IntegranteOrg = { idContacto: 99, credCivica: 'ABC12345', apellidos: 'Pérez', nombres: 'Juan', celular: '099', mail: 'j@x.com', posicion: 'Titular', organismo: 'Min. X', departamento: 'Montevideo' };
 
   beforeEach(() => {
     svc = jasmine.createSpyObj('OrganismosService', [
       'getOrganismos', 'getInfo', 'getReferencias', 'getTipos', 'getIntegrantes',
+      'getOrganizacionesEstatales', 'getOrganizacionesPartidarias',
       'createOrganismo', 'updateOrganismo', 'createInfo', 'updateInfo',
     ]);
-    svc.getOrganismos.and.returnValue(of(paged([orgEstatal, orgPart])));
+    svc.getOrganismos.and.returnValue(of(paged([orgEstatal, orgPart, orgAmbas, orgSinClasif])));
+    svc.getOrganizacionesEstatales.and.returnValue(of([{ id: 4, tipoOrganizacionId: 2, nombre: 'Entes Autónomos' }]));
+    svc.getOrganizacionesPartidarias.and.returnValue(of([{ id: 6, tipoOrganizacionId: 1, nombre: 'Agrupación de Gobierno' }]));
     svc.getInfo.and.returnValue(of(paged([info])));
     svc.getReferencias.and.returnValue(of(paged([])));
     svc.getTipos.and.returnValue(of([{ id: 2, nombre: 'Ministerio' }, { id: 5, nombre: 'Comité' }]));
@@ -49,8 +55,8 @@ describe('OrganismosComponent', () => {
 
   it('carga la primera página de organismos en el constructor', () => {
     expect(svc.getOrganismos).toHaveBeenCalled();
-    expect(cmp.organismos().length).toBe(2);
-    expect(cmp.orgTotal()).toBe(2);
+    expect(cmp.organismos().length).toBe(4);
+    expect(cmp.orgTotal()).toBe(4);
   });
 
   it('carga tipos para el select en el constructor', () => {
@@ -58,45 +64,83 @@ describe('OrganismosComponent', () => {
     expect(cmp.tipos().length).toBe(2);
   });
 
-  it('abrirNuevoOrganismo() abre el modal en ámbito Estatal', () => {
+  it('carga los catálogos de organizaciones para los selects (AC-5)', () => {
+    expect(cmp.orgEstatales()[0].nombre).toBe('Entes Autónomos');
+    expect(cmp.orgPartidarias()[0].nombre).toBe('Agrupación de Gobierno');
+  });
+
+  it('columna Clasificación: badges estatal y partidaria; sin clasificación → "—" (AC-1, EC-1)', () => {
+    const filas: HTMLElement[] = Array.from(fixture.nativeElement.querySelectorAll('tbody tr.clickable'));
+    const clasif = (i: number) => (filas[i].querySelector('td.clasif') as HTMLElement).textContent!.replace(/\s+/g, ' ').trim();
+    expect(clasif(2)).toContain('Entes Autónomos');
+    expect(clasif(2)).toContain('Agrupación de Gobierno');
+    expect(filas[2].querySelectorAll('td.clasif .badge').length).toBe(2);
+    expect(clasif(3)).toBe('—');
+  });
+
+  it('abrirNuevoOrganismo() abre el modal sin clasificación ni info', () => {
     cmp.abrirNuevoOrganismo();
     expect(cmp.modalKind()).toBe('organismo');
     expect(cmp.modalMode()).toBe('nueva');
-    expect(cmp.form.ambito).toBe('Estatal');
+    expect(cmp.form.organizacionEstatalId).toBeNull();
+    expect(cmp.form.organizacionPartidariaId).toBeNull();
+    expect(cmp.form.infoOrganizacionId).toBeNull();
+    expect(cmp.form.ambito).toBeUndefined();
   });
 
-  it('abrirEditarOrganismo() toma el ámbito de la fila', () => {
-    cmp.abrirEditarOrganismo(orgPart);
-    expect(cmp.form.ambito).toBe('Partidario');
-    expect(cmp.editId()).toBe(4);
+  it('abrirEditarOrganismo() toma clasificaciones e info de la fila', () => {
+    cmp.abrirEditarOrganismo(orgAmbas);
+    expect(cmp.form.organizacionEstatalId).toBe(4);
+    expect(cmp.form.organizacionPartidariaId).toBe(6);
+    expect(cmp.form.infoOrganizacionId).toBe(131);
+    expect(cmp.editId()).toBe(40);
   });
 
-  it('alta de organismo manda el ámbito elegido en el body (Partidario)', () => {
+  it('alta de organismo manda clasificaciones e info, sin ámbito (BR-1)', () => {
     cmp.abrirNuevoOrganismo();
-    cmp.form.ambito = 'Partidario';
     cmp.form.nombre = 'Nuevo';
-    cmp.form.tipoOrganizacionId = 5;
+    cmp.form.organizacionEstatalId = 4;
+    cmp.form.organizacionPartidariaId = 6;
+    cmp.form.infoOrganizacionId = '131';
     cmp.guardar();
-    expect(svc.createOrganismo).toHaveBeenCalledWith(jasmine.objectContaining({ ambito: 'Partidario', nombre: 'Nuevo', tipoOrganizacionId: 5 }));
+    expect(svc.createOrganismo).toHaveBeenCalledWith(jasmine.objectContaining({
+      nombre: 'Nuevo', organizacionEstatalId: 4, organizacionPartidariaId: 6, infoOrganizacionId: 131, tipoOrganizacionId: null,
+    }));
+    expect((svc.createOrganismo.calls.mostRecent().args[0] as any).ambito).toBeUndefined();
     expect(cmp.modalKind()).toBeNull();
   });
 
-  it('edición de organismo llama updateOrganismo con id (sin ámbito)', () => {
+  it('edición de organismo llama updateOrganismo con id y el mismo payload (sin ámbito)', () => {
     cmp.abrirEditarOrganismo(orgEstatal);
     cmp.guardar();
-    expect(svc.updateOrganismo).toHaveBeenCalledWith(3, jasmine.objectContaining({ nombre: 'Min. X' }));
+    expect(svc.updateOrganismo).toHaveBeenCalledWith(3, jasmine.objectContaining({ nombre: 'Min. X', organizacionEstatalId: 1, organizacionPartidariaId: null }));
     const arg = svc.updateOrganismo.calls.mostRecent().args[1] as any;
     expect(arg.ambito).toBeUndefined();
   });
 
-  it('valida tipoOrganizacionId obligatorio', () => {
+  it('el tipo de organización es opcional (AC-7)', () => {
     cmp.abrirNuevoOrganismo();
     cmp.form.nombre = 'Sin tipo';
     cmp.form.tipoOrganizacionId = null;
     cmp.guardar();
+    expect(svc.createOrganismo).toHaveBeenCalledWith(jasmine.objectContaining({ nombre: 'Sin tipo', tipoOrganizacionId: null }));
+  });
+
+  it('el nombre sigue siendo obligatorio', () => {
+    cmp.abrirNuevoOrganismo();
+    cmp.form.nombre = '  ';
+    cmp.guardar();
     expect(svc.createOrganismo).not.toHaveBeenCalled();
-    expect(cmp.modalError()).toContain('tipo');
-    expect(cmp.modalKind()).toBe('organismo');
+    expect(cmp.modalError()).toContain('nombre');
+  });
+
+  it('filtro de clasificación manda ?ambito (AC-2)', (done) => {
+    svc.getOrganismos.calls.reset();
+    cmp.setOrgFilter(cmp.fOrgAmb, 'Partidario');
+    setTimeout(() => {
+      expect(svc.getOrganismos).toHaveBeenCalledWith(jasmine.objectContaining({ filters: jasmine.objectContaining({ ambito: 'Partidario' }) }));
+      done();
+    }, 350);
   });
 
   it('error del backend deja el modal abierto y muestra el mensaje', () => {
@@ -109,12 +153,13 @@ describe('OrganismosComponent', () => {
     expect(cmp.modalError()).toBe('Tipo inválido');
   });
 
-  it('alta de info llama createInfo y refresca', () => {
+  it('alta de info llama createInfo sin organismoId y refresca (AC-8)', () => {
     svc.getInfo.calls.reset();
     cmp.abrirNuevaInfo();
     cmp.form.direccion = 'Nueva dir';
     cmp.guardar();
     expect(svc.createInfo).toHaveBeenCalledTimes(1);
+    expect('organismoId' in (svc.createInfo.calls.mostRecent().args[0] as any)).toBeFalse();
     expect(cmp.modalKind()).toBeNull();
     expect(svc.getInfo).toHaveBeenCalled();
   });

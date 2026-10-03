@@ -308,3 +308,16 @@
   `departamentoAgrupacion` queda vacío al pasar a ficha de adhesión.
 - **Fix propuesto**: buscar con `normDepto` y precargar el valor canónico: `DEPARTAMENTOS.find(d => normDepto(d) === normDepto(c.departamento))`.
 - **Complexity**: S
+
+### DEBT-017: `project/specs/features/organismos.md` describe una vista vieja (stubs, tabs que ya no existen)
+- **Priority**: Low
+- **Status**: pending
+- **Created**: 2026-10-02
+- **Origin**: feature 032-corregir-modelo-organismos (al actualizar la spec)
+- **Context**: el documento todavía describe las grillas como STUB, las tabs "integrantes" y "referencias"
+  (ya quitadas) y modelos locales (`InfoOrg` con `idEstatal`/`idPartidario`) que no existen. Las features
+  030 y 032 agregaron secciones de actualización al final, pero el cuerpo quedó desalineado. Espejo del
+  DEBT-022 del backend (resuelto en su 035).
+- **Fix propuesto**: reescribir el documento contra el código actual (como se hizo con listados en la 031).
+- **Affected Files**: project/specs/features/organismos.md
+- **Complexity**: M
