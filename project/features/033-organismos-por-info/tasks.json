@@ -5,7 +5,7 @@
   },
   "stats": {
     "total": 3,
-    "done": 0,
+    "done": 3,
     "by_layer": {
       "1": 2,
       "2": 1
@@ -17,7 +17,7 @@
       "id": "TASK-001",
       "title": "Modelo y pantalla info → organismos → integrantes",
       "description": "Reescritura de organismos.component: sin tabs, acordeón de dos niveles, buscador, fila Sin info, CSV.",
-      "status": "pending",
+      "status": "done",
       "layer": 1,
       "depends_on": [],
       "files": [
@@ -39,7 +39,7 @@
       "id": "TASK-002",
       "title": "Tests",
       "description": "Spec del componente reescrito.",
-      "status": "pending",
+      "status": "done",
       "layer": 1,
       "depends_on": [
         "TASK-001"
@@ -60,7 +60,7 @@
       "id": "TASK-003",
       "title": "Review y spec viva",
       "description": "Code/perf/security review; sección 033 en organismos.md.",
-      "status": "pending",
+      "status": "done",
       "layer": 2,
       "depends_on": [
         "TASK-001",
@@ -74,7 +74,8 @@
       ],
       "references": [
         "US-1"
-      ]
+      ],
+      "result": "Sin hallazgos: organismos y catálogos cargados bajo demanda con caché; interpolación Angular (sin innerHTML); spec viva con sección 033."
     }
   ],
   "dependency_graph": {
