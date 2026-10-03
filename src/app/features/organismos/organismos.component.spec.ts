@@ -222,6 +222,20 @@ describe('OrganismosComponent', () => {
     expect(svc.getInfo).toHaveBeenCalled();
   });
 
+  it('feature 034: la info guarda su nombre propio', () => {
+    cmp.abrirEditarInfo(gob);
+    expect(cmp.form.nombre).toBe('Agrupación de Gobierno');
+    cmp.form.nombre = '  PARTIDO NACIONAL - Agrupación Parlamentaria ';
+    cmp.guardar();
+    expect(svc.updateInfo).toHaveBeenCalledWith(131, jasmine.objectContaining({ nombre: 'PARTIDO NACIONAL - Agrupación Parlamentaria' }));
+  });
+
+  it('feature 034: el organismo no manda nombreCompania (el nombre es de la info)', () => {
+    cmp.abrirEditarOrganismo(afe);
+    cmp.guardar();
+    expect('nombreCompania' in (svc.updateOrganismo.calls.mostRecent().args[1] as any)).toBeFalse();
+  });
+
   it('error del backend deja el modal abierto con el mensaje', () => {
     svc.createOrganismo.and.returnValue(throwError(() => new HttpErrorResponse({ status: 400, error: { message: 'Info inválida' } })));
     cmp.abrirNuevoOrganismo();

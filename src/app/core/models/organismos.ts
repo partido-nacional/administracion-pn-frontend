@@ -17,7 +17,6 @@ export type Ambito = 'Estatal' | 'Partidario';
 export interface OrganismoDto {
   id: number;
   nombre: string;
-  nombreCompania?: string | null;
   tipoOrganizacionId?: number | null;
   organizacionEstatalId?: number | null;
   organizacionEstatalNombre?: string | null;
@@ -38,7 +37,6 @@ export interface OrganismoDto {
 /** Payload de alta y edición de un Organismo (POST /organismos y PUT /organismos/{id}). */
 export interface OrganismoInput {
   nombre: string;
-  nombreCompania?: string | null;
   tipoOrganizacionId?: number | null;
   organizacionEstatalId?: number | null;
   organizacionPartidariaId?: number | null;
@@ -108,8 +106,8 @@ export interface ReferenciaOrganismo {
 
 /**
  * Info de organización (grupo compartido: varios organismos apuntan a la misma info).
- * `nombre` y `cantidadOrganismos` los deriva el backend de sus organismos (feature 033 / backend 036):
- * `nombre` es null si no tiene organismos; la cantidad respeta el filtro `nombreOrganismo`.
+ * `nombre` es el nombre propio de la info (feature 034 / backend 037), distinto del de sus organismos.
+ * `cantidadOrganismos` respeta el filtro `nombreOrganismo` (backend 036).
  */
 export interface InfoOrganizacionDto {
   id: number;
@@ -124,6 +122,7 @@ export interface InfoOrganizacionDto {
 
 /** Payload de alta/edición de InfoOrganización. */
 export interface InfoOrganizacionInput {
+  nombre?: string | null;
   tipoOrganizacionId?: number | null;
   direccion?: string | null;
   telefono?: string | null;
