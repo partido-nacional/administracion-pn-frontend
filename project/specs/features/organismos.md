@@ -292,3 +292,5 @@ El filtro y el formulario de departamento usan `[...DEPARTAMENTOS, 'Nacional']` 
   ("Info #id" solo si está vacío).
 - **Alta de integrante** (`integrante-organismo-nuevo`): el select "Compañía" lista las infos de organización
   (por su nombre) y el de organismo filtra por `infoOrganizacionId`.
+- **Filtro por nombre de info** (2026-10-03): input en la columna Nombre de la grilla de infos → `?nombre=` (nombre
+  propio de la info, sin acentos, "contiene"). Es independiente del buscador por nombre de organismo, y se pueden combinar.
