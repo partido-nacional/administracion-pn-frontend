@@ -106,9 +106,15 @@ export interface ReferenciaOrganismo {
   notas?: string;
 }
 
-/** Info de organización (grupo compartido: varios organismos apuntan a la misma info). */
+/**
+ * Info de organización (grupo compartido: varios organismos apuntan a la misma info).
+ * `nombre` y `cantidadOrganismos` los deriva el backend de sus organismos (feature 033 / backend 036):
+ * `nombre` es null si no tiene organismos; la cantidad respeta el filtro `nombreOrganismo`.
+ */
 export interface InfoOrganizacionDto {
   id: number;
+  nombre?: string | null;
+  cantidadOrganismos: number;
   tipoOrganizacionId?: number | null;
   direccion?: string | null;
   telefono?: string | null;
