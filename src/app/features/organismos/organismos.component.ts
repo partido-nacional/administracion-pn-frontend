@@ -234,7 +234,6 @@ export type InfoKey = number | 'sin';
                 </div>
                 <div class="fg full"><label>Nombre *</label><input [(ngModel)]="form.nombre" name="o-nombre"></div>
                 <div class="fg"><label>Info de organización (Id)</label><input type="number" [(ngModel)]="form.infoOrganizacionId" name="o-info"></div>
-                <div class="fg"><label>Nombre Compañía</label><input [(ngModel)]="form.nombreCompania" name="o-comp"></div>
                 <div class="fg"><label>Categoría</label><input [(ngModel)]="form.categoria" name="o-cat"></div>
                 <div class="fg full"><label>Descripción</label><input [(ngModel)]="form.descripcion" name="o-desc"></div>
                 <div class="fg full"><label>Dirección</label><input [(ngModel)]="form.direccion" name="o-dir"></div>
@@ -252,6 +251,7 @@ export type InfoKey = number | 'sin';
               </div>
             } @else {
               <div class="nv-grid">
+                <div class="fg full"><label>Nombre</label><input [(ngModel)]="form.nombre" name="i-nombre"></div>
                 <div class="fg"><label>Tipo de Organización</label>
                   <select [(ngModel)]="form.tipoOrganizacionId" name="i-tipo">
                     <option [ngValue]="null">—</option>
@@ -375,7 +375,7 @@ export class OrganismosComponent {
   /** Clave string de un desplegable de info (para indexar las cachés). */
   k(key: InfoKey): string { return String(key); }
 
-  /** BR-1: nombre derivado por el backend; sin organismos → "Info #id". */
+  /** Nombre propio de la info (feature 034); si no tiene → "Info #id". */
   nombreInfo(i: InfoOrganizacionDto): string { return i.nombre?.trim() ? i.nombre : `Info #${i.id}`; }
 
   nombreTipo(id?: number | null): string {
@@ -495,7 +495,7 @@ export class OrganismosComponent {
 
   // ── Organismo (alta/edición) ─────────────────────────────
   abrirNuevoOrganismo() {
-    this.form = { tipoOrganizacionId: null, organizacionEstatalId: null, organizacionPartidariaId: null, infoOrganizacionId: null, nombre: '', nombreCompania: '', categoria: '', descripcion: '', direccion: '', ciudad: '', departamento: '', pais: '', ordenDpto: 0, observaciones: '', art44: false };
+    this.form = { tipoOrganizacionId: null, organizacionEstatalId: null, organizacionPartidariaId: null, infoOrganizacionId: null, nombre: '', categoria: '', descripcion: '', direccion: '', ciudad: '', departamento: '', pais: '', ordenDpto: 0, observaciones: '', art44: false };
     this.modalError.set(''); this.editId.set(null);
     this.modalMode.set('nueva'); this.modalKind.set('organismo');
   }
@@ -507,7 +507,6 @@ export class OrganismosComponent {
       organizacionPartidariaId: o.organizacionPartidariaId ?? null,
       infoOrganizacionId: o.infoOrganizacionId ?? null,
       nombre: o.nombre || '',
-      nombreCompania: o.nombreCompania || '',
       categoria: o.categoria || '',
       descripcion: o.descripcion || '',
       direccion: o.direccion || '',
@@ -524,13 +523,14 @@ export class OrganismosComponent {
 
   // ── Info (alta/edición) ──────────────────────────────────
   abrirNuevaInfo() {
-    this.form = { tipoOrganizacionId: null, direccion: '', telefono: '', email: '', observaciones: '' };
+    this.form = { nombre: '', tipoOrganizacionId: null, direccion: '', telefono: '', email: '', observaciones: '' };
     this.modalError.set(''); this.editId.set(null);
     this.modalMode.set('nueva'); this.modalKind.set('info');
   }
 
   abrirEditarInfo(i: InfoOrganizacionDto) {
     this.form = {
+      nombre: i.nombre || '',
       tipoOrganizacionId: i.tipoOrganizacionId ?? null,
       direccion: i.direccion || '',
       telefono: i.telefono || '',
@@ -557,7 +557,6 @@ export class OrganismosComponent {
     // Mismo payload para alta y edición (backend 035): sin ámbito; clasificaciones, tipo e info opcionales.
     const input: OrganismoInput = {
       nombre: this.form.nombre.trim(),
-      nombreCompania: this.form.nombreCompania || null,
       tipoOrganizacionId: this.num(this.form.tipoOrganizacionId),
       organizacionEstatalId: this.num(this.form.organizacionEstatalId),
       organizacionPartidariaId: this.num(this.form.organizacionPartidariaId),
@@ -585,6 +584,7 @@ export class OrganismosComponent {
 
   private guardarInfo() {
     const input: InfoOrganizacionInput = {
+      nombre: this.form.nombre?.trim() || null,
       tipoOrganizacionId: this.num(this.form.tipoOrganizacionId),
       direccion: this.form.direccion || null,
       telefono: this.form.telefono || null,

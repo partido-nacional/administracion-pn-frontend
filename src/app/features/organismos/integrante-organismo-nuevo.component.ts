@@ -5,7 +5,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ContactosService, IntegranteOrganismoInput } from '../agenda/contactos.service';
 import { OrganismosService } from '../../core/services/organismos.service';
 import { CatalogosService, PartidoSectorDto } from '../../core/catalogos.service';
-import { OrganismoDto } from '../../core/models/organismos';
+import { InfoOrganizacionDto, OrganismoDto } from '../../core/models/organismos';
 import { PageTitleService } from '../../core/page-title.service';
 import { ToastService } from '../../core/services/toast.service';
 
@@ -32,8 +32,8 @@ import { ToastService } from '../../core/services/toast.service';
             <label class="form-label">Compañía *</label>
             <select class="form-input" [ngModel]="companiaSel()" (ngModelChange)="onCompaniaChange($event)" name="comp">
               <option [ngValue]="null">— Seleccionar —</option>
-              @for (c of companias(); track c) {
-                <option [ngValue]="c">{{ c }}</option>
+              @for (c of companias(); track c.id) {
+                <option [ngValue]="c.id">{{ c.nombre || 'Info #' + c.id }}</option>
               }
             </select>
           </div>
@@ -127,28 +127,23 @@ export class IntegranteOrganismoNuevoComponent {
   contactoId!: number;
   organismos = signal<OrganismoDto[]>([]);
   sectores = signal<PartidoSectorDto[]>([]);
-  companiaSel = signal<string | null>(null);
+  /** Compañía = info de organización (por su nombre propio); se guarda el id de la info. */
+  infos = signal<InfoOrganizacionDto[]>([]);
+  companiaSel = signal<number | null>(null);
   busy = signal(false);
   error = signal('');
 
   /** Lista fija de condiciones (feature 026). El default es S/D. */
   readonly condiciones = ['S/D', 'Titular', 'Suplente', 'Titular con Licencia', 'Suplente en Ejercicio', 'Suspendido en Funciones'];
 
-  /** Compañías = valores distintos, no vacíos, de organismo.nombreCompania, ordenadas alfabéticamente. */
-  companias = computed(() => {
-    const set = new Set<string>();
-    for (const o of this.organismos()) {
-      const c = (o.nombreCompania ?? '').trim();
-      if (c) set.add(c);
-    }
-    return Array.from(set).sort((a, b) => a.localeCompare(b));
-  });
+  /** Compañías = infos de organización con organismos (el backend las devuelve ordenadas por nombre). */
+  companias = computed(() => this.infos().filter(i => i.cantidadOrganismos > 0));
 
   /** Organismos de la compañía seleccionada (vacío hasta elegir compañía). */
   organismosFiltrados = computed(() => {
     const comp = this.companiaSel();
     if (!comp) return [];
-    return this.organismos().filter(o => (o.nombreCompania ?? '').trim() === comp);
+    return this.organismos().filter(o => o.infoOrganizacionId === comp);
   });
 
   form: Partial<IntegranteOrganismoInput> = {
@@ -160,11 +155,12 @@ export class IntegranteOrganismoNuevoComponent {
     this.titleSvc.set('Nuevo integrante de organismo');
     this.contactoId = +this.route.snapshot.paramMap.get('contactoId')!;
     this.organismosSvc.getOrganismos({ page: 1, pageSize: 1000, all: true, filters: {} }).subscribe(r => this.organismos.set(r.items));
+    this.organismosSvc.getInfo({ page: 1, pageSize: 1000, all: true, filters: {} }).subscribe(r => this.infos.set(r.items));
     // Feature 026: "Partido Nacional - Todos" (código PN-CT (2)) no debe ofrecerse.
     this.catalogosSvc.partidoSectores().subscribe(s => this.sectores.set(s.filter(x => x.codigo !== 'PN-CT (2)')));
   }
 
-  onCompaniaChange(value: string | null) {
+  onCompaniaChange(value: number | null) {
     this.companiaSel.set(value);
     this.form.organismoId = null; // al cambiar de compañía se limpia el organismo elegido
   }

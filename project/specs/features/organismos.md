@@ -284,3 +284,11 @@ El filtro y el formulario de departamento usan `[...DEPARTAMENTOS, 'Nacional']` 
 - **Altas y ediciones**: "+ Nueva Info" y "+ Nuevo Organismo" en la topbar. Guardar recarga la lista y
   descarta los desplegables.
 - **CSV**: infos (nombre, id, tipo, contacto, cantidad de organismos) con el buscador aplicado.
+
+## Actualización feature 034 (espejo backend 037) — 2026-10-03
+
+- **Organismo e info tienen cada uno su nombre.** `OrganismoDto/Input` ya no tienen `nombreCompania`. La info
+  tiene `nombre` propio, que se edita en su formulario (campo "Nombre"). La grilla muestra ese nombre
+  ("Info #id" solo si está vacío).
+- **Alta de integrante** (`integrante-organismo-nuevo`): el select "Compañía" lista las infos de organización
+  (por su nombre) y el de organismo filtra por `infoOrganizacionId`.
