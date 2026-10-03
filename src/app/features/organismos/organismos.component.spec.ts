@@ -181,6 +181,18 @@ describe('OrganismosComponent', () => {
     }, 350);
   });
 
+  it('filtro por nombre de info: manda ?nombre, vuelve a página 1 y colapsa', (done) => {
+    cmp.toggleInfo(131, gob);
+    svc.getInfo.calls.reset();
+    cmp.setInfoFilter(cmp.fInfNom, 'parlamentaria');
+    expect(cmp.infoPage()).toBe(1);
+    setTimeout(() => {
+      expect(svc.getInfo).toHaveBeenCalledWith(jasmine.objectContaining({ page: 1, filters: jasmine.objectContaining({ nombre: 'parlamentaria' }) }));
+      expect(cmp.expandedInfo()).toBeNull();
+      done();
+    }, 350);
+  });
+
   // ── Alta / edición ───────────────────────────────────────
   it('AC-13: guardar un organismo recarga la lista y descarta los desplegables', () => {
     cmp.toggleInfo(131, gob);
