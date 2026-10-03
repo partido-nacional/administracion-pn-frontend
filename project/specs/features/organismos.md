@@ -262,3 +262,25 @@ El filtro y el formulario de departamento usan `[...DEPARTAMENTOS, 'Nacional']` 
 - **Info de organización**: sin "Id Organismo" en grilla, formulario ni CSV (la relación va del organismo a
   la info).
 - **CSV de organismos**: "Org. estatal" y "Org. partidaria" en lugar de "Ámbito".
+
+## Actualización feature 033 (espejo backend 036) — 2026-10-03
+
+> Manda sobre todo lo anterior en cuanto a la estructura de `OrganismosComponent`.
+
+- **Sin pestañas.** `/organismos` es la lista de **infos de organización** (paginada, orden por nombre o Id),
+  con un acordeón de dos niveles: **info → organismos → integrantes**.
+- **Fila de info**: nombre (derivado por el backend del `NombreCompania` de sus organismos; sin organismos →
+  "Info #id"), Id, tipo, dirección, teléfono, email, observaciones, cantidad de organismos y editar. Las
+  infos sin organismos no se despliegan. Se conservan los filtros de dirección y email.
+- **Desplegable de info**: todos sus organismos (`GET /organismos?infoOrganizacionId=…&all=true`), con la
+  misma estructura que la vieja grilla de organismos (clasificación, editar, "Referencias partidarias"). Cada
+  organismo se despliega a sus integrantes. Hay caché por info y por organismo, y un solo desplegable abierto
+  por nivel.
+- **Fila "Sin info de organización"** al principio de la página 1 si hay organismos sin info que pasan el
+  buscador (`sinInfo=true`).
+- **Buscador "Buscar organismo…"**: manda `nombreOrganismo` a `GET /organismos/info` y `nombre` a los
+  desplegables, así que se ven solo las infos y los organismos que coinciden. Al cambiar vuelve a la página 1
+  y colapsa todo.
+- **Altas y ediciones**: "+ Nueva Info" y "+ Nuevo Organismo" en la topbar. Guardar recarga la lista y
+  descarta los desplegables.
+- **CSV**: infos (nombre, id, tipo, contacto, cantidad de organismos) con el buscador aplicado.
