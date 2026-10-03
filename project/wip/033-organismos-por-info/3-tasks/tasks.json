@@ -1,0 +1,97 @@
+{
+  "feature": "organismos-por-info",
+  "local_config": {
+    "database": null
+  },
+  "stats": {
+    "total": 3,
+    "done": 0,
+    "by_layer": {
+      "1": 2,
+      "2": 1
+    }
+  },
+  "execution_strategy": "batched",
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "Modelo y pantalla info → organismos → integrantes",
+      "description": "Reescritura de organismos.component: sin tabs, acordeón de dos niveles, buscador, fila Sin info, CSV.",
+      "status": "pending",
+      "layer": 1,
+      "depends_on": [],
+      "files": [
+        "src/app/core/models/organismos.ts",
+        "src/app/features/organismos/organismos.component.ts"
+      ],
+      "acceptance_criteria": [
+        "AC-1..AC-14",
+        "GATE: ng build"
+      ],
+      "references": [
+        "US-1",
+        "US-2",
+        "US-3",
+        "US-4"
+      ]
+    },
+    {
+      "id": "TASK-002",
+      "title": "Tests",
+      "description": "Spec del componente reescrito.",
+      "status": "pending",
+      "layer": 1,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "files": [
+        "src/app/features/organismos/organismos.component.spec.ts"
+      ],
+      "acceptance_criteria": [
+        "GATE: ng test"
+      ],
+      "references": [
+        "US-1",
+        "US-2",
+        "US-3"
+      ]
+    },
+    {
+      "id": "TASK-003",
+      "title": "Review y spec viva",
+      "description": "Code/perf/security review; sección 033 en organismos.md.",
+      "status": "pending",
+      "layer": 2,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002"
+      ],
+      "files": [
+        "project/specs/features/organismos.md"
+      ],
+      "acceptance_criteria": [
+        "Sin hallazgos"
+      ],
+      "references": [
+        "US-1"
+      ]
+    }
+  ],
+  "dependency_graph": {
+    "by_layer": {
+      "1": {
+        "level_0": [
+          "TASK-001"
+        ],
+        "level_1": [
+          "TASK-002"
+        ]
+      },
+      "2": {
+        "level_0": [
+          "TASK-003"
+        ]
+      }
+    }
+  }
+}
