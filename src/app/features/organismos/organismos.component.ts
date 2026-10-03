@@ -44,7 +44,8 @@ export type InfoKey = number | 'sin';
       <table class="table" style="min-width:1100px">
         <thead>
           <tr class="filter-row">
-            <th></th><th></th><th></th>
+            <th><input class="column-filter" [ngModel]="fInfNom()" (ngModelChange)="setInfoFilter(fInfNom, $event)" placeholder="Filtrar por nombre de info..." aria-label="Filtrar por nombre de info"></th>
+            <th></th><th></th>
             <th><input class="column-filter" [ngModel]="fInfDir()" (ngModelChange)="setInfoFilter(fInfDir, $event)" placeholder="Filtrar..."></th>
             <th></th>
             <th><input class="column-filter" [ngModel]="fInfMail()" (ngModelChange)="setInfoFilter(fInfMail, $event)" placeholder="Filtrar..."></th>
@@ -319,7 +320,7 @@ export class OrganismosComponent {
   infoPageSize = signal(DEFAULT_PAGE_SIZE);
   infoSort = signal<string | undefined>(undefined);
   infoOrder = signal<SortOrder>('asc');
-  fInfDir = signal(''); fInfMail = signal('');
+  fInfNom = signal(''); fInfDir = signal(''); fInfMail = signal('');
 
   // Fila especial "Sin info de organización" (solo en la página 1 y si hay organismos que coinciden).
   sinInfoTotal = signal(0);
@@ -389,6 +390,7 @@ export class OrganismosComponent {
       page: this.infoPage(), pageSize: this.infoPageSize(),
       sort: this.infoSort(), order: this.infoOrder(),
       filters: {
+        nombre: this.clean(this.fInfNom()),
         direccion: this.clean(this.fInfDir()), email: this.clean(this.fInfMail()),
         nombreOrganismo: this.clean(this.busqueda()),
       },
