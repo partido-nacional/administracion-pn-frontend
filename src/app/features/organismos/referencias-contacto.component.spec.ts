@@ -121,4 +121,31 @@ describe('ReferenciasContactoComponent', () => {
     expect(f.componentInstance.editando()).toBeTruthy();              // el modal sigue abierto
     expect(f.componentInstance.editando()!.rol).toBe('Presidente');   // y conserva lo escrito
   });
+
+  // ── Feature 035: referencias calculadas desde integrantes finalizados ──
+  const calculada: ReferenciaPartidaria = {
+    id: 0, contactoId: 7, organismoId: 875, rol: 'Secretario', nombreOrganismo: 'Comisión Departamental de Artigas',
+    fechaDesignacion: '01/01/2000', art44: false, origen: 'Integrante', integranteId: 9001,
+  };
+
+  it('feature 035: la fila calculada se marca "Desde integrante" y no tiene Editar', () => {
+    contactosSpy.referenciasPartidarias.and.returnValue(of([{ ...referencia, origen: 'Referencia' }, calculada]));
+    const f = montar();
+    const filas: HTMLElement[] = Array.from(f.nativeElement.querySelectorAll('tbody tr'));
+    expect(filas.length).toBe(2);
+    expect(filas[0].querySelector('.badge-calc')).toBeNull();
+    expect(filas[0].querySelector('button')).toBeTruthy();
+    expect(filas[1].querySelector('.badge-calc')!.textContent).toContain('Desde integrante');
+    expect(filas[1].querySelector('button')).toBeNull();
+    expect(filas[1].classList).toContain('calculada');
+  });
+
+  it('feature 035: varias calculadas (id 0) se trackean por el integrante', () => {
+    const c = (fx: ComponentFixture<ReferenciasContactoComponent>) => fx.componentInstance;
+    contactosSpy.referenciasPartidarias.and.returnValue(of([calculada, { ...calculada, integranteId: 9002 }]));
+    const f = montar();
+    expect(f.nativeElement.querySelectorAll('tbody tr').length).toBe(2);
+    expect(c(f).clave(calculada)).toBe('i9001');
+    expect(c(f).clave(referencia)).toBe('r42');
+  });
 });

@@ -93,7 +93,12 @@ export interface ReferenteResumenDto {
 
 /** Referencia partidaria de un organismo puntual (solo lectura, feature 028). */
 export interface ReferenciaOrganismo {
+  /** 0 en las calculadas (no hay referencia guardada). */
   id: number;
+  /** 'Referencia' (guardada) | 'Integrante' (calculada desde un integrante finalizado sin referencia, feature 035). */
+  origen?: 'Referencia' | 'Integrante';
+  /** Id del integrante en las calculadas. */
+  integranteId?: number | null;
   contactoId: number;
   nombres: string;
   rol?: string;

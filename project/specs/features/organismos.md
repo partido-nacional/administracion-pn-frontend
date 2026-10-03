@@ -294,3 +294,10 @@ El filtro y el formulario de departamento usan `[...DEPARTAMENTOS, 'Nacional']` 
   (por su nombre) y el de organismo filtra por `infoOrganizacionId`.
 - **Filtro por nombre de info** (2026-10-03): input en la columna Nombre de la grilla de infos → `?nombre=` (nombre
   propio de la info, sin acentos, "contiene"). Es independiente del buscador por nombre de organismo, y se pueden combinar.
+
+## Actualización feature 035 (espejo backend 038) — 2026-10-03
+
+Las vistas de referencias partidarias (de un organismo y de un contacto) muestran también las **calculadas desde
+integrantes finalizados** sin referencia (`origen === 'Integrante'`, `id` 0). Van con la marca "Desde integrante",
+en gris y sin botón Editar, y se trackean por `integranteId`. En la agenda, el botón "Ver referencias partidarias"
+aparece también cuando el contacto solo tiene calculadas (el flag ya viene del backend).

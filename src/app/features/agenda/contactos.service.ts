@@ -124,7 +124,12 @@ export interface ContactoListado {
 
 /** Referencia partidaria de un contacto (solo lectura, feature 028). */
 export interface ReferenciaPartidaria {
+  /** 0 en las calculadas (no hay referencia guardada). */
   id: number;
+  /** 'Referencia' (guardada) | 'Integrante' (calculada desde un integrante finalizado sin referencia, feature 035). */
+  origen?: 'Referencia' | 'Integrante';
+  /** Id del integrante en las calculadas. */
+  integranteId?: number | null;
   contactoId: number;
   /** Lo exige PUT /organismos/referencias/{id}, que valida ámbito Partidario (feature 028). */
   organismoId?: number | null;
