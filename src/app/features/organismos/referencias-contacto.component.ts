@@ -45,9 +45,9 @@ import { ModalFormComponent } from '../../shared/components/modal-form/modal-for
               </tr>
             </thead>
             <tbody>
-              @for (r of items(); track r.id) {
-                <tr>
-                  <td><strong>{{ r.rol || '—' }}</strong></td>
+              @for (r of items(); track clave(r)) {
+                <tr [class.calculada]="esCalculada(r)">
+                  <td><strong>{{ r.rol || '—' }}</strong> @if (esCalculada(r)) { <span class="badge-calc" title="Integrante finalizado sin referencia partidaria (calculada, solo lectura)">Desde integrante</span> }</td>
                   <td>{{ r.nombreOrganismo || '—' }}</td>
                   <td>{{ r.periodo || '—' }}</td>
                   <td>{{ r.fechaDesignacion || '—' }}</td>
@@ -55,7 +55,11 @@ import { ModalFormComponent } from '../../shared/components/modal-form/modal-for
                   <td>{{ r.art44 ? 'Sí' : 'No' }}</td>
                   <td>{{ r.notas || '—' }}</td>
                   <td>
-                    <button type="button" class="btn btn-sm btn-secondary" (click)="abrirEdicion(r)">Editar</button>
+                    @if (esCalculada(r)) {
+                      <span class="hint" title="Integrante finalizado sin referencia partidaria: se muestra calculado y no se puede editar">—</span>
+                    } @else {
+                      <button type="button" class="btn btn-sm btn-secondary" (click)="abrirEdicion(r)">Editar</button>
+                    }
                   </td>
                 </tr>
               }
@@ -91,6 +95,9 @@ import { ModalFormComponent } from '../../shared/components/modal-form/modal-for
   `,
   styles: [`
     .topbar-inline { display:flex; justify-content:flex-start; margin-bottom:16px; }
+    .badge-calc { display:inline-block; margin-left:6px; padding:1px 6px; border-radius:10px; font-size:11px;
+                  background:#eef1f5; color:#5a6472; font-weight:500; white-space:nowrap; }
+    tr.calculada td { color:#5a6472; }
   `]
 })
 export class ReferenciasContactoComponent {
@@ -117,6 +124,11 @@ export class ReferenciasContactoComponent {
   private cargar() {
     this.svc.referenciasPartidarias(this.contactoId).subscribe(x => this.items.set(x));
   }
+
+  /** Feature 035: fila calculada desde un integrante finalizado sin referencia (solo lectura). */
+  esCalculada(r: ReferenciaPartidaria): boolean { return r.origen === 'Integrante'; }
+  /** Las calculadas tienen id 0: se trackean por el id del integrante. */
+  clave(r: ReferenciaPartidaria): string { return this.esCalculada(r) ? `i${r.integranteId}` : `r${r.id}`; }
 
   abrirEdicion(r: ReferenciaPartidaria) {
     // Copia: si el operador cancela, la fila de la grilla queda intacta.
