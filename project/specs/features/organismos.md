@@ -301,3 +301,14 @@ Las vistas de referencias partidarias (de un organismo y de un contacto) muestra
 integrantes finalizados** sin referencia (`origen === 'Integrante'`, `id` 0). Van con la marca "Desde integrante",
 en gris y sin botón Editar, y se trackean por `integranteId`. En la agenda, el botón "Ver referencias partidarias"
 aparece también cuando el contacto solo tiene calculadas (el flag ya viene del backend).
+
+## Actualización feature 036 — alta manual de referencias (2026-10-03)
+
+- **Referencias de un contacto**: botón **"+ Crear referencia"** con el contacto fijo y buscador de organismo
+  partidario (opcional; filtro sin acentos sobre `GET /organismos?ambito=Partidario&all=true`).
+- **Referencias de un organismo**: el título muestra el nombre del organismo; **"+ Crear referencia"** solo si el
+  organismo es partidario (`GET /organismos/{id}`). Tiene buscador de contacto (debounce, 8 resultados, la cédula
+  "0" no se muestra).
+- Campos: Rol / Cargo (obligatorio), Período, fechas de designación y cese, Art. 44 y Notas → `POST
+  /organismos/referencias`. Si es del mismo contacto + organismo que una fila "Desde integrante", esa fila deja de
+  aparecer.
