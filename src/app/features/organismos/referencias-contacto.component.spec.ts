@@ -24,8 +24,13 @@ describe('ReferenciasContactoComponent', () => {
   beforeEach(() => {
     contactosSpy = jasmine.createSpyObj('ContactosService', ['referenciasPartidarias']);
     contactosSpy.referenciasPartidarias.and.returnValue(of([referencia]));
-    organismosSpy = jasmine.createSpyObj('OrganismosService', ['editarReferencia']);
+    organismosSpy = jasmine.createSpyObj('OrganismosService', ['editarReferencia', 'crearReferencia', 'getOrganismos']);
     organismosSpy.editarReferencia.and.returnValue(of({}));
+    organismosSpy.crearReferencia.and.returnValue(of({}));
+    organismosSpy.getOrganismos.and.returnValue(of({ items: [
+      { id: 875, nombre: 'Comisión Departamental de Artigas', organizacionPartidariaId: 9, art44: false, ordenDpto: 0 },
+      { id: 1, nombre: 'Directorio', organizacionPartidariaId: 1, art44: false, ordenDpto: 0 },
+    ], total: 2, page: 1, pageSize: 2 }));
 
     TestBed.configureTestingModule({
       imports: [ReferenciasContactoComponent],
@@ -147,5 +152,78 @@ describe('ReferenciasContactoComponent', () => {
     expect(f.nativeElement.querySelectorAll('tbody tr').length).toBe(2);
     expect(c(f).clave(calculada)).toBe('i9001');
     expect(c(f).clave(referencia)).toBe('r42');
+  });
+
+  // ── Feature 036: alta manual ──
+  it('feature 036: "+ Crear referencia" abre el alta y carga solo organismos partidarios', () => {
+    const f = montar();
+    const btn = Array.from(f.nativeElement.querySelectorAll('.topbar-inline button')).find((b: any) => b.textContent.includes('Crear referencia')) as HTMLButtonElement;
+    btn.click();
+    f.detectChanges();
+    expect(f.componentInstance.nueva()).not.toBeNull();
+    expect(organismosSpy.getOrganismos).toHaveBeenCalledWith(jasmine.objectContaining({ all: true, filters: { ambito: 'Partidario' } }));
+  });
+
+  it('feature 036: el buscador de organismo filtra sin acentos', () => {
+    const f = montar();
+    const c = f.componentInstance;
+    c.abrirAlta();
+    c.qOrganismo.set('comision');   // sin acento: matchea 'Comisión…'
+    expect(c.opcionesOrganismo().map(o => o.id)).toEqual([875]);
+    c.qOrganismo.set('');
+    expect(c.opcionesOrganismo()).toEqual([]);
+  });
+
+  it('feature 036: crear manda el payload con el contacto fijo y recarga', () => {
+    const f = montar();
+    const c = f.componentInstance;
+    c.abrirAlta();
+    c.seleccionarOrganismo({ id: 875, nombre: 'Comisión Departamental de Artigas', art44: false, ordenDpto: 0 });
+    const n = c.nueva()!;
+    n.rol = '  Secretario ';
+    n.periodo = '2020/2025';
+    n.fechaDesignacion = '2020-03-01';
+    contactosSpy.referenciasPartidarias.calls.reset();
+    c.crear();
+    expect(organismosSpy.crearReferencia).toHaveBeenCalledWith({
+      contactoId: 7, organismoId: 875, rol: 'Secretario', periodo: '2020/2025',
+      fechaDesignacion: '2020-03-01', fechaCese: null, art44: false, notas: null,
+    });
+    expect(c.nueva()).toBeNull();
+    expect(contactosSpy.referenciasPartidarias).toHaveBeenCalled();
+  });
+
+  it('feature 036: sin organismo es válido; sin rol no se envía', () => {
+    const f = montar();
+    const c = f.componentInstance;
+    c.abrirAlta();
+    c.crear();
+    expect(organismosSpy.crearReferencia).not.toHaveBeenCalled();
+    expect(c.error()).toContain('rol');
+    c.nueva()!.rol = 'Diputado';
+    c.crear();
+    expect(organismosSpy.crearReferencia).toHaveBeenCalledWith(jasmine.objectContaining({ organismoId: null, rol: 'Diputado' }));
+  });
+
+  it('feature 036: texto de organismo sin elegir de la lista → no se envía', () => {
+    const f = montar();
+    const c = f.componentInstance;
+    c.abrirAlta();
+    c.nueva()!.rol = 'Vocal';
+    c.qOrganismo.set('algo');
+    c.crear();
+    expect(organismosSpy.crearReferencia).not.toHaveBeenCalled();
+    expect(c.error()).toContain('organismo');
+  });
+
+  it('feature 036: error del backend deja el alta abierta con el mensaje', () => {
+    organismosSpy.crearReferencia.and.returnValue(throwError(() => ({ error: { message: 'OrganismoId 9 no es partidario' } })));
+    const f = montar();
+    const c = f.componentInstance;
+    c.abrirAlta();
+    c.nueva()!.rol = 'Vocal';
+    c.crear();
+    expect(c.nueva()).not.toBeNull();
+    expect(c.error()).toBe('OrganismoId 9 no es partidario');
   });
 });

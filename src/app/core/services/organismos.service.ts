@@ -28,6 +28,11 @@ export class OrganismosService {
     return this.http.get<PagedResult<OrganismoDto>>(this.base, { params: buildPagedParams(query) });
   }
 
+  /** Un organismo por id (feature 036: saber si es partidario y mostrar su nombre). */
+  getOrganismo(id: number): Observable<OrganismoDto> {
+    return this.http.get<OrganismoDto>(`${this.base}/${id}`);
+  }
+
   getInfo(query: GridQuery): Observable<PagedResult<InfoOrganizacionDto>> {
     return this.http.get<PagedResult<InfoOrganizacionDto>>(`${this.base}/info`, { params: buildPagedParams(query) });
   }
@@ -49,6 +54,11 @@ export class OrganismosService {
    */
   editarReferencia(id: number, input: ReferenciaEditInput): Observable<unknown> {
     return this.http.put(`${this.base}/referencias/${id}`, input);
+  }
+
+  /** Alta manual de una referencia partidaria (feature 036). Si trae organismo, debe ser partidario. */
+  crearReferencia(input: ReferenciaEditInput): Observable<unknown> {
+    return this.http.post(`${this.base}/referencias`, input);
   }
 
   /** Integrantes de un organismo puntual, por id (paginado; el inline pide una página grande). */
