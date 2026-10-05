@@ -71,6 +71,14 @@ describe('AgendaListadoComponent', () => {
     expect(filaDe(f, 0).classList).toContain('moroso');
   });
 
+  it('feature 037: la fila morosa se pinta de rojo #e85d5d; la común no', () => {
+    const f = montar([fila(1, 'M'), fila(2)]);
+    document.body.appendChild(f.nativeElement);   // getComputedStyle necesita el elemento en el DOM
+    expect(getComputedStyle(filaDe(f, 0)).backgroundColor).toBe('rgb(232, 93, 93)');
+    expect(getComputedStyle(filaDe(f, 1)).backgroundColor).not.toBe('rgb(232, 93, 93)');
+    f.nativeElement.remove();
+  });
+
   it('AC-2: la fila de un contacto con otra situación no la recibe', () => {
     const f = montar([fila(1, 'PC'), fila(2)]);
     expect(filaDe(f, 0).classList).not.toContain('moroso');
