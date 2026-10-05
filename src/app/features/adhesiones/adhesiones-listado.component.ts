@@ -276,6 +276,7 @@ import { DEPARTAMENTOS } from '../../core/departamentos';
                 <option>OCA</option>
                 <option>eBROU</option>
                 <option>ANTEL</option>
+                <option>Mercado Pago</option>
                 <option>Efectivo</option>
               </select>
             </div>
