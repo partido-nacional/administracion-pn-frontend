@@ -21,6 +21,13 @@ describe('ficha-adhesion.constants — catálogos', () => {
     expect(APORTES_SEC_AGR.length).toBeGreaterThan(0);
   });
 
+  it('SISTEMAS incluye Mercado Pago, que no pide cédula, teléfono Antel ni fechas de pago', () => {
+    expect(SISTEMAS).toContain('Mercado Pago');
+    expect(showCedula('Mercado Pago')).toBeFalse();
+    expect(showTelefonoAntel('Mercado Pago')).toBeFalse();
+    expect(showFechasPago('Mercado Pago')).toBeFalse();
+  });
+
   it('SECTORES es la lista fija sin "TODO POR EL PUEBLO"', () => {
     expect(SECTORES).toEqual([
       'ALIANZA NACIONAL', 'AIRE FRESCO', 'MEJOR PAÍS', 'D CENTRO',

@@ -11,7 +11,7 @@ import { DEPARTAMENTOS_CON_NACIONAL } from '../../core/departamentos';
  * que el componente solo tiene que hacer `signal.set(applyX(...))`.
  */
 
-export const SISTEMAS = ['Antel', 'OCA', 'VISA', 'MASTER', 'EBROU', 'ANUAL', 'Otro'];
+export const SISTEMAS = ['Antel', 'OCA', 'VISA', 'MASTER', 'EBROU', 'Mercado Pago', 'ANUAL', 'Otro'];
 
 /** Departamentos del formulario de ficha: la lista canónica + 'Nacional' (feature 031). */
 export const DEPARTAMENTOS = DEPARTAMENTOS_CON_NACIONAL;
