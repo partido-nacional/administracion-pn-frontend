@@ -329,16 +329,18 @@ export const AVISO_MOROSIDAD =
        usa !important, así que se le gana con !important + mayor especificidad
        (tr.moroso.selected = 0,2,1 contra tr.selected = 0,1,1). Sin esto el azul
        tapa el rojo justo al desplegar, que es cuando el operador va a actuar.  */
-    tr.moroso { background:#fdecea; }
-    tr.clickable.moroso:hover { background:#fbdfdc; }
-    tr.moroso.selected { background:#fdecea !important; }
+    /* Feature 037: rojo #e85d5d pedido por el usuario (el rosa #fdecea casi no se distinguía).
+       Texto negro sobre #e85d5d = contraste 5,4:1 (WCAG AA). */
+    tr.moroso { background:#e85d5d; }
+    tr.clickable.moroso:hover { background:#e04a4a; }
+    tr.moroso.selected { background:#e85d5d !important; }
     /* La expansión se marca con una barra lateral en vez de con el azul. Va como
        box-shadow inset en el primer td: border-left sobre un <tr> sólo renderiza
        de forma consistente con border-collapse:collapse, y no queremos que el
        resaltado dependa de una propiedad de la tabla que otro cambio podría tocar. */
-    tr.moroso.selected > td:first-child { box-shadow: inset 3px 0 0 #e57373; }
+    tr.moroso.selected > td:first-child { box-shadow: inset 4px 0 0 #8e1b1b; }
 
-    tr.detalle-row.moroso > td { background:#fdecea; }
+    tr.detalle-row.moroso > td { background:#e85d5d; }
     .detalle-wrap.moroso .detalle-section { background:#fff7f6; border-color:#f3d3cf; }
 
     .aviso-morosidad {

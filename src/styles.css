@@ -1026,9 +1026,11 @@ html.dark .table tbody tr:hover { background: #2a2f3e; }
    hardcodeado. Oscurecer sólo la card del moroso dejaba texto negro sobre marrón,
    ilegible. Cuando se salde la deuda del tema oscuro de esta grilla (ver backlog),
    la card morosa se oscurece junto con el resto. */
-html.dark tr.moroso { background: #3b2422; }
-html.dark tr.clickable.moroso:hover { background: #472b28; }
-html.dark tr.moroso.selected { background: #3b2422 !important; }
+/* Feature 037: en tema oscuro el texto es claro, así que el rojo va más oscuro (#9b2c2c: blanco
+   encima = contraste 7:1) en vez del #e85d5d del tema claro (blanco encima = 3,3:1, ilegible). */
+html.dark tr.moroso { background: #9b2c2c; }
+html.dark tr.clickable.moroso:hover { background: #ad3434; }
+html.dark tr.moroso.selected { background: #9b2c2c !important; }
 
 html.dark .filter-chip {
     background: #2a2f3e;
