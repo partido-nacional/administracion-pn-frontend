@@ -48,7 +48,16 @@ export interface FichaAgrupacion {
 }
 
 import { DEPARTAMENTOS } from '../../core/departamentos';
-import { Subject, debounceTime } from 'rxjs';
+import { Subject, debounceTime, finalize } from 'rxjs';
+import { ToastService } from '../../core/services/toast.service';
+
+/** Respuesta de POST /fichas-agrupacion/sincronizar (feature 039). */
+export interface SincronizacionAgrupaciones {
+  nuevas: number;
+  duplicadasIgnoradas: number;
+  desde: string;
+  ultimaSincronizacion: string | null;
+}
 
 @Component({
   selector: 'app-fichas-agrupacion',
@@ -56,7 +65,11 @@ import { Subject, debounceTime } from 'rxjs';
   imports: [CommonModule, FormsModule, PaginatorComponent],
   template: `
     <div class="topbar-inline">
-      <button class="btn btn-primary" (click)="sincronizar()" [disabled]="syncing()">
+      @if (ultimaSincronizacion()) {
+        <span class="ultima-sync" title="Fecha de creación en la web de la última solicitud traída">Última solicitud traída: {{ ultimaSincronizacion() }}</span>
+      }
+      <button class="btn btn-primary" (click)="sincronizar()" [disabled]="syncing()"
+              title="Trae de la web las solicitudes de agrupación que todavía no se trajeron">
         {{ syncing() ? 'Sincronizando…' : '↻ Sincronizar' }}
       </button>
     </div>
@@ -417,7 +430,8 @@ import { Subject, debounceTime } from 'rxjs';
     }
   `,
   styles: [`
-    .topbar-inline { display:flex; justify-content:flex-end; margin-bottom:16px; }
+    .topbar-inline { display:flex; justify-content:flex-end; align-items:center; gap:12px; margin-bottom:16px; }
+    .ultima-sync { font-size:13px; color:#5a6472; }
     .resumen-table { width:100%; border-collapse:collapse; font-size:14px; }
     .resumen-table th, .resumen-table td { border-bottom:1px solid #eef1f5; padding:10px 14px; text-align:left; }
     .resumen-table th { font-size:11px; color:#666; text-transform:uppercase; letter-spacing:.4px; background:#fafbfd; }
@@ -590,7 +604,10 @@ import { Subject, debounceTime } from 'rxjs';
 })
 export class FichasAgrupacionComponent {
   private http = inject(HttpClient);
+  private toast = inject(ToastService);
   private base = `${environment.apiUrl}/fichas-agrupacion`;
+  /** Fecha (hora de Uruguay) de la última solicitud traída de la web; null hasta sincronizar (feature 039). */
+  ultimaSincronizacion = signal<string | null>(null);
 
   fichas = signal<FichaAgrupacion[]>([]);
   loading = signal(true);
@@ -643,12 +660,26 @@ export class FichasAgrupacionComponent {
     this.expandido.set(this.expandido() === id ? null : id);
   }
 
+  /**
+   * Trae de la web las solicitudes de agrupación nuevas (feature 039; antes insertaba fichas de prueba).
+   * El error (web caída, clave o IP no habilitada, sin configurar) lo muestra el toast global con el
+   * mensaje del backend; acá solo el resultado.
+   */
   sincronizar() {
+    if (this.syncing()) return;
     this.syncing.set(true);
-    this.http.post(`${this.base}/sincronizar`, {}).subscribe({
-      next: () => { this.syncing.set(false); this.cargar(); },
-      error: () => { this.syncing.set(false); }
-    });
+    this.http.post<SincronizacionAgrupaciones>(`${this.base}/sincronizar`, {})
+      .pipe(finalize(() => this.syncing.set(false)))
+      .subscribe({
+        next: r => {
+          this.ultimaSincronizacion.set(r.ultimaSincronizacion);
+          this.toast.success(r.nuevas === 0 ? 'No hay fichas nuevas.'
+            : r.nuevas === 1 ? '1 ficha nueva.' : `${r.nuevas} fichas nuevas.`);
+          this.cargar();
+        },
+        // El mensaje ya lo mostró el interceptor global; sin este handler el error quedaría sin capturar.
+        error: () => {},
+      });
   }
 
   eliminar(id: number) {
