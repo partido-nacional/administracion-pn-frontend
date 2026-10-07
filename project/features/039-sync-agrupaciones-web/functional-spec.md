@@ -1,6 +1,6 @@
 # Functional Specification: Sincronizar fichas de agrupación desde la web
 
-**Status**: Draft · **Created**: 2026-10-06 · **Espejo**: frontend `039-sync-agrupaciones-web`
+**Status**: Approved (2026-10-06) · **Created**: 2026-10-06 · **Espejo**: frontend `039-sync-agrupaciones-web`
 **Fuente**: "API Agrupaciones Partido Nacional" (DesarrolloDelSur), endpoint `api_solicitudes`
 
 ## Problem Statement
