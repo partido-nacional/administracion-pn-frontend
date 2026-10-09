@@ -61,8 +61,8 @@ type Modo = 'login' | 'registro' | 'verificar' | 'recuperar' | 'resetear';
             <input class="form-input" name="usuario" [(ngModel)]="usuario" required autofocus></div>
           <div class="form-group" style="margin-bottom:12px;"><label class="form-label">Email</label>
             <input class="form-input" type="email" name="email" [(ngModel)]="email" required></div>
-          <div class="form-group" style="margin-bottom:16px;"><label class="form-label">Clave (mín. 6)</label>
-            <input class="form-input" type="password" name="clave" [(ngModel)]="clave" required minlength="6"></div>
+          <div class="form-group" style="margin-bottom:16px;"><label class="form-label">Clave (mín. 8)</label>
+            <input class="form-input" type="password" name="clave" [(ngModel)]="clave" required minlength="8"></div>
           <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;" [disabled]="loading() || f.invalid">
             {{ loading() ? 'Creando…' : 'Crear cuenta' }}
           </button>
@@ -105,8 +105,8 @@ type Modo = 'login' | 'registro' | 'verificar' | 'recuperar' | 'resetear';
       @if (modo()==='resetear') {
         <p style="font-size:13px;color:var(--gray-500);margin:0 0 12px;">Elegí tu nueva contraseña.</p>
         <form (ngSubmit)="doResetear()" #f="ngForm">
-          <div class="form-group" style="margin-bottom:16px;"><label class="form-label">Nueva clave (mín. 6)</label>
-            <input class="form-input" type="password" name="nuevaClave" [(ngModel)]="nuevaClave" required minlength="6" autofocus></div>
+          <div class="form-group" style="margin-bottom:16px;"><label class="form-label">Nueva clave (mín. 8)</label>
+            <input class="form-input" type="password" name="nuevaClave" [(ngModel)]="nuevaClave" required minlength="8" autofocus></div>
           <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;" [disabled]="loading() || f.invalid">
             {{ loading() ? 'Guardando…' : 'Cambiar contraseña' }}
           </button>

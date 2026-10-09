@@ -19,7 +19,7 @@ interface ProductoListado {
 interface Stats { productosUnicosTotales: number; productosSinStock: number; productosPocoStock: number; ventasMes: number; donacionesMes: number; }
 interface Movimiento { fecha: string; producto: string; tipo: string; cantidad: number; motivo: string; observaciones: string; }
 interface Venta { id: string; fecha: string; producto: string; cantidad: number; precioUnit: number; total: number; comprador: string; vendedor: string; metodoPago: string; nroRecibo: string; }
-interface Donacion { id: string; fecha: string; producto: string; cantidad: number; destinatario: string; observaciones: string; }
+interface Donacion { id: string; fecha: string; producto: string; cantidad: number; monto: number; destinatario: string; observaciones: string; }
 
 type Tab = 'gestion' | 'listar' | 'ventas' | 'donaciones' | 'form';
 
@@ -240,7 +240,7 @@ type Tab = 'gestion' | 'listar' | 'ventas' | 'donaciones' | 'form';
         <div class="card-body" style="padding:0; overflow-x:auto">
           <table class="table">
             <thead>
-              <tr><th>ID</th><th>Fecha</th><th>Producto</th><th>Cantidad</th><th>Destinatario</th><th>Observaciones</th><th></th></tr>
+              <tr><th>ID</th><th>Fecha</th><th>Producto</th><th>Cantidad</th><th>Monto</th><th>Destinatario</th><th>Observaciones</th><th></th></tr>
             </thead>
             <tbody>
               @for (d of donaciones(); track d.id) {
@@ -248,13 +248,14 @@ type Tab = 'gestion' | 'listar' | 'ventas' | 'donaciones' | 'form';
                   <td>{{ d.id }}</td>
                   <td>{{ d.fecha }}</td>
                   <td><strong>{{ d.producto }}</strong></td>
-                  <td>{{ d.cantidad }}</td>
+                  <td>{{ d.cantidad || '—' }}</td>
+                  <td>{{ d.monto ? '$' + d.monto : '—' }}</td>
                   <td>{{ d.destinatario }}</td>
                   <td>{{ d.observaciones }}</td>
                   <td><a class="action-link" style="color:var(--danger)" (click)="eliminarDonacion(d)">Eliminar</a></td>
                 </tr>
               } @empty {
-                <tr><td colspan="7"><div class="empty-state"><div class="empty-state-text">Sin donaciones</div></div></td></tr>
+                <tr><td colspan="8"><div class="empty-state"><div class="empty-state-text">Sin donaciones</div></div></td></tr>
               }
             </tbody>
           </table>
@@ -569,13 +570,15 @@ export class ProductosComponent {
     operacion: 'Alta', cantidad: 1, motivo: '', observaciones: ''
   };
 
-  stockPreview = computed(() => {
+  // Método y no computed(): sForm es un objeto plano (ngModel), no un signal, así que un computed
+  // se calculaba una sola vez y "Después del ajuste" quedaba congelado en el valor inicial.
+  stockPreview(): number {
     const p = this.modalStock();
     if (!p) return 0;
     const c = Number(this.sForm.cantidad) || 0;
     const op = this.sForm.operacion;
     return op === 'Alta' ? p.stock + c : p.stock - c;
-  });
+  }
 
   abrirStock(p: ProductoListado) {
     this.sForm = { operacion: 'Alta', cantidad: 1, motivo: '', observaciones: '' };
