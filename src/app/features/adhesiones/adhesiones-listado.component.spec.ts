@@ -1,6 +1,7 @@
+import { fakeAsync, tick } from '@angular/core/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { of } from 'rxjs';
 import { AdhesionesListadoComponent } from './adhesiones-listado.component';
 import { AdhesionesService, AdhesionWebDto, AdhesionLocalDto } from './adhesiones.service';
@@ -140,5 +141,41 @@ describe('AdhesionesListadoComponent', () => {
     acciones(f)[0].click();
 
     expect(spy).toHaveBeenCalledOnceWith(filaLocal.id);
+  });
+
+  // ── Bugs menores de QA ─────────────────────────────────────
+  it('"Pasar a Local" pide confirmación y, si se cancela, no llama al backend', () => {
+    const f = montar('web');
+    spyOn(window, 'confirm').and.returnValue(false);
+    const http = TestBed.inject(HttpTestingController);
+    f.componentInstance.pasar(filaWeb.id);
+    http.expectNone(r => r.url.includes('pasar-a-local'));
+  });
+
+  it('los filtros de Locales viajan al servicio tras el debounce y vuelven a la página 1', fakeAsync(() => {
+    const f = montar('locales');
+    f.componentInstance.localesPage.set(3);
+    svcSpy.locales.calls.reset();
+    f.componentInstance.filtrarLocales('apellido', 'per');
+    f.componentInstance.filtrarLocales('apellido', 'perez');
+    tick(300);
+    expect(svcSpy.locales).toHaveBeenCalledTimes(1);
+    const q = svcSpy.locales.calls.mostRecent().args[0];
+    expect(q.filters).toEqual(jasmine.objectContaining({ apellido: 'perez' }));
+    expect(q.page).toBe(1);
+  }));
+
+  it('Anuales marca las vencidas con un badge', () => {
+    const f = TestBed.createComponent(AdhesionesListadoComponent);
+    f.detectChanges();
+    f.componentInstance.tab.set('anuales');
+    f.componentInstance.anuales.set([
+      { contactoId: 1, nombre: 'Ana', apellido: 'X', vencimiento: '03/10/2026', vencida: true },
+      { contactoId: 2, nombre: 'Beto', apellido: 'Y', vencimiento: '28/10/2026', vencida: false },
+    ]);
+    f.detectChanges();
+    const filas: HTMLElement[] = Array.from(f.nativeElement.querySelectorAll('tbody tr'));
+    expect(filas[0].textContent).toContain('Vencida');
+    expect(filas[1].textContent).not.toContain('Vencida');
   });
 });

@@ -32,6 +32,8 @@ export interface AdhesionLocalDto {
 export interface AnualPorVencerDto {
   contactoId: number; nombre: string; apellido: string;
   celular?: string | null; sistContrib?: string | null; vencimiento: string;
+  /** El vencimiento es de este mes pero ya pasó. */
+  vencida?: boolean;
 }
 
 @Injectable({ providedIn: 'root' })

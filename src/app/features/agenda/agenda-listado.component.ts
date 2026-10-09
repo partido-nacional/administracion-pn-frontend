@@ -223,7 +223,14 @@ export const AVISO_MOROSIDAD =
                   </tr>
                 }
               } @empty {
-                <tr><td colspan="10"><div class="empty-state"><div class="empty-state-text">Sin contactos</div></div></td></tr>
+                <tr><td colspan="10"><div class="empty-state"><div class="empty-state-text">
+                  @if (loading()) { Cargando… }
+                  @else if (errorCarga()) {
+                    No se pudo cargar la agenda.
+                    <button type="button" class="btn btn-sm btn-secondary" style="margin-left:8px" (click)="reintentar()">Reintentar</button>
+                  }
+                  @else { Sin contactos }
+                </div></div></td></tr>
               }
             </tbody>
           </table>
@@ -391,6 +398,8 @@ export class AgendaListadoComponent implements OnInit {
   sort = signal<string | undefined>('id');
   order = signal<SortOrder>('asc');
   loading = signal(false);
+  /** La última carga falló: el vacío no es "Sin contactos", es un error (antes se confundían). */
+  errorCarga = signal(false);
   expandedId = signal<number | null>(null);
   detalle = signal<Contacto | null>(null);
 
@@ -445,11 +454,17 @@ export class AgendaListadoComponent implements OnInit {
 
   private load() {
     this.loading.set(true);
+    this.errorCarga.set(false);
     this.svc.listado(this.buildQuery()).subscribe({
       next: r => { this.items.set(r.items); this.total.set(r.total); this.loading.set(false); },
-      error: () => this.loading.set(false),
+      error: () => {
+        this.items.set([]); this.total.set(0);
+        this.errorCarga.set(true); this.loading.set(false);
+      },
     });
   }
+
+  reintentar() { this.load(); }
 
   onFilter() { this.filter$.next(); }
   onPage(p: number) { this.page.set(p); this.load(); }
