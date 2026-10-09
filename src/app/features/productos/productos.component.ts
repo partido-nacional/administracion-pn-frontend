@@ -207,7 +207,7 @@ type Tab = 'gestion' | 'listar' | 'ventas' | 'donaciones' | 'form';
                   <td>{{ v.nroRecibo || '—' }}</td>
                   <td>{{ v.metodoPago || '—' }}</td>
                   <td>{{ v.vendedor || '—' }}</td>
-                  <td><a class="action-link" style="color:var(--danger)">Eliminar</a></td>
+                  <td><a class="action-link" style="color:var(--danger)" (click)="eliminarVenta(v)">Eliminar</a></td>
                 </tr>
               } @empty {
                 <tr><td colspan="10"><div class="empty-state"><div class="empty-state-text">Sin ventas</div></div></td></tr>
@@ -251,7 +251,7 @@ type Tab = 'gestion' | 'listar' | 'ventas' | 'donaciones' | 'form';
                   <td>{{ d.cantidad }}</td>
                   <td>{{ d.destinatario }}</td>
                   <td>{{ d.observaciones }}</td>
-                  <td><a class="action-link" style="color:var(--danger)">Eliminar</a></td>
+                  <td><a class="action-link" style="color:var(--danger)" (click)="eliminarDonacion(d)">Eliminar</a></td>
                 </tr>
               } @empty {
                 <tr><td colspan="7"><div class="empty-state"><div class="empty-state-text">Sin donaciones</div></div></td></tr>
@@ -923,8 +923,32 @@ export class ProductosComponent {
   editarProducto(p: ProductoListado) { this.formP = { ...p }; this.tab.set('form'); }
   volver() { this.tab.set('listar'); }
 
+  /** Los ids de las grillas vienen formateados ("V-012", "D-214"); el endpoint espera el número. */
+  private idNumerico(id: string): number { return Number(String(id).replace(/^\D+-?/, '')); }
+
+  eliminarVenta(v: Venta) {
+    if (!confirm(`¿Eliminar la venta ${v.id}? Las unidades vuelven al stock.`)) return;
+    this.http.delete(`${environment.apiUrl}/ventas/${this.idNumerico(v.id)}`).subscribe(() => {
+      this.reload();
+      this.toast.success('Venta eliminada.');
+    });
+  }
+
+  eliminarDonacion(d: Donacion) {
+    if (!confirm(`¿Eliminar la donación ${d.id}?`)) return;
+    this.http.delete(`${environment.apiUrl}/donaciones/${this.idNumerico(d.id)}`).subscribe(() => {
+      this.reload();
+      this.toast.success('Donación eliminada.');
+    });
+  }
+
   guardar() {
-    const body = { id: this.formP.id, nombre: this.formP.nombre, descripcion: this.formP.descripcion, precio: this.formP.precio, categoria: this.formP.categoria, activo: this.formP.activo ?? true };
+    if (!this.formP.nombre?.trim()) { this.toast.error('El nombre del producto es obligatorio.'); return; }
+    const precio = Number(this.formP.precio);
+    if (this.formP.precio == null || String(this.formP.precio) === '' || isNaN(precio) || precio < 0) {
+      this.toast.error('El precio debe ser un número mayor o igual a 0.'); return;
+    }
+    const body ={ id: this.formP.id, nombre: this.formP.nombre, descripcion: this.formP.descripcion, precio: this.formP.precio, categoria: this.formP.categoria, activo: this.formP.activo ?? true };
     const editando = !!this.formP.id;
     const req = editando
       ? this.http.put(`${environment.apiUrl}/productos/${this.formP.id}`, body)
