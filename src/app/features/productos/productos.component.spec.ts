@@ -71,4 +71,13 @@ describe('ProductosComponent — eliminar ventas/donaciones y validar producto',
     http.expectOne(r => r.method === 'POST' && r.url.endsWith('/productos')).flush({});
     flushGets();
   });
+
+  it('stockPreview acompaña lo que se tipea (no queda congelado)', () => {
+    cmp.abrirStock({ id: 1, nombre: 'Bandera', stock: 10 } as any);
+    expect(cmp.stockPreview()).toBe(11);          // valor inicial: Alta de 1
+    cmp.sForm.cantidad = 4;
+    expect(cmp.stockPreview()).toBe(14);
+    cmp.sForm.operacion = 'Baja';
+    expect(cmp.stockPreview()).toBe(6);
+  });
 });

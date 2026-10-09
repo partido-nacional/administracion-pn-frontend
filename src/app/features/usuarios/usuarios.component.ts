@@ -75,7 +75,7 @@ type ModalMode = 'nueva' | 'editar';
             </select>
           </div>
           @if (modalMode()==='nueva') {
-            <div class="fg"><label>Contraseña inicial *</label><input type="password" [(ngModel)]="form.clave" name="u-clave"></div>
+            <div class="fg"><label>Contraseña inicial * (mín. 8)</label><input type="password" [(ngModel)]="form.clave" name="u-clave"></div>
           }
         </div>
       </app-modal-form>
@@ -165,6 +165,7 @@ export class UsuariosComponent {
     if (!this.form.usuario.trim()) { this.modalError.set('El usuario es obligatorio.'); return; }
     if (!this.form.nombre.trim()) { this.modalError.set('El nombre es obligatorio.'); return; }
     if (this.modalMode() === 'nueva' && !this.form.clave.trim()) { this.modalError.set('La contraseña inicial es obligatoria.'); return; }
+    if (this.modalMode() === 'nueva' && this.form.clave.length < 8) { this.modalError.set('La contraseña debe tener al menos 8 caracteres.'); return; }
 
     const input: UsuarioInput = {
       usuario: this.form.usuario.trim(),

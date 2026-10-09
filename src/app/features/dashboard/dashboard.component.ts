@@ -287,6 +287,9 @@ const DIAS_SEM = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
       background:#fff; border-radius:10px; width:min(480px, 100%);
       display:flex; flex-direction:column; box-shadow:0 20px 50px rgba(0,0,0,.3);
       overflow:hidden;
+      /* En pantallas bajas el form no entraba y el footer (Guardar) quedaba fuera de vista sin
+         poder scrollear: se limita al alto disponible y scrollea solo el cuerpo. */
+      max-height:calc(100vh - 40px);
     }
     .ev-header {
       display:flex; justify-content:space-between; align-items:center;
@@ -294,7 +297,8 @@ const DIAS_SEM = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
     }
     .ev-title { font-size:16px; font-weight:600; }
     .ev-close { background:transparent; border:none; color:#fff; font-size:22px; cursor:pointer; }
-    .ev-body { padding:18px 20px; display:flex; flex-direction:column; gap:12px; }
+    .ev-body { padding:18px 20px; display:flex; flex-direction:column; gap:12px; overflow-y:auto; min-height:0; }
+    .ev-header, .ev-footer { flex-shrink:0; }
     .ev-footer { padding:12px 18px; border-top:1px solid #eef1f5; background:#fafbfd;
       display:flex; gap:8px; justify-content:flex-end; }
     .row { display:flex; gap:10px; }
@@ -461,7 +465,9 @@ export class DashboardComponent {
   formatoFechaCompleta(iso: string): string {
     const d = new Date(iso);
     if (isNaN(d.getTime())) return iso;
-    return d.toLocaleString('es-UY', { dateStyle: 'medium', timeStyle: 'short' });
+    // El backend guarda la hora de pared que tipeó el usuario marcada como UTC ("...T09:00:00Z").
+    // Formatear en UTC la muestra tal cual; en hora local salía 3 horas antes (09:00 → 6:00).
+    return d.toLocaleString('es-UY', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'UTC' });
   }
 
   abrirCrear(isoDate: string) {
