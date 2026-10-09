@@ -12,6 +12,6 @@ export function waLink(celular: string | null | undefined, mensaje: string): str
 }
 
 /** Mensaje de recordatorio de vencimiento de la adhesión anual. */
-export function mensajeVencimiento(nombre: string, vencimiento: string): string {
-  return `Hola ${nombre}, te recordamos desde el Partido Nacional que tu adhesión anual vence el ${vencimiento}. ¡Gracias por tu apoyo!`;
+export function mensajeVencimiento(nombre: string, vencimiento: string, vencida = false): string {
+  return `Hola ${nombre}, te recordamos desde el Partido Nacional que tu adhesión anual ${vencida ? 'venció' : 'vence'} el ${vencimiento}. ¡Gracias por tu apoyo!`;
 }
