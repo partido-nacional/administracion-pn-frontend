@@ -218,7 +218,7 @@ import { Subject, debounceTime } from 'rxjs';
                   @for (o of opcionesConActual(solicitaOpciones, form.solicita); track o) { <option [ngValue]="o">{{ o }}</option> }
                 </select>
               </div>
-              <div class="fg"><label>Sector {{ req() }}</label><input [(ngModel)]="form.sector" name="sector"></div>
+              <div class="fg"><label>Sector</label><input [(ngModel)]="form.sector" name="sector"></div>
               <div class="fg"><label>Fecha Solicitud {{ req() }}</label><input type="date" [(ngModel)]="form.fechaSolicitud" name="fechaSolicitud"></div>
               <div class="fg"><label>Cod. Ant.</label><input [(ngModel)]="form.codAnt" name="codAnt"></div>
               <div class="fg"><label>Sublema Renunciado</label><input [(ngModel)]="form.sublemaRenunciado" name="sublemaRenunciado"></div>
@@ -251,9 +251,9 @@ import { Subject, debounceTime } from 'rxjs';
                   @for (o of opcionesConActual(formas, form.formaActuacion); track o) { <option [ngValue]="o">{{ o }}</option> }
                 </select>
               </div>
-              <div class="fg"><label>Fecha Ing. Comis. {{ req() }}</label><input type="date" [(ngModel)]="form.fechaIngComis" name="fechaIngComis"></div>
-              <div class="fg"><label>Fecha Rec. Agrup. {{ req() }}</label><input type="date" [(ngModel)]="form.fechaRecAgrup" name="fechaRecAgrup"></div>
-              <div class="fg"><label>Fecha Entr. C.E. {{ req() }}</label><input type="date" [(ngModel)]="form.fechaEntrCE" name="fechaEntrCE"></div>
+              <div class="fg"><label>Fecha Ing. Comis.</label><input type="date" [(ngModel)]="form.fechaIngComis" name="fechaIngComis"></div>
+              <div class="fg"><label>Fecha Rec. Agrup.</label><input type="date" [(ngModel)]="form.fechaRecAgrup" name="fechaRecAgrup"></div>
+              <div class="fg"><label>Fecha Entr. C.E.</label><input type="date" [(ngModel)]="form.fechaEntrCE" name="fechaEntrCE"></div>
               <div class="fg"><label>N° Trámite {{ req() }}</label><input [(ngModel)]="form.nroTramite" name="nroTramite"></div>
             </div>
 
@@ -268,9 +268,9 @@ import { Subject, debounceTime } from 'rxjs';
 
             <h4 class="sec-h">Observaciones</h4>
             <div class="grid">
-              <div class="fg full"><label>Antecedentes {{ req() }}</label><textarea rows="2" [(ngModel)]="form.antecedentes" name="antecedentes"></textarea></div>
-              <div class="fg full"><label>Resolución de la Comisión {{ req() }}</label><textarea rows="2" [(ngModel)]="form.resolucionComision" name="resolucionComision"></textarea></div>
-              <div class="fg"><label>Observaciones {{ req() }}</label><input [(ngModel)]="form.observaciones" name="observaciones"></div>
+              <div class="fg full"><label>Antecedentes</label><textarea rows="2" [(ngModel)]="form.antecedentes" name="antecedentes"></textarea></div>
+              <div class="fg full"><label>Resolución de la Comisión</label><textarea rows="2" [(ngModel)]="form.resolucionComision" name="resolucionComision"></textarea></div>
+              <div class="fg"><label>Observaciones</label><input [(ngModel)]="form.observaciones" name="observaciones"></div>
               <div class="fg"><label>Obs. C.E.</label><input [(ngModel)]="form.obsCE" name="obsCE"></div>
               <div class="fg full"><label>Nota</label><input [(ngModel)]="form.nota" name="nota"></div>
             </div>
@@ -521,7 +521,6 @@ export class AgrupacionesPendientesComponent {
     req('Departamento', this.form.depto);
     req('Clasificación', this.form.clasificacion);
     req('Solicita', this.form.solicita);
-    req('Sector', this.form.sector);
     req('Fecha Solicitud', this.form.fechaSolicitud);
     req('Domicilio Legal', this.form.domicilioLegal);
     req('Ciudad', this.form.ciudad);
@@ -531,13 +530,7 @@ export class AgrupacionesPendientesComponent {
     req('Representante', this.form.representante);
     req('Delegado C.E.', this.form.delegadoCE);
     req('Forma Actuación', this.form.formaActuacion);
-    req('Fecha Ing. Comis.', this.form.fechaIngComis);
-    req('Fecha Rec. Agrup.', this.form.fechaRecAgrup);
-    req('Fecha Entr. C.E.', this.form.fechaEntrCE);
     req('N° Trámite', this.form.nroTramite);
-    req('Antecedentes', this.form.antecedentes);
-    req('Resolución de la Comisión', this.form.resolucionComision);
-    req('Observaciones', this.form.observaciones);
     req('Sublema 1', this.form.sublema1);
     return f;
   }

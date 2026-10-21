@@ -312,3 +312,7 @@ Contacto directo al responsable de la ficha vía `wa.me` con mensaje plantilla p
 - **Forma Representación / Forma Actuación**: desplegables independientes con *Indistinta* y *Conjunta* (`FORMAS_AGRUPACION`), en Nueva/Editar y Pendientes. Los valores viejos ("Unipersonal", nombres, etc.) se muestran como opción extra al editar.
 - **N° Trámite** reemplaza a *Fecha Circ. C.E.* en los formularios (Nueva/Editar, Pendientes, Crear desde ficha), en los detalles y en la impresión. La fecha migrada se sigue mostrando si existe y se reenvía oculta al editar (el `PUT` reemplaza la entidad completa). Aprobar una pendiente exige N° Trámite.
 - **Eliminar** en la grilla "Todas": abre un cartel de confirmación (`shared/components/confirm-dialog`) que avisa que se borran también períodos e integrantes y que no se puede deshacer; recién al confirmar se hace `DELETE /agrupaciones/{id}`.
+
+## Actualización — menos campos obligatorios al aprobar
+
+En el modal de Pendientes (modo aprobar) dejan de llevar `*` y de figurar en `faltantes()`: **Sector**, **Fecha Ing. Comis.**, **Fecha Rec. Agrup.**, **Fecha Entr. C.E.**, **Antecedentes**, **Resolución de la Comisión** y **Observaciones**. Espejo de la misma regla en el backend (`CamposFaltantes`).
