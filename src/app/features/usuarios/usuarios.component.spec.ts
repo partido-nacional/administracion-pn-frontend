@@ -49,6 +49,14 @@ describe('UsuariosComponent', () => {
     expect(cmp.form.usuario).toBe('');
   });
 
+  it('guardar() en alta rechaza claves de menos de 8 caracteres sin llamar al backend', () => {
+    cmp.abrirNuevo();
+    cmp.form.usuario = 'nuevo'; cmp.form.nombre = 'Nuevo'; cmp.form.clave = '1234567';
+    cmp.guardar();
+    expect(svc.crear).not.toHaveBeenCalled();
+    expect(cmp.modalError()).toContain('8 caracteres');
+  });
+
   it('abrirEditar() precarga el form y el id, sin clave', () => {
     cmp.abrirEditar(user);
     expect(cmp.modalMode()).toBe('editar');

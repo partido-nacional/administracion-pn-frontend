@@ -36,4 +36,9 @@ describe('waLink', () => {
     expect(m).toContain('Ana');
     expect(m).toContain('15/07/2026');
   });
+
+  it('mensajeVencimiento dice "venció" si ya venció', () => {
+    expect(mensajeVencimiento('Ana', '03/10/2026', true)).toContain('venció el 03/10/2026');
+    expect(mensajeVencimiento('Ana', '28/10/2026')).toContain('vence el 28/10/2026');
+  });
 });

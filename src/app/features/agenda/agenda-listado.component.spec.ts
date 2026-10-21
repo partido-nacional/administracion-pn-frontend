@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { AgendaListadoComponent, esMoroso, AVISO_MOROSIDAD } from './agenda-listado.component';
 import { ContactosService, Contacto, ContactoListado } from './contactos.service';
 import { PagedResult } from '../../core/models/paged';
@@ -154,5 +154,20 @@ describe('AgendaListadoComponent', () => {
 
     expect(f.nativeElement.querySelector('.aviso-morosidad')).toBeTruthy();
     expect(filaDe(f, 0).classList).not.toContain('moroso');
+  });
+
+  it('si falla la carga muestra el error con Reintentar, no "Sin contactos"', () => {
+    svcSpy.listado.and.returnValue(throwError(() => new Error('500')));
+    const f = TestBed.createComponent(AgendaListadoComponent);
+    f.detectChanges();
+    const txt = (f.nativeElement as HTMLElement).querySelector('tbody')!.textContent!;
+    expect(txt).toContain('No se pudo cargar la agenda');
+    expect(txt).not.toContain('Sin contactos');
+
+    svcSpy.listado.and.returnValue(of(paged([fila(1)])));
+    f.componentInstance.reintentar();
+    f.detectChanges();
+    expect(f.componentInstance.errorCarga()).toBeFalse();
+    expect(f.componentInstance.items().length).toBe(1);
   });
 });

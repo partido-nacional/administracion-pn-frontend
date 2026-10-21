@@ -216,6 +216,10 @@ body {
 /* ---- Main Content ---- */
 .main {
     flex: 1;
+    /* Sin esto, como ítem flex no se achica por debajo de su contenido: una tabla con min-width
+       (Adhesiones: 1400px) estiraba toda la página y aparecía scroll horizontal de página en vez
+       del scroll propio de la tabla. */
+    min-width: 0;
     margin-left: var(--sidebar-width);
     min-height: 100vh;
     transition: margin-left 0.25s ease;

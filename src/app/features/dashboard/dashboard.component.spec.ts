@@ -35,6 +35,14 @@ describe('DashboardComponent — editar evento', () => {
 
   afterEach(() => http.verify());
 
+  it('formatoFechaCompleta muestra la hora guardada sin correrla por zona horaria', () => {
+    // El backend devuelve la hora de pared marcada como UTC: 09:00 debe seguir siendo 09:00.
+    // Se comparan solo dígitos y ':' porque el formato de Intl intercala espacios/marcas invisibles.
+    const hora = cmp.formatoFechaCompleta('2026-10-09T09:00:00Z').replace(/[^\d:]/g, ' ');
+    expect(hora).toContain(' 9:00');
+    expect(hora).not.toContain(' 6:00');
+  });
+
   it('abrirEditar prellena el form y entra en modo editar', () => {
     cmp.abrirEditar(evento as any);
     expect(cmp.modal()).toBe('editar');
