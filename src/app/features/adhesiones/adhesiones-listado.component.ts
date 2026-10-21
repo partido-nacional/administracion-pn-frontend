@@ -2,7 +2,8 @@ import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { finalize } from 'rxjs';
+import { Subject, debounceTime, finalize } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { environment } from '../../../environments/environment';
 import { PageTitleService } from '../../core/page-title.service';
 import { AdhesionesService, AdhesionWebDto, AdhesionLocalDto, AnualPorVencerDto } from './adhesiones.service';
@@ -29,7 +30,7 @@ import { DEPARTAMENTOS } from '../../core/departamentos';
     <div class="tabs">
       <a class="tab" [class.active]="tab()==='web'"     (click)="tab.set('web')">Adhesiones Pendientes en Web</a>
       <a class="tab" [class.active]="tab()==='locales'" (click)="tab.set('locales')">Adhesiones Locales</a>
-      <a class="tab" [class.active]="tab()==='anuales'" (click)="tab.set('anuales'); reloadAnuales()">Anuales por vencer</a>
+      <a class="tab" [class.active]="tab()==='anuales'" (click)="tab.set('anuales'); reloadAnuales()">Anuales del mes</a>
     </div>
 
     @if (tab() === 'web') {
@@ -139,6 +140,15 @@ import { DEPARTAMENTOS } from '../../core/departamentos';
         <div class="card-body" style="padding:0; overflow-x:auto">
           <table class="table" style="min-width:1560px">
             <thead>
+              <tr class="filter-row">
+                <th></th><th></th>
+                <th><input class="column-filter" placeholder="Filtrar..." aria-label="Filtrar por nombre" [ngModel]="fLocales.nombre" (ngModelChange)="filtrarLocales('nombre', $event)"></th>
+                <th><input class="column-filter" placeholder="Filtrar..." aria-label="Filtrar por apellidos" [ngModel]="fLocales.apellido" (ngModelChange)="filtrarLocales('apellido', $event)"></th>
+                <th><input class="column-filter" placeholder="Filtrar..." aria-label="Filtrar por cédula" [ngModel]="fLocales.cedula" (ngModelChange)="filtrarLocales('cedula', $event)"></th>
+                <th><input class="column-filter" placeholder="Filtrar..." aria-label="Filtrar por sector" [ngModel]="fLocales.sector" (ngModelChange)="filtrarLocales('sector', $event)"></th>
+                <th><input class="column-filter" placeholder="Filtrar..." aria-label="Filtrar por sistema de contribución" [ngModel]="fLocales.sist" (ngModelChange)="filtrarLocales('sist', $event)"></th>
+                <th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th>
+              </tr>
               <tr>
                 <th style="width:45px">ID</th>
                 <th style="width:65px">ID Contacto</th>
@@ -190,7 +200,7 @@ import { DEPARTAMENTOS } from '../../core/departamentos';
                 </tr>
               } @empty {
                 <tr><td colspan="15"><div class="empty-state"><div class="empty-state-text">
-                  {{ loadingLocales() ? 'Cargando…' : 'Sin adhesiones locales' }}
+                  {{ loadingLocales() ? 'Cargando…' : (hayFiltrosLocales() ? 'Sin resultados para los filtros' : 'Sin adhesiones locales') }}
                 </div></div></td></tr>
               }
             </tbody>
@@ -204,7 +214,7 @@ import { DEPARTAMENTOS } from '../../core/departamentos';
 
     @if (tab() === 'anuales') {
       <div style="margin-top:16px; display:flex; align-items:baseline; gap:10px">
-        <h3 style="margin:0">Anuales por vencer este mes</h3>
+        <h3 style="margin:0">Anuales que vencen este mes</h3>
         <span style="color:#666; font-size:14px">({{ anuales().length }})</span>
       </div>
       <div class="card" style="margin-top:12px">
@@ -229,7 +239,10 @@ import { DEPARTAMENTOS } from '../../core/departamentos';
                   <td><strong>{{ a.apellido }}</strong></td>
                   <td>{{ a.celular || '—' }}</td>
                   <td><span class="badge">{{ a.sistContrib || 'ANUAL' }}</span></td>
-                  <td>{{ a.vencimiento }}</td>
+                  <td>
+                    {{ a.vencimiento }}
+                    @if (a.vencida) { <span class="badge status-rejected" style="margin-left:6px">Vencida</span> }
+                  </td>
                   <td style="text-align:right">
                     @if (waParaFila(a); as link) {
                       <a class="btn btn-sm btn-wpp" [href]="link" target="_blank" rel="noopener" title="Avisar por WhatsApp">
@@ -240,7 +253,7 @@ import { DEPARTAMENTOS } from '../../core/departamentos';
                 </tr>
               } @empty {
                 <tr><td colspan="7"><div class="empty-state"><div class="empty-state-text">
-                  {{ loadingAnuales() ? 'Cargando…' : 'Sin anuales por vencer este mes' }}
+                  {{ loadingAnuales() ? 'Cargando…' : 'Sin anuales que venzan este mes' }}
                 </div></div></td></tr>
               }
             </tbody>
@@ -362,6 +375,10 @@ export class AdhesionesListadoComponent {
   localesSort = signal<string | undefined>(undefined);
   localesOrder = signal<SortOrder>('asc');
   loadingLocales = signal(false);
+  // Filtros por columna de locales (~12.000 filas): antes no había forma de buscar a alguien.
+  fLocales: Record<'nombre' | 'apellido' | 'cedula' | 'sector' | 'sist', string> =
+    { nombre: '', apellido: '', cedula: '', sector: '', sist: '' };
+  private localesFiltro$ = new Subject<void>();
 
   form: any = {
     contactoId: null, sector: '', sistContrib: '', aporte: null,
@@ -373,7 +390,17 @@ export class AdhesionesListadoComponent {
     this.reloadWeb();
     this.reloadLocales();
     this.reloadStats();
+    this.localesFiltro$.pipe(debounceTime(300), takeUntilDestroyed()).subscribe(() => {
+      this.localesPage.set(1);
+      this.reloadLocales();
+    });
   }
+
+  filtrarLocales(campo: keyof AdhesionesListadoComponent['fLocales'], valor: string) {
+    this.fLocales = { ...this.fLocales, [campo]: valor };
+    this.localesFiltro$.next();
+  }
+  hayFiltrosLocales(): boolean { return Object.values(this.fLocales).some(v => !!v.trim()); }
 
   badgeClass(s: string): string {
     const k = (s || '').toLowerCase();
@@ -392,7 +419,10 @@ export class AdhesionesListadoComponent {
     };
   }
   private localesQuery(): GridQuery {
-    return { page: this.localesPage(), pageSize: this.localesPageSize(), sort: this.localesSort(), order: this.localesOrder() };
+    return {
+      page: this.localesPage(), pageSize: this.localesPageSize(), sort: this.localesSort(), order: this.localesOrder(),
+      filters: { ...this.fLocales },
+    };
   }
 
   reloadWeb() {
@@ -421,7 +451,7 @@ export class AdhesionesListadoComponent {
 
   /** Deep link de WhatsApp para la fila, o null si el contacto no tiene celular válido. */
   waParaFila(a: AnualPorVencerDto): string | null {
-    return waLink(a.celular, mensajeVencimiento(a.nombre, a.vencimiento));
+    return waLink(a.celular, mensajeVencimiento(a.nombre, a.vencimiento, a.vencida));
   }
 
   onWebPage(p: number) { this.webPage.set(p); this.reloadWeb(); }
@@ -467,6 +497,7 @@ export class AdhesionesListadoComponent {
   }
 
   pasar(id: number) {
+    if (!confirm('¿Pasar esta adhesión web a local? Se crea (o actualiza) el contacto y deja de figurar como pendiente.')) return;
     // El error lo muestra el toast global (interceptor); acá solo el éxito y recargar.
     this.http.post(`${environment.apiUrl}/adhesiones/web/${id}/pasar-a-local`, {}).subscribe({
       next: () => {
