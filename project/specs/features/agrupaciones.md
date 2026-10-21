@@ -305,3 +305,10 @@ Contacto directo al responsable de la ficha vía `wa.me` con mensaje plantilla p
   - Solicita: Ampliar Sublemas · Reconocimiento · Modifica Autoridades · Cambio de cargo.
 - El backend sigue guardando texto libre. Los valores migrados del sistema viejo (códigos `N`/`C`/`R`/`S`, `T`/`U`/`S` y textos largos) no están en las listas: `opcionesConActual` los agrega como opción extra al editar para no perderlos al guardar.
 - El campo **Solic.** ya no aparece al crear una Nueva Agrupación (se envía `0`); sigue en el modo Editar y en el modal de Pendientes, donde aprobar exige Solic. > 0.
+
+## Actualización — código correlativo, formas, N° Trámite y eliminar
+
+- **Cod. Agrupación por defecto**: al abrir *Nueva Agrupación* se pide `GET /agrupaciones/siguiente-codigo` y se precarga el último + 1 (editable; no pisa lo que el operador ya escribió; si falla queda vacío y lo asigna el backend). En *Crear desde ficha* queda vacío = automático, porque la ficha puede corresponder a una agrupación existente que ya tiene código.
+- **Forma Representación / Forma Actuación**: desplegables independientes con *Indistinta* y *Conjunta* (`FORMAS_AGRUPACION`), en Nueva/Editar y Pendientes. Los valores viejos ("Unipersonal", nombres, etc.) se muestran como opción extra al editar.
+- **N° Trámite** reemplaza a *Fecha Circ. C.E.* en los formularios (Nueva/Editar, Pendientes, Crear desde ficha), en los detalles y en la impresión. La fecha migrada se sigue mostrando si existe y se reenvía oculta al editar (el `PUT` reemplaza la entidad completa). Aprobar una pendiente exige N° Trámite.
+- **Eliminar** en la grilla "Todas": abre un cartel de confirmación (`shared/components/confirm-dialog`) que avisa que se borran también períodos e integrantes y que no se puede deshacer; recién al confirmar se hace `DELETE /agrupaciones/{id}`.

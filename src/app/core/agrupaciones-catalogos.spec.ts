@@ -1,4 +1,4 @@
-import { CLASIFICACIONES_AGRUPACION, SOLICITA_AGRUPACION, opcionesConActual } from './agrupaciones-catalogos';
+import { CLASIFICACIONES_AGRUPACION, FORMAS_AGRUPACION, SOLICITA_AGRUPACION, opcionesConActual } from './agrupaciones-catalogos';
 
 describe('agrupaciones-catalogos', () => {
   it('Clasificación tiene las 5 opciones en orden', () => {
@@ -9,6 +9,10 @@ describe('agrupaciones-catalogos', () => {
 
   it('Solicita tiene las 4 opciones en orden', () => {
     expect(SOLICITA_AGRUPACION).toEqual(['Ampliar Sublemas', 'Reconocimiento', 'Modifica Autoridades', 'Cambio de cargo']);
+  });
+
+  it('Forma de Representación / Actuación: Indistinta y Conjunta', () => {
+    expect(FORMAS_AGRUPACION).toEqual(['Indistinta', 'Conjunta']);
   });
 
   it('opcionesConActual devuelve la lista tal cual si el valor está o viene vacío', () => {

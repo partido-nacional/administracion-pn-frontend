@@ -39,6 +39,7 @@ export interface PrintAgrupacionData {
   fechaRecAgrup?: string;
   fechaEntrCE?: string;
   fechaCircCE?: string;
+  nroTramite?: string;
 
   // observaciones
   observaciones?: string;
@@ -245,7 +246,8 @@ function buildHtml(d: PrintAgrupacionData, opts: { firmas: boolean; titulo: stri
       ${row('Fecha Ing. Comis.', d.fechaIngComis)}
       ${row('Fecha Rec. Agrup.', d.fechaRecAgrup)}
       ${row('Fecha Entr. C.E.', d.fechaEntrCE)}
-      ${row('Fecha Circ. C.E.', d.fechaCircCE)}
+      ${row('N° Trámite', d.nroTramite)}
+      ${d.fechaCircCE ? row('Fecha Circ. C.E.', d.fechaCircCE) : ''}
     </table>
   </div>
 

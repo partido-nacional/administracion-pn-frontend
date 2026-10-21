@@ -57,6 +57,7 @@ interface AgrupacionPeriodoRow {
   fechaRecAgrup?: string;
   fechaEntrCE?: string;
   fechaCircCE?: string;
+  nroTramite?: string;
   observaciones?: string;
   obsCE?: string;
   nota?: string;
@@ -233,7 +234,8 @@ import { DEPARTAMENTOS } from '../../core/departamentos';
                         <div class="kv"><span class="k">Fecha Ing. Comis.</span><span class="v">{{ r.fechaIngComis || '—' }}</span></div>
                         <div class="kv"><span class="k">Fecha Rec. Agrup.</span><span class="v">{{ r.fechaRecAgrup || '—' }}</span></div>
                         <div class="kv"><span class="k">Fecha Entr. C.E.</span><span class="v">{{ r.fechaEntrCE || '—' }}</span></div>
-                        <div class="kv"><span class="k">Fecha Circ. C.E.</span><span class="v">{{ r.fechaCircCE || '—' }}</span></div>
+                        <div class="kv"><span class="k">N° Trámite</span><span class="v">{{ r.nroTramite || '—' }}</span></div>
+                        @if (r.fechaCircCE) { <div class="kv"><span class="k">Fecha Circ. C.E.</span><span class="v">{{ r.fechaCircCE }}</span></div> }
                       </div>
                     </div>
 
@@ -700,7 +702,7 @@ export class AgrupacionesPorPeriodoComponent {
       formaRepresentacion: r.formaRepresentacion, representante: r.representante,
       delegadoCE: r.delegadoCE, formaActuacion: r.formaActuacion,
       fechaIngComis: r.fechaIngComis, fechaRecAgrup: r.fechaRecAgrup,
-      fechaEntrCE: r.fechaEntrCE, fechaCircCE: r.fechaCircCE,
+      fechaEntrCE: r.fechaEntrCE, fechaCircCE: r.fechaCircCE, nroTramite: r.nroTramite,
       observaciones: r.observaciones, obsCE: r.obsCE, nota: r.nota,
       antecedentes: r.antecedentes, resolucionComision: r.resolucionComision,
       sublema1: r.sublema1, sublema2: r.sublema2, sublema3: r.sublema3,
