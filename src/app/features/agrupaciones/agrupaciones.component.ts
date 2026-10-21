@@ -35,6 +35,7 @@ interface PadronItem { serie: string; nro: string; primerNombre: string; segundo
 type Tab = 'todas' | 'pendientes' | 'fichas' | 'periodo' | 'padron';
 
 import { DEPARTAMENTOS_CON_NACIONAL } from '../../core/departamentos';
+import { CLASIFICACIONES_AGRUPACION, SOLICITA_AGRUPACION, opcionesConActual } from '../../core/agrupaciones-catalogos';
 
 @Component({
   selector: 'app-agrupaciones',
@@ -79,15 +80,27 @@ import { DEPARTAMENTOS_CON_NACIONAL } from '../../core/departamentos';
                   <option value="NACIONAL">NACIONAL</option>
                 </select>
               </div>
-              <div class="fg"><label>Solic.</label><input type="number" [(ngModel)]="nuevoForm.solic" name="n-solic"></div>
+              @if (modoModal() === 'editar') {
+                <div class="fg"><label>Solic.</label><input type="number" [(ngModel)]="nuevoForm.solic" name="n-solic"></div>
+              }
               <div class="fg"><label>Departamento</label>
                 <select [(ngModel)]="nuevoForm.depto" name="n-depto">
                   <option value="">—</option>
                   @for (d of departamentos; track d) { <option [ngValue]="d">{{ d }}</option> }
                 </select>
               </div>
-              <div class="fg"><label>Clasificación</label><input [(ngModel)]="nuevoForm.clasificacion" name="n-clasif"></div>
-              <div class="fg"><label>Solicita</label><input [(ngModel)]="nuevoForm.solicita" name="n-solicita"></div>
+              <div class="fg"><label>Clasificación</label>
+                <select [(ngModel)]="nuevoForm.clasificacion" name="n-clasif">
+                  <option value="">—</option>
+                  @for (o of opcionesConActual(clasificaciones, nuevoForm.clasificacion); track o) { <option [ngValue]="o">{{ o }}</option> }
+                </select>
+              </div>
+              <div class="fg"><label>Solicita</label>
+                <select [(ngModel)]="nuevoForm.solicita" name="n-solicita">
+                  <option value="">—</option>
+                  @for (o of opcionesConActual(solicitaOpciones, nuevoForm.solicita); track o) { <option [ngValue]="o">{{ o }}</option> }
+                </select>
+              </div>
               <div class="fg"><label>Sector</label><input [(ngModel)]="nuevoForm.sector" name="n-sector"></div>
               <div class="fg"><label>Fecha Solicitud</label><input type="date" [(ngModel)]="nuevoForm.fechaSolicitud" name="n-fSol"></div>
               <div class="fg"><label>Cod. Ant.</label><input [(ngModel)]="nuevoForm.codAnt" name="n-codAnt"></div>
@@ -501,6 +514,9 @@ export class AgrupacionesComponent {
   nuevoError = signal('');
   nuevoForm: any = {};
   departamentos = DEPARTAMENTOS_CON_NACIONAL;
+  readonly clasificaciones = CLASIFICACIONES_AGRUPACION;
+  readonly solicitaOpciones = SOLICITA_AGRUPACION;
+  readonly opcionesConActual = opcionesConActual;
 
   private formVacio() {
     return {

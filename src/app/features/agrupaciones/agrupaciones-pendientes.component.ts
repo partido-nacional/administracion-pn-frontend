@@ -27,6 +27,7 @@ interface AgrupacionPendiente {
 
 
 import { DEPARTAMENTOS_CON_NACIONAL, opcionesDepto } from '../../core/departamentos';
+import { CLASIFICACIONES_AGRUPACION, SOLICITA_AGRUPACION, opcionesConActual } from '../../core/agrupaciones-catalogos';
 import { Subject, debounceTime } from 'rxjs';
 
 @Component({
@@ -204,8 +205,18 @@ import { Subject, debounceTime } from 'rxjs';
                   @for (d of opcionesDepto(deptos, form.depto); track d) { <option [ngValue]="d">{{ d }}</option> }
                 </select>
               </div>
-              <div class="fg"><label>Clasificación {{ req() }}</label><input [(ngModel)]="form.clasificacion" name="clasificacion"></div>
-              <div class="fg"><label>Solicita {{ req() }}</label><input [(ngModel)]="form.solicita" name="solicita"></div>
+              <div class="fg"><label>Clasificación {{ req() }}</label>
+                <select [(ngModel)]="form.clasificacion" name="clasificacion">
+                  <option value="">—</option>
+                  @for (o of opcionesConActual(clasificaciones, form.clasificacion); track o) { <option [ngValue]="o">{{ o }}</option> }
+                </select>
+              </div>
+              <div class="fg"><label>Solicita {{ req() }}</label>
+                <select [(ngModel)]="form.solicita" name="solicita">
+                  <option value="">—</option>
+                  @for (o of opcionesConActual(solicitaOpciones, form.solicita); track o) { <option [ngValue]="o">{{ o }}</option> }
+                </select>
+              </div>
               <div class="fg"><label>Sector {{ req() }}</label><input [(ngModel)]="form.sector" name="sector"></div>
               <div class="fg"><label>Fecha Solicitud {{ req() }}</label><input type="date" [(ngModel)]="form.fechaSolicitud" name="fechaSolicitud"></div>
               <div class="fg"><label>Cod. Ant.</label><input [(ngModel)]="form.codAnt" name="codAnt"></div>
@@ -365,6 +376,9 @@ export class AgrupacionesPendientesComponent {
   form: any = {};
   deptos = DEPARTAMENTOS_CON_NACIONAL;
   readonly opcionesDepto = opcionesDepto;
+  readonly clasificaciones = CLASIFICACIONES_AGRUPACION;
+  readonly solicitaOpciones = SOLICITA_AGRUPACION;
+  readonly opcionesConActual = opcionesConActual;
 
   // Filtros de la grilla (feature 030). Lista canónica + 'Nacional' (Depto 'X'/'NACIONAL').
   fId = signal(''); fCod = signal(''); fNombre = signal(''); fDepto = signal('');

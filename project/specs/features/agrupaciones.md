@@ -296,3 +296,12 @@ Contacto directo al responsable de la ficha vía `wa.me` con mensaje plantilla p
 - Los dropdowns de departamento de los **formularios** (alta/aprobación) no cambian.
 
 - Los dropdowns de Depto. de las grillas de agrupaciones (Todas, Pendientes, Por Período) son `[...DEPARTAMENTOS, 'Nacional']`. El dato guarda letras de serie (`C`, `X`); el backend las mapea.
+
+## Actualización — desplegables Clasificación / Solicita y sin Solic. en el alta
+
+- **Clasificación** y **Solicita** pasan de input libre a `<select>` en los tres formularios que los editan: modal Nueva/Editar (`AgrupacionesComponent`), modal de Pendientes y "Crear agrupación desde ficha" (`FichasAgrupacionComponent`).
+- Opciones en `src/app/core/agrupaciones-catalogos.ts`:
+  - Clasificación: No tiene · Nueva · Vieja sin acta electoral · Vieja con acta electoral · Reconocida en este período.
+  - Solicita: Ampliar Sublemas · Reconocimiento · Modifica Autoridades · Cambio de cargo.
+- El backend sigue guardando texto libre. Los valores migrados del sistema viejo (códigos `N`/`C`/`R`/`S`, `T`/`U`/`S` y textos largos) no están en las listas: `opcionesConActual` los agrega como opción extra al editar para no perderlos al guardar.
+- El campo **Solic.** ya no aparece al crear una Nueva Agrupación (se envía `0`); sigue en el modo Editar y en el modal de Pendientes, donde aprobar exige Solic. > 0.
