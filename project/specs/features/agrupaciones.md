@@ -316,3 +316,9 @@ Contacto directo al responsable de la ficha vía `wa.me` con mensaje plantilla p
 ## Actualización — menos campos obligatorios al aprobar
 
 En el modal de Pendientes (modo aprobar) dejan de llevar `*` y de figurar en `faltantes()`: **Sector**, **Fecha Ing. Comis.**, **Fecha Rec. Agrup.**, **Fecha Entr. C.E.**, **Antecedentes**, **Resolución de la Comisión** y **Observaciones**. Espejo de la misma regla en el backend (`CamposFaltantes`).
+
+## Actualización — integrantes en el alta
+
+- El modal **Nueva Agrupación** tiene una sección **Integrantes** (opcional): se busca el contacto por nombre o cédula con el nuevo `shared/components/contacto-buscador`, se agrega a una lista (no admite repetidos) y se completa cargo y fecha de ingreso (por defecto hoy). Se mandan en `integrantes` del `POST /agrupaciones-pendientes/nueva` y se guardan junto con la agrupación. En modo Editar la sección no aparece (los integrantes se gestionan en Agrupaciones por Período).
+- **Crear desde ficha** avisa que las autoridades de la ficha quedan cargadas como integrantes (lo hace el backend al promover).
+- `AgrupacionesPorPeriodoComponent` mantiene su propio buscador inline; migrarlo a `app-contacto-buscador` queda como mejora.

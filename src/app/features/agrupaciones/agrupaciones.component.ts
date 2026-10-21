@@ -37,11 +37,22 @@ type Tab = 'todas' | 'pendientes' | 'fichas' | 'periodo' | 'padron';
 import { DEPARTAMENTOS_CON_NACIONAL } from '../../core/departamentos';
 import { CLASIFICACIONES_AGRUPACION, FORMAS_AGRUPACION, SOLICITA_AGRUPACION, opcionesConActual } from '../../core/agrupaciones-catalogos';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
+import { ContactoBuscadorComponent, etiquetaContacto } from '../../shared/components/contacto-buscador/contacto-buscador.component';
+import { ContactoListado } from '../agenda/contactos.service';
+
+/** Integrante elegido en el alta, todavía sin guardar. */
+interface IntegranteNuevo { contacto: ContactoListado; cargo: string; fechaIngreso: string; }
+
+/** Fecha de hoy (local) como yyyy-MM-dd para un input date. */
+function hoyIso(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
 
 @Component({
   selector: 'app-agrupaciones',
   standalone: true,
-  imports: [CommonModule, FormsModule, FichasAgrupacionComponent, AgrupacionesPendientesComponent, AgrupacionesPorPeriodoComponent, PaginatorComponent, ModalFormComponent, ListStateComponent, ConfirmDialogComponent],
+  imports: [CommonModule, FormsModule, FichasAgrupacionComponent, AgrupacionesPendientesComponent, AgrupacionesPorPeriodoComponent, PaginatorComponent, ModalFormComponent, ListStateComponent, ConfirmDialogComponent, ContactoBuscadorComponent],
   template: `
     <div class="topbar-inline">
       <button class="btn btn-primary" (click)="abrirNueva()">+ Nueva Agrupación</button>
@@ -150,6 +161,29 @@ import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/c
                 <div class="fg"><label>Sublema 5</label><input [(ngModel)]="nuevoForm.sublema5" name="n-s5"></div>
                 <div class="fg full"><label>Sublema Renunciado</label><input [(ngModel)]="nuevoForm.sublemaRenunciado" name="n-sr"></div>
               </div>
+
+              <h4 class="sec-h">Integrantes</h4>
+              <p class="nv-sub">Opcional. También se pueden agregar después en <strong>Agrupaciones por Período</strong>.</p>
+              <div class="nv-grid g3 int-alta">
+                <div class="fg full"><label>Agregar contacto</label>
+                  <app-contacto-buscador (seleccionar)="agregarIntegrante($event)"></app-contacto-buscador>
+                </div>
+              </div>
+              @if (integrantesNuevos().length > 0) {
+                <table class="int-alta-table">
+                  <thead><tr><th>Contacto</th><th>Cargo</th><th>Fecha ingreso</th><th></th></tr></thead>
+                  <tbody>
+                    @for (i of integrantesNuevos(); track i.contacto.id) {
+                      <tr>
+                        <td>{{ etiquetaContacto(i.contacto) }}</td>
+                        <td><input [(ngModel)]="i.cargo" [name]="'n-int-cargo-' + i.contacto.id" placeholder="Cargo"></td>
+                        <td><input type="date" [(ngModel)]="i.fechaIngreso" [name]="'n-int-fi-' + i.contacto.id"></td>
+                        <td><button type="button" class="btn btn-sm btn-secondary" (click)="quitarIntegrante(i.contacto.id)">Quitar</button></td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              }
             }
 
             <h4 class="sec-h">Observaciones</h4>
@@ -385,6 +419,10 @@ import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/c
     }
   `,
   styles: [`
+    .int-alta-table { width:100%; border-collapse:collapse; font-size:13px; margin-top:8px; }
+    .int-alta-table th, .int-alta-table td { border-bottom:1px solid #eef1f5; padding:6px 8px; text-align:left; }
+    .int-alta-table th { font-size:11px; color:#666; text-transform:uppercase; letter-spacing:.4px; background:#fafbfd; }
+    .int-alta-table input { width:100%; box-sizing:border-box; padding:5px 8px; font-size:13px; border:1px solid #cfd6e0; border-radius:5px; }
     .topbar-inline { display:flex; justify-content:flex-end; margin-bottom:16px; }
     tr.clickable { cursor:pointer; }
     tr.clickable:hover { background:#f5f8ff; }
@@ -569,10 +607,27 @@ export class AgrupacionesComponent {
 
   abrirNueva() {
     this.nuevoForm = this.formVacio();
+    this.integrantesNuevos.set([]);
     this.nuevoError.set('');
     this.editandoId.set(null);
     this.modoModal.set('nueva');
     this.proponerCodigo();
+  }
+
+  // ── Integrantes en el alta (se guardan junto con la agrupación) ──
+  integrantesNuevos = signal<IntegranteNuevo[]>([]);
+  readonly etiquetaContacto = etiquetaContacto;
+
+  agregarIntegrante(c: ContactoListado) {
+    if (this.integrantesNuevos().some(i => i.contacto.id === c.id)) {
+      this.toast.error(`${etiquetaContacto(c)} ya está en la lista.`);
+      return;
+    }
+    this.integrantesNuevos.update(l => [...l, { contacto: c, cargo: '', fechaIngreso: hoyIso() }]);
+  }
+
+  quitarIntegrante(contactoId: number) {
+    this.integrantesNuevos.update(l => l.filter(i => i.contacto.id !== contactoId));
   }
 
   /** Cod. Agrupación por defecto: el último + 1. Si falla queda vacío y el backend lo asigna igual. */
@@ -642,6 +697,13 @@ export class AgrupacionesComponent {
       fechaEntrCE: this.nuevoForm.fechaEntrCE || null,
       fechaCircCE: this.nuevoForm.fechaCircCE || null
     };
+    if (this.modoModal() === 'nueva') {
+      body.integrantes = this.integrantesNuevos().map(i => ({
+        contactoId: i.contacto.id,
+        cargo: i.cargo.trim() || null,
+        fechaIngreso: i.fechaIngreso || null,
+      }));
+    }
 
     const editId = this.editandoId();
     if (this.modoModal() === 'editar' && editId != null) {

@@ -303,6 +303,9 @@ export interface SincronizacionAgrupaciones {
             <p class="prom-from">
               Desde ficha: <strong>{{ promFicha()!.nombreAgrupacion }}</strong>
             </p>
+            <p class="prom-from">
+              Las autoridades de la ficha quedan cargadas como <strong>integrantes</strong> del período, con su rol como cargo.
+            </p>
 
             <div class="prom-grid">
               <div class="fg"><label>Cod. Agrupación</label><input [(ngModel)]="prom.codAgrup" name="codAgrup" placeholder="Automático si se deja vacío"></div>
