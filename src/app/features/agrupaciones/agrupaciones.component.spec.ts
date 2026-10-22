@@ -124,4 +124,63 @@ describe('AgrupacionesComponent', () => {
       expect(c.eliminarError()).toBe('Sin permiso');
     });
   });
+  describe('Integrantes en el alta', () => {
+    const ana: any = { id: 1, nombre: 'Ana', apellido: 'Pérez', cedula: '12345672' };
+    const luis: any = { id: 2, nombre: 'Luis', apellido: 'Gómez' };
+
+    function abrir() {
+      const f = montar();
+      const c = f.componentInstance;
+      c.abrirNueva();
+      http.expectOne(r => r.url.endsWith('/agrupaciones/siguiente-codigo')).flush({ codigo: '6325' });
+      f.detectChanges();
+      return { f, c };
+    }
+
+    it('agrega, evita repetidos y quita', () => {
+      const { c } = abrir();
+      c.agregarIntegrante(ana);
+      c.agregarIntegrante(luis);
+      c.agregarIntegrante(ana);
+      expect(c.integrantesNuevos().map(i => i.contacto.id)).toEqual([1, 2]);
+      expect(toast.error).toHaveBeenCalled();
+      c.quitarIntegrante(1);
+      expect(c.integrantesNuevos().map(i => i.contacto.id)).toEqual([2]);
+    });
+
+    it('el alta manda los integrantes con cargo y fecha', () => {
+      const { c } = abrir();
+      c.nuevoForm.nombre = 'Lista Nueva';
+      c.agregarIntegrante(ana);
+      c.integrantesNuevos()[0].cargo = ' Presidente ';
+      c.integrantesNuevos()[0].fechaIngreso = '2026-10-01';
+      c.agregarIntegrante(luis);
+      c.integrantesNuevos()[1].fechaIngreso = '';
+      c.guardarNueva();
+
+      const req = http.expectOne(r => r.method === 'POST' && r.url.endsWith('/agrupaciones-pendientes/nueva'));
+      expect(req.request.body.integrantes).toEqual([
+        { contactoId: 1, cargo: 'Presidente', fechaIngreso: '2026-10-01' },
+        { contactoId: 2, cargo: null, fechaIngreso: null },
+      ]);
+      req.flush({ agrupacionId: 9, periodoId: 9, nombre: 'Lista Nueva', integrantes: 2 });
+    });
+
+    it('al reabrir la lista arranca vacía y editar no manda integrantes', () => {
+      const { c } = abrir();
+      c.agregarIntegrante(ana);
+      c.cerrarNueva();
+      c.abrirNueva();
+      http.expectOne(r => r.url.endsWith('/agrupaciones/siguiente-codigo')).flush({ codigo: '6325' });
+      expect(c.integrantesNuevos()).toEqual([]);
+
+      c.cerrarNueva();
+      c.abrirEditar(agrup);
+      c.guardarNueva();
+      const req = http.expectOne(r => r.method === 'PUT');
+      expect(req.request.body.integrantes).toBeUndefined();
+      req.flush(null);
+      http.expectOne(r => r.url.endsWith('/agrupaciones')).flush(pagina);
+    });
+  });
 });
