@@ -48,7 +48,7 @@ export interface FichaAgrupacion {
 }
 
 import { DEPARTAMENTOS } from '../../core/departamentos';
-import { CLASIFICACIONES_AGRUPACION, SOLICITA_AGRUPACION, opcionesConActual } from '../../core/agrupaciones-catalogos';
+import { CARGOS_INTEGRANTE, CLASIFICACIONES_AGRUPACION, SOLICITA_AGRUPACION, opcionesConActual } from '../../core/agrupaciones-catalogos';
 import { Subject, debounceTime, finalize } from 'rxjs';
 import { ToastService } from '../../core/services/toast.service';
 
@@ -417,12 +417,8 @@ export interface SincronizacionAgrupaciones {
                     <td><input [(ngModel)]="a.apellido" [name]="'aut-ape-' + i"></td>
                     <td><input [(ngModel)]="a.ci" [name]="'aut-ci-' + i"></td>
                     <td>
-                      <select [(ngModel)]="a.rol" [name]="'aut-rol-' + i">
-                        <option>Presidente</option>
-                        <option>Vicepresidente</option>
-                        <option>Secretario</option>
-                        <option>Tesorero</option>
-                        <option>Vocal</option>
+                      <select [(ngModel)]="a.rol" [name]="'aut-rol-' + i" aria-label="Rol">
+                        @for (o of opcionesConActual(cargos, a.rol); track o) { <option [ngValue]="o">{{ o }}</option> }
                       </select>
                     </td>
                     <td><button class="btn btn-sm btn-danger" (click)="quitarAutoridad(i)">×</button></td>
@@ -639,6 +635,7 @@ export class FichasAgrupacionComponent {
   readonly deptosFiltro = DEPARTAMENTOS;
   readonly clasificaciones = CLASIFICACIONES_AGRUPACION;
   readonly solicitaOpciones = SOLICITA_AGRUPACION;
+  readonly cargos = CARGOS_INTEGRANTE;
   readonly opcionesConActual = opcionesConActual;
   private filter$ = new Subject<void>();
   onFilter() { this.filter$.next(); }
