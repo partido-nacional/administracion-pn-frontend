@@ -23,17 +23,27 @@ interface AgrupacionPendiente {
   observaciones?: string; obsCE?: string; nota?: string;
   antecedentes?: string; resolucionComision?: string;
   sublema1?: string; sublema2?: string; sublema3?: string; sublema4?: string; sublema5?: string;
+  /** Integrantes del período pendiente (backend #160). Undefined si el backend todavía no los manda. */
+  integrantes?: IntegrantePendiente[];
+}
+
+interface IntegrantePendiente {
+  id: number; contactoId: number; nombre: string; apellido: string;
+  cedula?: string; credencial?: string; cargo?: string; fechaIngreso?: string;
+  /** Adhesión local con aporte confirmado: requisito para abrir una agrupación. */
+  adherente: boolean;
 }
 
 
 import { DEPARTAMENTOS_CON_NACIONAL, opcionesDepto } from '../../core/departamentos';
 import { CLASIFICACIONES_AGRUPACION, FORMAS_AGRUPACION, SOLICITA_AGRUPACION, opcionesConActual } from '../../core/agrupaciones-catalogos';
 import { Subject, debounceTime } from 'rxjs';
+import { IntegranteEditable, IntegrantesEditorComponent, integrantesParaGuardar } from './integrantes-editor.component';
 
 @Component({
   selector: 'app-agrupaciones-pendientes',
   standalone: true,
-  imports: [CommonModule, FormsModule, PaginatorComponent],
+  imports: [CommonModule, FormsModule, PaginatorComponent, IntegrantesEditorComponent],
   template: `
     @if (loading() && !cargado()) {
       <div class="card"><div class="card-body"><div class="empty-state"><div class="empty-state-text">Cargando agrupaciones pendientes…</div></div></div></div>
@@ -275,6 +285,13 @@ import { Subject, debounceTime } from 'rxjs';
               <div class="fg full"><label>Nota</label><input [(ngModel)]="form.nota" name="nota"></div>
             </div>
 
+            <h4 class="sec-h">Integrantes</h4>
+            @if (integrantesEditables()) {
+              <app-integrantes-editor [integrantes]="integrantes()" (integrantesChange)="integrantes.set($event)"></app-integrantes-editor>
+            } @else {
+              <p class="int-nota">Los integrantes se editan en <strong>Agrupaciones por Período</strong>.</p>
+            }
+
             @if (faltantes().length > 0) {
               <div class="prom-err">
                 <strong>Faltan campos obligatorios:</strong>
@@ -341,6 +358,7 @@ import { Subject, debounceTime } from 'rxjs';
       background:#e6f4ea; border:1px solid #b6e0c2; border-radius:6px;
       padding:10px 12px; font-size:13px; color:#1f6f3b; margin-bottom:14px;
     }
+    .int-nota { font-size:12px; color:#666; margin:0 0 6px; }
     .sec-h {
       margin:16px 0 8px 0; font-size:13px; font-weight:600; color:#4a5568;
       text-transform:uppercase; letter-spacing:.5px;
@@ -385,6 +403,13 @@ export class AgrupacionesPendientesComponent {
   busy = signal(false);
   modalError = signal<string>('');
   form: any = {};
+  /** Integrantes en edición; se guardan con el resto del formulario (PUT / aprobar). */
+  integrantes = signal<IntegranteEditable[]>([]);
+  /**
+   * Solo si el backend mandó la lista: si no vino (versión vieja), no se manda nada y no se tocan.
+   * Mandar una lista vacía los borraría.
+   */
+  integrantesEditables = signal(false);
   deptos = DEPARTAMENTOS_CON_NACIONAL;
   readonly opcionesDepto = opcionesDepto;
   readonly clasificaciones = CLASIFICACIONES_AGRUPACION;
@@ -452,7 +477,8 @@ export class AgrupacionesPendientesComponent {
       antecedentes: a.antecedentes, resolucionComision: a.resolucionComision,
       sublema1: a.sublema1, sublema2: a.sublema2, sublema3: a.sublema3,
       sublema4: a.sublema4, sublema5: a.sublema5,
-      sublemaRenunciado: a.sublemaRenunciado
+      sublemaRenunciado: a.sublemaRenunciado,
+      integrantes: a.integrantes
     }, { firmas: true, titulo: 'Agrupación Pendiente' });
   }
 
@@ -491,6 +517,15 @@ export class AgrupacionesPendientesComponent {
       sublema1: a.sublema1 || '', sublema2: a.sublema2 || '',
       sublema3: a.sublema3 || '', sublema4: a.sublema4 || '', sublema5: a.sublema5 || ''
     };
+    this.integrantesEditables.set(a.integrantes !== undefined);
+    this.integrantes.set((a.integrantes ?? []).map(i => ({
+      contacto: {
+        id: i.contactoId, nombre: i.nombre, apellido: i.apellido,
+        cedula: i.cedula, credencial: i.credencial, adherente: i.adherente,
+      },
+      cargo: i.cargo || '',
+      fechaIngreso: this.toInputDate(i.fechaIngreso),
+    })));
     this.modalError.set('');
     this.modal.set(modo);
   }
@@ -552,6 +587,7 @@ export class AgrupacionesPendientesComponent {
       fechaEntrCE: this.form.fechaEntrCE || null,
       fechaCircCE: this.form.fechaCircCE || null
     };
+    if (this.integrantesEditables()) body.integrantes = integrantesParaGuardar(this.integrantes());
 
     const url = this.modal() === 'aprobar' ? `${this.base}/${id}/aprobar` : `${this.base}/${id}`;
     const req$ = this.modal() === 'aprobar'

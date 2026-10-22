@@ -3,6 +3,8 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { AgrupacionesComponent } from './agrupaciones.component';
 import { ToastService } from '../../core/services/toast.service';
+import { By } from '@angular/platform-browser';
+import { IntegrantesEditorComponent } from './integrantes-editor.component';
 
 /** Alta con código correlativo propuesto, N° Trámite y eliminar con cartel de confirmación. */
 describe('AgrupacionesComponent', () => {
@@ -125,8 +127,8 @@ describe('AgrupacionesComponent', () => {
     });
   });
   describe('Integrantes en el alta', () => {
-    const ana: any = { id: 1, nombre: 'Ana', apellido: 'Pérez', cedula: '12345672' };
-    const luis: any = { id: 2, nombre: 'Luis', apellido: 'Gómez' };
+    const ana: any = { id: 1, nombre: 'Ana', apellido: 'Pérez', cedula: '12345672', adherente: true };
+    const luis: any = { id: 2, nombre: 'Luis', apellido: 'Gómez', adherente: false, adhesion: 'Baja' };
 
     function abrir() {
       const f = montar();
@@ -134,27 +136,27 @@ describe('AgrupacionesComponent', () => {
       c.abrirNueva();
       http.expectOne(r => r.url.endsWith('/agrupaciones/siguiente-codigo')).flush({ codigo: '6325' });
       f.detectChanges();
-      return { f, c };
+      const editor = () => f.debugElement.query(By.directive(IntegrantesEditorComponent)).componentInstance as IntegrantesEditorComponent;
+      return { f, c, editor };
     }
 
-    it('agrega, evita repetidos y quita', () => {
-      const { c } = abrir();
-      c.agregarIntegrante(ana);
-      c.agregarIntegrante(luis);
-      c.agregarIntegrante(ana);
+    it('el editor de integrantes está en el alta y lo que agrega queda en la agrupación', () => {
+      const { f, c, editor } = abrir();
+      editor().agregar(ana);
+      editor().agregar(luis);
+      f.detectChanges();
       expect(c.integrantesNuevos().map(i => i.contacto.id)).toEqual([1, 2]);
-      expect(toast.error).toHaveBeenCalled();
-      c.quitarIntegrante(1);
+      editor().quitar(1);
       expect(c.integrantesNuevos().map(i => i.contacto.id)).toEqual([2]);
     });
 
-    it('el alta manda los integrantes con cargo y fecha', () => {
-      const { c } = abrir();
+    it('el alta manda los integrantes con cargo y fecha, adheridos o no', () => {
+      const { c, editor } = abrir();
       c.nuevoForm.nombre = 'Lista Nueva';
-      c.agregarIntegrante(ana);
+      editor().agregar(ana);
+      editor().agregar(luis);
       c.integrantesNuevos()[0].cargo = 'Presidente';
       c.integrantesNuevos()[0].fechaIngreso = '2026-10-01';
-      c.agregarIntegrante(luis);
       c.integrantesNuevos()[1].fechaIngreso = '';
       c.guardarNueva();
 
@@ -166,37 +168,9 @@ describe('AgrupacionesComponent', () => {
       req.flush({ agrupacionId: 9, periodoId: 9, nombre: 'Lista Nueva', integrantes: 2 });
     });
 
-    it('un integrante no adherido muestra el aviso y se manda igual en el alta', () => {
-      const { f, c } = abrir();
-      c.nuevoForm.nombre = 'Lista Nueva';
-      c.agregarIntegrante({ ...ana, adherente: false, adhesion: 'Baja' });
-      c.agregarIntegrante({ ...luis, adherente: true });
-      f.detectChanges();
-      const avisos = Array.from((f.nativeElement as HTMLElement).querySelectorAll('.int-alta-table .aviso-adh'))
-        .map(e => e.textContent?.trim());
-      expect(avisos).toEqual(['No adherido (Baja)']);
-
-      c.guardarNueva();
-      const req = http.expectOne(r => r.method === 'POST' && r.url.endsWith('/agrupaciones-pendientes/nueva'));
-      expect(req.request.body.integrantes.map((i: any) => i.contactoId)).toEqual([1, 2]);
-      req.flush({ agrupacionId: 9, periodoId: 9, nombre: 'Lista Nueva', integrantes: 2 });
-    });
-
-    it('Cargo es un desplegable con las 8 opciones', () => {
-      const { f, c } = abrir();
-      c.agregarIntegrante(ana);
-      f.detectChanges();
-      const select = (f.nativeElement as HTMLElement).querySelector('.int-alta-table select') as HTMLSelectElement;
-      expect(select).toBeTruthy();
-      expect(Array.from(select.options).map(o => o.textContent?.trim())).toEqual([
-        '—', 'Presidente', 'Vicepresidente', 'Tesorero', 'Sec. General', 'Vocal', 'Secretario', 'Protesorero', 'Prosecretario',
-      ]);
-      expect((f.nativeElement as HTMLElement).querySelector('.int-alta-table input[placeholder="Cargo"]')).toBeNull();
-    });
-
     it('al reabrir la lista arranca vacía y editar no manda integrantes', () => {
-      const { c } = abrir();
-      c.agregarIntegrante(ana);
+      const { c, editor } = abrir();
+      editor().agregar(ana);
       c.cerrarNueva();
       c.abrirNueva();
       http.expectOne(r => r.url.endsWith('/agrupaciones/siguiente-codigo')).flush({ codigo: '6325' });
