@@ -19,7 +19,11 @@ export const SOLICITA_AGRUPACION: readonly string[] = [
   'Cambio de cargo',
 ];
 
-/** Cargo de un integrante al darlo de alta junto con la agrupación. */
+/**
+ * Cargo de un integrante (alta de agrupación, Agrupaciones por Período) y rol de una autoridad
+ * en las fichas web, que al promover pasa a ser el cargo del integrante. Los cargados antes son
+ * texto libre ("Secretario General", "Tesorera"...): editar un rol usa opcionesConActual.
+ */
 export const CARGOS_INTEGRANTE: readonly string[] = [
   'Presidente',
   'Vicepresidente',

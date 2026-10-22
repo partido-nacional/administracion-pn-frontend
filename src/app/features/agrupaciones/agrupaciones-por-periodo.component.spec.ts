@@ -55,6 +55,18 @@ describe('AgrupacionesPorPeriodoComponent — integrantes', () => {
     expect(cmp.agregando()).toBeFalse();
   });
 
+  it('Cargo es un desplegable con las 8 opciones; vacío se manda como null', () => {
+    expect(cmp.cargos).toEqual(['Presidente', 'Vicepresidente', 'Tesorero', 'Sec. General', 'Vocal', 'Secretario', 'Protesorero', 'Prosecretario']);
+    cmp.abrirAgregar(5);
+    cmp.seleccionarContacto({ id: 42, nombre: 'Ana', apellido: 'Lopez' } as any);
+    cmp.fechaIngresoNuevo = '2026-07-12';
+    cmp.guardarIntegrante(5);
+    const post = httpMock.expectOne(`${environment.apiUrl}/agrupacion-integrantes`);
+    expect(post.request.body.cargo).toBeNull();
+    post.flush({});
+    flushReload();
+  });
+
   it('no guarda sin contacto seleccionado', () => {
     cmp.abrirAgregar(5);
     cmp.guardarIntegrante(5);

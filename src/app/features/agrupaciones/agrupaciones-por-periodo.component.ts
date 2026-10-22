@@ -10,6 +10,7 @@ import { GridQuery, PagedResult, SortOrder, DEFAULT_PAGE_SIZE } from '../../core
 import { buildPagedParams } from '../../core/services/paged';
 import { toggleSort, sortArrow } from '../../shared/grid/grid-sort';
 import { ContactosService, ContactoListado } from '../agenda/contactos.service';
+import { CARGOS_INTEGRANTE } from '../../core/agrupaciones-catalogos';
 import { ToastService } from '../../core/services/toast.service';
 
 interface IntegranteRow {
@@ -292,7 +293,12 @@ import { DEPARTAMENTOS } from '../../core/departamentos';
                               }
                             </div>
                           </div>
-                          <div class="add-fg"><label>Cargo</label><input [(ngModel)]="cargoNuevo" name="cargoNuevo"></div>
+                          <div class="add-fg"><label>Cargo</label>
+                            <select [(ngModel)]="cargoNuevo" name="cargoNuevo">
+                              <option value="">—</option>
+                              @for (o of cargos; track o) { <option [ngValue]="o">{{ o }}</option> }
+                            </select>
+                          </div>
                           <div class="add-fg"><label>Fecha ingreso</label><input type="date" [(ngModel)]="fechaIngresoNuevo" name="fiNuevo"></div>
                           <div class="add-actions">
                             <button class="btn btn-sm btn-secondary" (click)="cerrarAgregar()">Cancelar</button>
@@ -518,6 +524,7 @@ export class AgrupacionesPorPeriodoComponent {
   resultados = signal<ContactoListado[]>([]);
   contactoSel = signal<ContactoListado | null>(null);
   cargoNuevo = '';
+  readonly cargos = CARGOS_INTEGRANTE;
   fechaIngresoNuevo = new Date().toISOString().slice(0, 10);
   guardando = signal(false);
   private buscarContacto$ = new Subject<string>();
