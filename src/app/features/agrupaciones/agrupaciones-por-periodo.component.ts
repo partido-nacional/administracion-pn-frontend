@@ -26,6 +26,8 @@ interface IntegranteRow {
   email?: string;
   cargo?: string;
   fechaIngreso?: string;
+  /** Adhesión local con aporte confirmado: requisito para abrir una agrupación. */
+  adherente?: boolean;
 }
 
 interface AgrupacionPeriodoRow {
@@ -326,6 +328,7 @@ import { DEPARTAMENTOS } from '../../core/departamentos';
                               <th>Nombre</th>
                               <th>Cédula</th>
                               <th>Credencial</th>
+                              <th class="c">Adh.</th>
                               <th>Teléfono</th>
                               <th>Celular</th>
                               <th>Email</th>
@@ -341,6 +344,10 @@ import { DEPARTAMENTOS } from '../../core/departamentos';
                                 <td><strong>{{ i.apellido }}, {{ i.nombre }}</strong></td>
                                 <td>{{ i.cedula || '—' }}</td>
                                 <td>{{ i.credencial || '—' }}</td>
+                                <td class="c">
+                                  <input type="checkbox" class="adh" disabled [checked]="i.adherente === true"
+                                         [attr.aria-label]="'Adherido: ' + i.apellido + ', ' + i.nombre">
+                                </td>
                                 <td>{{ i.telefono || '—' }}</td>
                                 <td>{{ i.celular || '—' }}</td>
                                 <td>{{ i.email || '—' }}</td>
@@ -513,6 +520,8 @@ import { DEPARTAMENTOS } from '../../core/departamentos';
     }
     .aviso-adh { display:inline-block; margin-left:6px; padding:1px 6px; border-radius:4px; font-size:11px; font-weight:600; color:#8a5a00; background:#fff3cd; border:1px solid #f0d58a; }
     .aviso-sel { margin:4px 0 0; }
+    .int-table .c { text-align:center; }
+    .adh { width:15px; height:15px; accent-color:#1f6f3b; }
     .combo-opt { padding:8px 12px; cursor:pointer; font-size:13px; border-bottom:1px solid #f0f3f7; }
     .combo-opt:last-child { border-bottom:none; }
     .combo-opt:hover { background:#eef5ff; }
@@ -726,7 +735,7 @@ export class AgrupacionesPorPeriodoComponent {
       sublema4: r.sublema4, sublema5: r.sublema5,
       sublemaRenunciado: r.sublemaRenunciado,
       integrantes: r.integrantes
-    }, { firmas: false, titulo: 'Agrupación por Período' });
+    }, { firmas: true, titulo: 'Agrupación por Período' });
   }
 
   joinSublemas(r: AgrupacionPeriodoRow): string {
