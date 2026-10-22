@@ -48,6 +48,7 @@ export interface FichaAgrupacion {
 }
 
 import { DEPARTAMENTOS } from '../../core/departamentos';
+import { CLASIFICACIONES_AGRUPACION, SOLICITA_AGRUPACION, opcionesConActual } from '../../core/agrupaciones-catalogos';
 import { Subject, debounceTime, finalize } from 'rxjs';
 import { ToastService } from '../../core/services/toast.service';
 
@@ -307,8 +308,18 @@ export interface SincronizacionAgrupaciones {
               <div class="fg"><label>Cod. Agrupación</label><input [(ngModel)]="prom.codAgrup" name="codAgrup"></div>
               <div class="fg"><label>Cod. Depto.</label><input [(ngModel)]="prom.codDepto" name="codDepto"></div>
               <div class="fg"><label>Solic.</label><input type="number" [(ngModel)]="prom.solic" name="solic"></div>
-              <div class="fg"><label>Clasificación</label><input [(ngModel)]="prom.clasificacion" name="clasificacion"></div>
-              <div class="fg"><label>Solicita</label><input [(ngModel)]="prom.solicita" name="solicita"></div>
+              <div class="fg"><label>Clasificación</label>
+                <select [(ngModel)]="prom.clasificacion" name="clasificacion">
+                  <option value="">—</option>
+                  @for (o of opcionesConActual(clasificaciones, prom.clasificacion); track o) { <option [ngValue]="o">{{ o }}</option> }
+                </select>
+              </div>
+              <div class="fg"><label>Solicita</label>
+                <select [(ngModel)]="prom.solicita" name="solicita">
+                  <option value="">—</option>
+                  @for (o of opcionesConActual(solicitaOpciones, prom.solicita); track o) { <option [ngValue]="o">{{ o }}</option> }
+                </select>
+              </div>
               <div class="fg"><label>Sector</label><input [(ngModel)]="prom.sector" name="sector"></div>
               <div class="fg"><label>Cod. Ant.</label><input [(ngModel)]="prom.codAnt" name="codAnt"></div>
               <div class="fg"><label>Sublema Renunciado</label><input [(ngModel)]="prom.sublemaRenunciado" name="sublemaRenunciado"></div>
@@ -623,6 +634,9 @@ export class FichasAgrupacionComponent {
   // Filtros de la grilla (feature 030).
   fId = signal(''); fNombre = signal(''); fDepto = signal('');
   readonly deptosFiltro = DEPARTAMENTOS;
+  readonly clasificaciones = CLASIFICACIONES_AGRUPACION;
+  readonly solicitaOpciones = SOLICITA_AGRUPACION;
+  readonly opcionesConActual = opcionesConActual;
   private filter$ = new Subject<void>();
   onFilter() { this.filter$.next(); }
   hayFiltros = computed(() => !!(this.fId() || this.fNombre() || this.fDepto()));
