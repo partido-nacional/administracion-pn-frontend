@@ -333,3 +333,9 @@ En el modal de Pendientes (modo aprobar) dejan de llevar `*` y de figurar en `fa
 - **Agrupaciones por Período** (agregar integrante): Cargo es un desplegable con `CARGOS_INTEGRANTE`; vacío (—) se manda como `null`.
 - **Fichas web** (editar autoridades): el Rol usa las mismas 8 opciones en lugar de las 5 fijas (Presidente, Vicepresidente, Secretario, Tesorero, Vocal). Al promover, ese rol pasa a ser el cargo del integrante. Un rol que vino de la web y no está en la lista se conserva como opción extra (`opcionesConActual`). Las validaciones siguen igual: exactamente 1 Presidente y al menos 1 Secretario; una autoridad nueva arranca como Vocal.
 - Los cargos ya guardados (texto libre: "Secretario General", "Tesorera", "Delegado Electoral"...) no se modifican.
+
+## Actualización — aviso de integrante no adherido
+
+- Al cargar integrantes (alta de Nueva Agrupación y Agrupaciones por Período), un contacto **no adherido** se marca con "No adherido (Baja | Pendiente | sin adhesión)": en los resultados del buscador, en la lista de integrantes del alta y debajo del contacto elegido en Por Período.
+- **Solo avisa, no bloquea**: el integrante se guarda igual (decisión del usuario). En cambio, promover una ficha web sigue rechazando autoridades no adheridas.
+- Criterio: `adherente` del listado de contactos (alguna adhesión local con aporte confirmado), el mismo que valida la ficha web. El estado entre paréntesis es `adhesion` (la última). `avisoNoAdherido` en `contacto-buscador.component.ts`; si el dato no viene no avisa.

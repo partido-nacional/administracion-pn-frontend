@@ -1,11 +1,12 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
-import { ContactoBuscadorComponent, detalleContacto, etiquetaContacto } from './contacto-buscador.component';
+import { ContactoBuscadorComponent, avisoNoAdherido, detalleContacto, etiquetaContacto } from './contacto-buscador.component';
 import { ContactosService, ContactoListado } from '../../../features/agenda/contactos.service';
 
 describe('ContactoBuscadorComponent', () => {
   const ana: ContactoListado = { id: 1, nombre: 'Ana', apellido: 'Pérez', cedula: '12345672' };
   let svc: jasmine.SpyObj<ContactosService>;
+  let fixture: ComponentFixture<ContactoBuscadorComponent>;
 
   function montar() {
     svc = jasmine.createSpyObj('ContactosService', ['listado']);
@@ -13,9 +14,9 @@ describe('ContactoBuscadorComponent', () => {
       imports: [ContactoBuscadorComponent],
       providers: [{ provide: ContactosService, useValue: svc }],
     });
-    const f = TestBed.createComponent(ContactoBuscadorComponent);
-    f.detectChanges();
-    return f.componentInstance;
+    fixture = TestBed.createComponent(ContactoBuscadorComponent);
+    fixture.detectChanges();
+    return fixture.componentInstance;
   }
 
   const tipear = (c: ContactoBuscadorComponent, v: string) => c.onInput({ target: { value: v } } as any);
@@ -29,6 +30,27 @@ describe('ContactoBuscadorComponent', () => {
     expect(detalleContacto({ ...ana, credencial: 'BAA27057' })).toBe('#1 · Cred. BAA27057');
     expect(detalleContacto(ana)).toBe('#1');
   });
+
+  it('avisa si el contacto no está adherido (solo si el dato vino en false)', () => {
+    expect(avisoNoAdherido({ ...ana, adherente: false, adhesion: 'Baja' })).toBe('No adherido (Baja)');
+    expect(avisoNoAdherido({ ...ana, adherente: false })).toBe('No adherido (sin adhesión)');
+    expect(avisoNoAdherido({ ...ana, adherente: true, adhesion: 'Baja' })).toBeNull();
+    expect(avisoNoAdherido(ana)).toBeNull();
+  });
+
+  it('el resultado de un no adherido muestra el aviso y se puede elegir igual', fakeAsync(() => {
+    const c = montar();
+    const baja = { ...ana, adherente: false, adhesion: 'Baja' };
+    svc.listado.and.returnValue(of({ items: [baja], total: 1, page: 1, pageSize: 8 }));
+    const emitido = spyOn(c.seleccionar, 'emit');
+    tipear(c, 'ana'); tick(250);
+    fixture.detectChanges();
+    const opt = (fixture.nativeElement as HTMLElement).querySelector('.combo-opt')!;
+    expect(opt.querySelector('.aviso-adh')?.textContent?.trim()).toBe('No adherido (Baja)');
+    (opt as HTMLElement).click();
+    tick(250);
+    expect(emitido).toHaveBeenCalledWith(baja);
+  }));
 
   it('busca con debounce, una sola vez, con el texto final', fakeAsync(() => {
     const c = montar();

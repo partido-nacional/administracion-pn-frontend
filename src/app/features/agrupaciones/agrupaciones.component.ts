@@ -37,7 +37,7 @@ type Tab = 'todas' | 'pendientes' | 'fichas' | 'periodo' | 'padron';
 import { DEPARTAMENTOS_CON_NACIONAL } from '../../core/departamentos';
 import { CARGOS_INTEGRANTE, CLASIFICACIONES_AGRUPACION, FORMAS_AGRUPACION, SOLICITA_AGRUPACION, opcionesConActual } from '../../core/agrupaciones-catalogos';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
-import { ContactoBuscadorComponent, etiquetaContacto } from '../../shared/components/contacto-buscador/contacto-buscador.component';
+import { ContactoBuscadorComponent, avisoNoAdherido, etiquetaContacto } from '../../shared/components/contacto-buscador/contacto-buscador.component';
 import { ContactoListado } from '../agenda/contactos.service';
 
 /** Integrante elegido en el alta, todavía sin guardar. */
@@ -175,7 +175,10 @@ function hoyIso(): string {
                   <tbody>
                     @for (i of integrantesNuevos(); track i.contacto.id) {
                       <tr>
-                        <td>{{ etiquetaContacto(i.contacto) }}</td>
+                        <td>
+                          {{ etiquetaContacto(i.contacto) }}
+                          @if (avisoNoAdherido(i.contacto); as a) { <span class="aviso-adh">{{ a }}</span> }
+                        </td>
                         <td>
                           <select [(ngModel)]="i.cargo" [name]="'n-int-cargo-' + i.contacto.id" aria-label="Cargo">
                             <option value="">—</option>
@@ -424,6 +427,7 @@ function hoyIso(): string {
     }
   `,
   styles: [`
+    .aviso-adh { display:inline-block; margin-left:6px; padding:1px 6px; border-radius:4px; font-size:11px; font-weight:600; color:#8a5a00; background:#fff3cd; border:1px solid #f0d58a; }
     .int-alta-table { width:100%; border-collapse:collapse; font-size:13px; margin-top:8px; }
     .int-alta-table th, .int-alta-table td { border-bottom:1px solid #eef1f5; padding:6px 8px; text-align:left; }
     .int-alta-table th { font-size:11px; color:#666; text-transform:uppercase; letter-spacing:.4px; background:#fafbfd; }
@@ -623,6 +627,7 @@ export class AgrupacionesComponent {
   // ── Integrantes en el alta (se guardan junto con la agrupación) ──
   integrantesNuevos = signal<IntegranteNuevo[]>([]);
   readonly etiquetaContacto = etiquetaContacto;
+  readonly avisoNoAdherido = avisoNoAdherido;
 
   agregarIntegrante(c: ContactoListado) {
     if (this.integrantesNuevos().some(i => i.contacto.id === c.id)) {
