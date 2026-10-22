@@ -19,7 +19,7 @@ interface AgrupacionPendiente {
   domicilioLegal?: string; ciudad?: string;
   tel1?: string; tel2?: string; fax?: string; email?: string;
   formaRepresentacion?: string; representante?: string; delegadoCE?: string; formaActuacion?: string;
-  fechaIngComis?: string; fechaRecAgrup?: string; fechaEntrCE?: string; fechaCircCE?: string;
+  fechaIngComis?: string; fechaRecAgrup?: string; fechaEntrCE?: string; fechaCircCE?: string; nroTramite?: string;
   observaciones?: string; obsCE?: string; nota?: string;
   antecedentes?: string; resolucionComision?: string;
   sublema1?: string; sublema2?: string; sublema3?: string; sublema4?: string; sublema5?: string;
@@ -27,6 +27,7 @@ interface AgrupacionPendiente {
 
 
 import { DEPARTAMENTOS_CON_NACIONAL, opcionesDepto } from '../../core/departamentos';
+import { CLASIFICACIONES_AGRUPACION, FORMAS_AGRUPACION, SOLICITA_AGRUPACION, opcionesConActual } from '../../core/agrupaciones-catalogos';
 import { Subject, debounceTime } from 'rxjs';
 
 @Component({
@@ -129,7 +130,8 @@ import { Subject, debounceTime } from 'rxjs';
                           <div class="kv"><span class="k">Fecha Ing. Comis.</span><span class="v">{{ a.fechaIngComis || '—' }}</span></div>
                           <div class="kv"><span class="k">Fecha Rec. Agrup.</span><span class="v">{{ a.fechaRecAgrup || '—' }}</span></div>
                           <div class="kv"><span class="k">Fecha Entr. C.E.</span><span class="v">{{ a.fechaEntrCE || '—' }}</span></div>
-                          <div class="kv"><span class="k">Fecha Circ. C.E.</span><span class="v">{{ a.fechaCircCE || '—' }}</span></div>
+                          <div class="kv"><span class="k">N° Trámite</span><span class="v">{{ a.nroTramite || '—' }}</span></div>
+                          @if (a.fechaCircCE) { <div class="kv"><span class="k">Fecha Circ. C.E.</span><span class="v">{{ a.fechaCircCE }}</span></div> }
                         </div>
                       </div>
                       <div class="seccion">
@@ -204,9 +206,19 @@ import { Subject, debounceTime } from 'rxjs';
                   @for (d of opcionesDepto(deptos, form.depto); track d) { <option [ngValue]="d">{{ d }}</option> }
                 </select>
               </div>
-              <div class="fg"><label>Clasificación {{ req() }}</label><input [(ngModel)]="form.clasificacion" name="clasificacion"></div>
-              <div class="fg"><label>Solicita {{ req() }}</label><input [(ngModel)]="form.solicita" name="solicita"></div>
-              <div class="fg"><label>Sector {{ req() }}</label><input [(ngModel)]="form.sector" name="sector"></div>
+              <div class="fg"><label>Clasificación {{ req() }}</label>
+                <select [(ngModel)]="form.clasificacion" name="clasificacion">
+                  <option value="">—</option>
+                  @for (o of opcionesConActual(clasificaciones, form.clasificacion); track o) { <option [ngValue]="o">{{ o }}</option> }
+                </select>
+              </div>
+              <div class="fg"><label>Solicita {{ req() }}</label>
+                <select [(ngModel)]="form.solicita" name="solicita">
+                  <option value="">—</option>
+                  @for (o of opcionesConActual(solicitaOpciones, form.solicita); track o) { <option [ngValue]="o">{{ o }}</option> }
+                </select>
+              </div>
+              <div class="fg"><label>Sector</label><input [(ngModel)]="form.sector" name="sector"></div>
               <div class="fg"><label>Fecha Solicitud {{ req() }}</label><input type="date" [(ngModel)]="form.fechaSolicitud" name="fechaSolicitud"></div>
               <div class="fg"><label>Cod. Ant.</label><input [(ngModel)]="form.codAnt" name="codAnt"></div>
               <div class="fg"><label>Sublema Renunciado</label><input [(ngModel)]="form.sublemaRenunciado" name="sublemaRenunciado"></div>
@@ -225,14 +237,24 @@ import { Subject, debounceTime } from 'rxjs';
 
             <h4 class="sec-h">Comisión Electoral</h4>
             <div class="grid">
-              <div class="fg"><label>Forma Representación {{ req() }}</label><input [(ngModel)]="form.formaRepresentacion" name="formaRepresentacion"></div>
+              <div class="fg"><label>Forma Representación {{ req() }}</label>
+                <select [(ngModel)]="form.formaRepresentacion" name="formaRepresentacion">
+                  <option value="">—</option>
+                  @for (o of opcionesConActual(formas, form.formaRepresentacion); track o) { <option [ngValue]="o">{{ o }}</option> }
+                </select>
+              </div>
               <div class="fg"><label>Representante {{ req() }}</label><input [(ngModel)]="form.representante" name="representante"></div>
               <div class="fg"><label>Delegado C.E. {{ req() }}</label><input [(ngModel)]="form.delegadoCE" name="delegadoCE"></div>
-              <div class="fg"><label>Forma Actuación {{ req() }}</label><input [(ngModel)]="form.formaActuacion" name="formaActuacion"></div>
-              <div class="fg"><label>Fecha Ing. Comis. {{ req() }}</label><input type="date" [(ngModel)]="form.fechaIngComis" name="fechaIngComis"></div>
-              <div class="fg"><label>Fecha Rec. Agrup. {{ req() }}</label><input type="date" [(ngModel)]="form.fechaRecAgrup" name="fechaRecAgrup"></div>
-              <div class="fg"><label>Fecha Entr. C.E. {{ req() }}</label><input type="date" [(ngModel)]="form.fechaEntrCE" name="fechaEntrCE"></div>
-              <div class="fg"><label>Fecha Circ. C.E. {{ req() }}</label><input type="date" [(ngModel)]="form.fechaCircCE" name="fechaCircCE"></div>
+              <div class="fg"><label>Forma Actuación {{ req() }}</label>
+                <select [(ngModel)]="form.formaActuacion" name="formaActuacion">
+                  <option value="">—</option>
+                  @for (o of opcionesConActual(formas, form.formaActuacion); track o) { <option [ngValue]="o">{{ o }}</option> }
+                </select>
+              </div>
+              <div class="fg"><label>Fecha Ing. Comis.</label><input type="date" [(ngModel)]="form.fechaIngComis" name="fechaIngComis"></div>
+              <div class="fg"><label>Fecha Rec. Agrup.</label><input type="date" [(ngModel)]="form.fechaRecAgrup" name="fechaRecAgrup"></div>
+              <div class="fg"><label>Fecha Entr. C.E.</label><input type="date" [(ngModel)]="form.fechaEntrCE" name="fechaEntrCE"></div>
+              <div class="fg"><label>N° Trámite {{ req() }}</label><input [(ngModel)]="form.nroTramite" name="nroTramite"></div>
             </div>
 
             <h4 class="sec-h">Sublemas</h4>
@@ -246,9 +268,9 @@ import { Subject, debounceTime } from 'rxjs';
 
             <h4 class="sec-h">Observaciones</h4>
             <div class="grid">
-              <div class="fg full"><label>Antecedentes {{ req() }}</label><textarea rows="2" [(ngModel)]="form.antecedentes" name="antecedentes"></textarea></div>
-              <div class="fg full"><label>Resolución de la Comisión {{ req() }}</label><textarea rows="2" [(ngModel)]="form.resolucionComision" name="resolucionComision"></textarea></div>
-              <div class="fg"><label>Observaciones {{ req() }}</label><input [(ngModel)]="form.observaciones" name="observaciones"></div>
+              <div class="fg full"><label>Antecedentes</label><textarea rows="2" [(ngModel)]="form.antecedentes" name="antecedentes"></textarea></div>
+              <div class="fg full"><label>Resolución de la Comisión</label><textarea rows="2" [(ngModel)]="form.resolucionComision" name="resolucionComision"></textarea></div>
+              <div class="fg"><label>Observaciones</label><input [(ngModel)]="form.observaciones" name="observaciones"></div>
               <div class="fg"><label>Obs. C.E.</label><input [(ngModel)]="form.obsCE" name="obsCE"></div>
               <div class="fg full"><label>Nota</label><input [(ngModel)]="form.nota" name="nota"></div>
             </div>
@@ -365,6 +387,10 @@ export class AgrupacionesPendientesComponent {
   form: any = {};
   deptos = DEPARTAMENTOS_CON_NACIONAL;
   readonly opcionesDepto = opcionesDepto;
+  readonly clasificaciones = CLASIFICACIONES_AGRUPACION;
+  readonly solicitaOpciones = SOLICITA_AGRUPACION;
+  readonly formas = FORMAS_AGRUPACION;
+  readonly opcionesConActual = opcionesConActual;
 
   // Filtros de la grilla (feature 030). Lista canónica + 'Nacional' (Depto 'X'/'NACIONAL').
   fId = signal(''); fCod = signal(''); fNombre = signal(''); fDepto = signal('');
@@ -421,7 +447,7 @@ export class AgrupacionesPendientesComponent {
       formaRepresentacion: a.formaRepresentacion, representante: a.representante,
       delegadoCE: a.delegadoCE, formaActuacion: a.formaActuacion,
       fechaIngComis: a.fechaIngComis, fechaRecAgrup: a.fechaRecAgrup,
-      fechaEntrCE: a.fechaEntrCE, fechaCircCE: a.fechaCircCE,
+      fechaEntrCE: a.fechaEntrCE, fechaCircCE: a.fechaCircCE, nroTramite: a.nroTramite,
       observaciones: a.observaciones, obsCE: a.obsCE, nota: a.nota,
       antecedentes: a.antecedentes, resolucionComision: a.resolucionComision,
       sublema1: a.sublema1, sublema2: a.sublema2, sublema3: a.sublema3,
@@ -458,7 +484,8 @@ export class AgrupacionesPendientesComponent {
       fechaIngComis: this.toInputDate(a.fechaIngComis),
       fechaRecAgrup: this.toInputDate(a.fechaRecAgrup),
       fechaEntrCE:   this.toInputDate(a.fechaEntrCE),
-      fechaCircCE:   this.toInputDate(a.fechaCircCE),
+      fechaCircCE:   this.toInputDate(a.fechaCircCE),   // sin campo en el form; se reenvía para no borrarla
+      nroTramite:    a.nroTramite || '',
       observaciones: a.observaciones || '', obsCE: a.obsCE || '', nota: a.nota || '',
       antecedentes: a.antecedentes || '', resolucionComision: a.resolucionComision || '',
       sublema1: a.sublema1 || '', sublema2: a.sublema2 || '',
@@ -494,7 +521,6 @@ export class AgrupacionesPendientesComponent {
     req('Departamento', this.form.depto);
     req('Clasificación', this.form.clasificacion);
     req('Solicita', this.form.solicita);
-    req('Sector', this.form.sector);
     req('Fecha Solicitud', this.form.fechaSolicitud);
     req('Domicilio Legal', this.form.domicilioLegal);
     req('Ciudad', this.form.ciudad);
@@ -504,13 +530,7 @@ export class AgrupacionesPendientesComponent {
     req('Representante', this.form.representante);
     req('Delegado C.E.', this.form.delegadoCE);
     req('Forma Actuación', this.form.formaActuacion);
-    req('Fecha Ing. Comis.', this.form.fechaIngComis);
-    req('Fecha Rec. Agrup.', this.form.fechaRecAgrup);
-    req('Fecha Entr. C.E.', this.form.fechaEntrCE);
-    req('Fecha Circ. C.E.', this.form.fechaCircCE);
-    req('Antecedentes', this.form.antecedentes);
-    req('Resolución de la Comisión', this.form.resolucionComision);
-    req('Observaciones', this.form.observaciones);
+    req('N° Trámite', this.form.nroTramite);
     req('Sublema 1', this.form.sublema1);
     return f;
   }

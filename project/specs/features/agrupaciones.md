@@ -296,3 +296,29 @@ Contacto directo al responsable de la ficha vía `wa.me` con mensaje plantilla p
 - Los dropdowns de departamento de los **formularios** (alta/aprobación) no cambian.
 
 - Los dropdowns de Depto. de las grillas de agrupaciones (Todas, Pendientes, Por Período) son `[...DEPARTAMENTOS, 'Nacional']`. El dato guarda letras de serie (`C`, `X`); el backend las mapea.
+
+## Actualización — desplegables Clasificación / Solicita y sin Solic. en el alta
+
+- **Clasificación** y **Solicita** pasan de input libre a `<select>` en los tres formularios que los editan: modal Nueva/Editar (`AgrupacionesComponent`), modal de Pendientes y "Crear agrupación desde ficha" (`FichasAgrupacionComponent`).
+- Opciones en `src/app/core/agrupaciones-catalogos.ts`:
+  - Clasificación: No tiene · Nueva · Vieja sin acta electoral · Vieja con acta electoral · Reconocida en este período.
+  - Solicita: Ampliar Sublemas · Reconocimiento · Modifica Autoridades · Cambio de cargo.
+- El backend sigue guardando texto libre. Los valores migrados del sistema viejo (códigos `N`/`C`/`R`/`S`, `T`/`U`/`S` y textos largos) no están en las listas: `opcionesConActual` los agrega como opción extra al editar para no perderlos al guardar.
+- El campo **Solic.** ya no aparece al crear una Nueva Agrupación (se envía `0`); sigue en el modo Editar y en el modal de Pendientes, donde aprobar exige Solic. > 0.
+
+## Actualización — código correlativo, formas, N° Trámite y eliminar
+
+- **Cod. Agrupación por defecto**: al abrir *Nueva Agrupación* se pide `GET /agrupaciones/siguiente-codigo` y se precarga el último + 1 (editable; no pisa lo que el operador ya escribió; si falla queda vacío y lo asigna el backend). En *Crear desde ficha* queda vacío = automático, porque la ficha puede corresponder a una agrupación existente que ya tiene código.
+- **Forma Representación / Forma Actuación**: desplegables independientes con *Indistinta* y *Conjunta* (`FORMAS_AGRUPACION`), en Nueva/Editar y Pendientes. Los valores viejos ("Unipersonal", nombres, etc.) se muestran como opción extra al editar.
+- **N° Trámite** reemplaza a *Fecha Circ. C.E.* en los formularios (Nueva/Editar, Pendientes, Crear desde ficha), en los detalles y en la impresión. La fecha migrada se sigue mostrando si existe y se reenvía oculta al editar (el `PUT` reemplaza la entidad completa). Aprobar una pendiente exige N° Trámite.
+- **Eliminar** en la grilla "Todas": abre un cartel de confirmación (`shared/components/confirm-dialog`) que avisa que se borran también períodos e integrantes y que no se puede deshacer; recién al confirmar se hace `DELETE /agrupaciones/{id}`.
+
+## Actualización — menos campos obligatorios al aprobar
+
+En el modal de Pendientes (modo aprobar) dejan de llevar `*` y de figurar en `faltantes()`: **Sector**, **Fecha Ing. Comis.**, **Fecha Rec. Agrup.**, **Fecha Entr. C.E.**, **Antecedentes**, **Resolución de la Comisión** y **Observaciones**. Espejo de la misma regla en el backend (`CamposFaltantes`).
+
+## Actualización — integrantes en el alta
+
+- El modal **Nueva Agrupación** tiene una sección **Integrantes** (opcional): se busca el contacto por nombre o cédula con el nuevo `shared/components/contacto-buscador`, se agrega a una lista (no admite repetidos) y se completa cargo y fecha de ingreso (por defecto hoy). Se mandan en `integrantes` del `POST /agrupaciones-pendientes/nueva` y se guardan junto con la agrupación. En modo Editar la sección no aparece (los integrantes se gestionan en Agrupaciones por Período).
+- **Crear desde ficha** avisa que las autoridades de la ficha quedan cargadas como integrantes (lo hace el backend al promover).
+- `AgrupacionesPorPeriodoComponent` mantiene su propio buscador inline; migrarlo a `app-contacto-buscador` queda como mejora.

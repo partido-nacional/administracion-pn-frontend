@@ -25,7 +25,7 @@ interface Agrupacion {
   nombreAnt?: string; domicilioLegal?: string; ciudad?: string;
   tel1?: string; tel2?: string; fax?: string; email?: string;
   formaRepresentacion?: string; representante?: string; delegadoCE?: string; formaActuacion?: string;
-  fechaIngComis?: string; fechaRecAgrup?: string; fechaEntrCE?: string; fechaCircCE?: string;
+  fechaIngComis?: string; fechaRecAgrup?: string; fechaEntrCE?: string; fechaCircCE?: string; nroTramite?: string;
   observaciones?: string; obsCE?: string; nota?: string;
   antecedentes?: string; resolucionComision?: string;
   sublema1?: string; sublema2?: string; sublema3?: string; sublema4?: string; sublema5?: string;
@@ -35,11 +35,24 @@ interface PadronItem { serie: string; nro: string; primerNombre: string; segundo
 type Tab = 'todas' | 'pendientes' | 'fichas' | 'periodo' | 'padron';
 
 import { DEPARTAMENTOS_CON_NACIONAL } from '../../core/departamentos';
+import { CLASIFICACIONES_AGRUPACION, FORMAS_AGRUPACION, SOLICITA_AGRUPACION, opcionesConActual } from '../../core/agrupaciones-catalogos';
+import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
+import { ContactoBuscadorComponent, etiquetaContacto } from '../../shared/components/contacto-buscador/contacto-buscador.component';
+import { ContactoListado } from '../agenda/contactos.service';
+
+/** Integrante elegido en el alta, todavía sin guardar. */
+interface IntegranteNuevo { contacto: ContactoListado; cargo: string; fechaIngreso: string; }
+
+/** Fecha de hoy (local) como yyyy-MM-dd para un input date. */
+function hoyIso(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
 
 @Component({
   selector: 'app-agrupaciones',
   standalone: true,
-  imports: [CommonModule, FormsModule, FichasAgrupacionComponent, AgrupacionesPendientesComponent, AgrupacionesPorPeriodoComponent, PaginatorComponent, ModalFormComponent, ListStateComponent],
+  imports: [CommonModule, FormsModule, FichasAgrupacionComponent, AgrupacionesPendientesComponent, AgrupacionesPorPeriodoComponent, PaginatorComponent, ModalFormComponent, ListStateComponent, ConfirmDialogComponent, ContactoBuscadorComponent],
   template: `
     <div class="topbar-inline">
       <button class="btn btn-primary" (click)="abrirNueva()">+ Nueva Agrupación</button>
@@ -70,7 +83,7 @@ import { DEPARTAMENTOS_CON_NACIONAL } from '../../core/departamentos';
             <div class="nv-grid g3">
               <div class="fg full"><label>Nombre *</label><input [(ngModel)]="nuevoForm.nombre" name="n-nombre"></div>
               <div class="fg"><label>Sigla</label><input [(ngModel)]="nuevoForm.sigla" name="n-sigla"></div>
-              <div class="fg"><label>Cod. Agrupación</label><input [(ngModel)]="nuevoForm.codAgrup" name="n-codAgrup"></div>
+              <div class="fg"><label>Cod. Agrupación</label><input [(ngModel)]="nuevoForm.codAgrup" name="n-codAgrup" placeholder="Siguiente correlativo"></div>
               <div class="fg"><label>Cod. Depto.</label><input [(ngModel)]="nuevoForm.codDepto" name="n-codDepto"></div>
               <div class="fg"><label>Tipo</label>
                 <select [(ngModel)]="nuevoForm.tipo" name="n-tipo">
@@ -79,15 +92,27 @@ import { DEPARTAMENTOS_CON_NACIONAL } from '../../core/departamentos';
                   <option value="NACIONAL">NACIONAL</option>
                 </select>
               </div>
-              <div class="fg"><label>Solic.</label><input type="number" [(ngModel)]="nuevoForm.solic" name="n-solic"></div>
+              @if (modoModal() === 'editar') {
+                <div class="fg"><label>Solic.</label><input type="number" [(ngModel)]="nuevoForm.solic" name="n-solic"></div>
+              }
               <div class="fg"><label>Departamento</label>
                 <select [(ngModel)]="nuevoForm.depto" name="n-depto">
                   <option value="">—</option>
                   @for (d of departamentos; track d) { <option [ngValue]="d">{{ d }}</option> }
                 </select>
               </div>
-              <div class="fg"><label>Clasificación</label><input [(ngModel)]="nuevoForm.clasificacion" name="n-clasif"></div>
-              <div class="fg"><label>Solicita</label><input [(ngModel)]="nuevoForm.solicita" name="n-solicita"></div>
+              <div class="fg"><label>Clasificación</label>
+                <select [(ngModel)]="nuevoForm.clasificacion" name="n-clasif">
+                  <option value="">—</option>
+                  @for (o of opcionesConActual(clasificaciones, nuevoForm.clasificacion); track o) { <option [ngValue]="o">{{ o }}</option> }
+                </select>
+              </div>
+              <div class="fg"><label>Solicita</label>
+                <select [(ngModel)]="nuevoForm.solicita" name="n-solicita">
+                  <option value="">—</option>
+                  @for (o of opcionesConActual(solicitaOpciones, nuevoForm.solicita); track o) { <option [ngValue]="o">{{ o }}</option> }
+                </select>
+              </div>
               <div class="fg"><label>Sector</label><input [(ngModel)]="nuevoForm.sector" name="n-sector"></div>
               <div class="fg"><label>Fecha Solicitud</label><input type="date" [(ngModel)]="nuevoForm.fechaSolicitud" name="n-fSol"></div>
               <div class="fg"><label>Cod. Ant.</label><input [(ngModel)]="nuevoForm.codAnt" name="n-codAnt"></div>
@@ -106,14 +131,24 @@ import { DEPARTAMENTOS_CON_NACIONAL } from '../../core/departamentos';
 
             <h4 class="sec-h">Comisión Electoral</h4>
             <div class="nv-grid g3">
-              <div class="fg"><label>Forma Representación</label><input [(ngModel)]="nuevoForm.formaRepresentacion" name="n-fr"></div>
+              <div class="fg"><label>Forma Representación</label>
+                <select [(ngModel)]="nuevoForm.formaRepresentacion" name="n-fr">
+                  <option value="">—</option>
+                  @for (o of opcionesConActual(formas, nuevoForm.formaRepresentacion); track o) { <option [ngValue]="o">{{ o }}</option> }
+                </select>
+              </div>
               <div class="fg"><label>Representante</label><input [(ngModel)]="nuevoForm.representante" name="n-rep"></div>
               <div class="fg"><label>Delegado C.E.</label><input [(ngModel)]="nuevoForm.delegadoCE" name="n-del"></div>
-              <div class="fg"><label>Forma Actuación</label><input [(ngModel)]="nuevoForm.formaActuacion" name="n-fa"></div>
+              <div class="fg"><label>Forma Actuación</label>
+                <select [(ngModel)]="nuevoForm.formaActuacion" name="n-fa">
+                  <option value="">—</option>
+                  @for (o of opcionesConActual(formas, nuevoForm.formaActuacion); track o) { <option [ngValue]="o">{{ o }}</option> }
+                </select>
+              </div>
               <div class="fg"><label>Fecha Ing. Comis.</label><input type="date" [(ngModel)]="nuevoForm.fechaIngComis" name="n-fic"></div>
               <div class="fg"><label>Fecha Rec. Agrup.</label><input type="date" [(ngModel)]="nuevoForm.fechaRecAgrup" name="n-fra"></div>
               <div class="fg"><label>Fecha Entr. C.E.</label><input type="date" [(ngModel)]="nuevoForm.fechaEntrCE" name="n-fec"></div>
-              <div class="fg"><label>Fecha Circ. C.E.</label><input type="date" [(ngModel)]="nuevoForm.fechaCircCE" name="n-fcc"></div>
+              <div class="fg"><label>N° Trámite</label><input [(ngModel)]="nuevoForm.nroTramite" name="n-tram"></div>
             </div>
 
             @if (modoModal() === 'nueva') {
@@ -126,6 +161,29 @@ import { DEPARTAMENTOS_CON_NACIONAL } from '../../core/departamentos';
                 <div class="fg"><label>Sublema 5</label><input [(ngModel)]="nuevoForm.sublema5" name="n-s5"></div>
                 <div class="fg full"><label>Sublema Renunciado</label><input [(ngModel)]="nuevoForm.sublemaRenunciado" name="n-sr"></div>
               </div>
+
+              <h4 class="sec-h">Integrantes</h4>
+              <p class="nv-sub">Opcional. También se pueden agregar después en <strong>Agrupaciones por Período</strong>.</p>
+              <div class="nv-grid g3 int-alta">
+                <div class="fg full"><label>Agregar contacto</label>
+                  <app-contacto-buscador (seleccionar)="agregarIntegrante($event)"></app-contacto-buscador>
+                </div>
+              </div>
+              @if (integrantesNuevos().length > 0) {
+                <table class="int-alta-table">
+                  <thead><tr><th>Contacto</th><th>Cargo</th><th>Fecha ingreso</th><th></th></tr></thead>
+                  <tbody>
+                    @for (i of integrantesNuevos(); track i.contacto.id) {
+                      <tr>
+                        <td>{{ etiquetaContacto(i.contacto) }}</td>
+                        <td><input [(ngModel)]="i.cargo" [name]="'n-int-cargo-' + i.contacto.id" placeholder="Cargo"></td>
+                        <td><input type="date" [(ngModel)]="i.fechaIngreso" [name]="'n-int-fi-' + i.contacto.id"></td>
+                        <td><button type="button" class="btn btn-sm btn-secondary" (click)="quitarIntegrante(i.contacto.id)">Quitar</button></td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              }
             }
 
             <h4 class="sec-h">Observaciones</h4>
@@ -138,6 +196,15 @@ import { DEPARTAMENTOS_CON_NACIONAL } from '../../core/departamentos';
             </div>
 
       </app-modal-form>
+    }
+
+    @if (aEliminar(); as e) {
+      <app-confirm-dialog title="Eliminar agrupación" confirmLabel="Sí, eliminar" busyLabel="Eliminando…"
+                          [busy]="eliminarBusy()" [error]="eliminarError()"
+                          (confirm)="confirmarEliminar()" (cancel)="cancelarEliminar()">
+        <p>¿Seguro que querés eliminar la agrupación <strong>{{ e.nombre }}</strong>@if (e.codAgrup) { (código {{ e.codAgrup }})}?</p>
+        <p>Se borran también todos sus períodos (sublemas) y sus integrantes. <strong>Esta acción no se puede deshacer.</strong></p>
+      </app-confirm-dialog>
     }
 
     <div class="tabs">
@@ -198,6 +265,7 @@ import { DEPARTAMENTOS_CON_NACIONAL } from '../../core/departamentos';
                       <path d="M16.5 3.5a2.121 2.121 0 113 3L7 19l-4 1 1-4 12.5-12.5z"/>
                     </svg>
                   </button>
+                  <button class="btn btn-sm btn-danger" (click)="pedirEliminar(a)" title="Eliminar agrupación" style="margin-left:6px">Eliminar</button>
                 </td>
               </tr>
               @if (expandido() === a.id) {
@@ -245,7 +313,8 @@ import { DEPARTAMENTOS_CON_NACIONAL } from '../../core/departamentos';
                           <div class="kv"><span class="k">Fecha Ing. Comis.</span><span class="v">{{ a.fechaIngComis || '—' }}</span></div>
                           <div class="kv"><span class="k">Fecha Rec. Agrup.</span><span class="v">{{ a.fechaRecAgrup || '—' }}</span></div>
                           <div class="kv"><span class="k">Fecha Entr. C.E.</span><span class="v">{{ a.fechaEntrCE || '—' }}</span></div>
-                          <div class="kv"><span class="k">Fecha Circ. C.E.</span><span class="v">{{ a.fechaCircCE || '—' }}</span></div>
+                          <div class="kv"><span class="k">N° Trámite</span><span class="v">{{ a.nroTramite || '—' }}</span></div>
+                          @if (a.fechaCircCE) { <div class="kv"><span class="k">Fecha Circ. C.E.</span><span class="v">{{ a.fechaCircCE }}</span></div> }
                         </div>
                       </div>
 
@@ -350,6 +419,10 @@ import { DEPARTAMENTOS_CON_NACIONAL } from '../../core/departamentos';
     }
   `,
   styles: [`
+    .int-alta-table { width:100%; border-collapse:collapse; font-size:13px; margin-top:8px; }
+    .int-alta-table th, .int-alta-table td { border-bottom:1px solid #eef1f5; padding:6px 8px; text-align:left; }
+    .int-alta-table th { font-size:11px; color:#666; text-transform:uppercase; letter-spacing:.4px; background:#fafbfd; }
+    .int-alta-table input { width:100%; box-sizing:border-box; padding:5px 8px; font-size:13px; border:1px solid #cfd6e0; border-radius:5px; }
     .topbar-inline { display:flex; justify-content:flex-end; margin-bottom:16px; }
     tr.clickable { cursor:pointer; }
     tr.clickable:hover { background:#f5f8ff; }
@@ -501,6 +574,10 @@ export class AgrupacionesComponent {
   nuevoError = signal('');
   nuevoForm: any = {};
   departamentos = DEPARTAMENTOS_CON_NACIONAL;
+  readonly clasificaciones = CLASIFICACIONES_AGRUPACION;
+  readonly solicitaOpciones = SOLICITA_AGRUPACION;
+  readonly formas = FORMAS_AGRUPACION;
+  readonly opcionesConActual = opcionesConActual;
 
   private formVacio() {
     return {
@@ -511,7 +588,7 @@ export class AgrupacionesComponent {
       domicilioLegal: '', ciudad: '',
       tel1: '', tel2: '', fax: '', email: '',
       formaRepresentacion: '', representante: '', delegadoCE: '', formaActuacion: '',
-      fechaIngComis: '', fechaRecAgrup: '', fechaEntrCE: '', fechaCircCE: '',
+      fechaIngComis: '', fechaRecAgrup: '', fechaEntrCE: '', fechaCircCE: '', nroTramite: '',
       observaciones: '', obsCE: '', nota: '',
       antecedentes: '', resolucionComision: '',
       sublema1: '', sublema2: '', sublema3: '', sublema4: '', sublema5: '',
@@ -530,9 +607,36 @@ export class AgrupacionesComponent {
 
   abrirNueva() {
     this.nuevoForm = this.formVacio();
+    this.integrantesNuevos.set([]);
     this.nuevoError.set('');
     this.editandoId.set(null);
     this.modoModal.set('nueva');
+    this.proponerCodigo();
+  }
+
+  // ── Integrantes en el alta (se guardan junto con la agrupación) ──
+  integrantesNuevos = signal<IntegranteNuevo[]>([]);
+  readonly etiquetaContacto = etiquetaContacto;
+
+  agregarIntegrante(c: ContactoListado) {
+    if (this.integrantesNuevos().some(i => i.contacto.id === c.id)) {
+      this.toast.error(`${etiquetaContacto(c)} ya está en la lista.`);
+      return;
+    }
+    this.integrantesNuevos.update(l => [...l, { contacto: c, cargo: '', fechaIngreso: hoyIso() }]);
+  }
+
+  quitarIntegrante(contactoId: number) {
+    this.integrantesNuevos.update(l => l.filter(i => i.contacto.id !== contactoId));
+  }
+
+  /** Cod. Agrupación por defecto: el último + 1. Si falla queda vacío y el backend lo asigna igual. */
+  private proponerCodigo() {
+    this.http.get<{ codigo: string }>(`${environment.apiUrl}/agrupaciones/siguiente-codigo`, { context: skipErrorToast() })
+      .subscribe({
+        next: r => { if (this.modoModal() === 'nueva' && !this.nuevoForm.codAgrup) this.nuevoForm.codAgrup = r.codigo; },
+        error: () => {}
+      });
   }
 
   abrirEditar(a: Agrupacion) {
@@ -560,7 +664,8 @@ export class AgrupacionesComponent {
       fechaIngComis: this.toInputDate(a.fechaIngComis),
       fechaRecAgrup: this.toInputDate(a.fechaRecAgrup),
       fechaEntrCE: this.toInputDate(a.fechaEntrCE),
-      fechaCircCE: this.toInputDate(a.fechaCircCE),
+      fechaCircCE: this.toInputDate(a.fechaCircCE),   // sin campo en el form; se reenvía para no borrarla
+      nroTramite: a.nroTramite || '',
       observaciones: a.observaciones || '', obsCE: a.obsCE || '', nota: a.nota || '',
       antecedentes: a.antecedentes || '', resolucionComision: a.resolucionComision || ''
     };
@@ -592,6 +697,13 @@ export class AgrupacionesComponent {
       fechaEntrCE: this.nuevoForm.fechaEntrCE || null,
       fechaCircCE: this.nuevoForm.fechaCircCE || null
     };
+    if (this.modoModal() === 'nueva') {
+      body.integrantes = this.integrantesNuevos().map(i => ({
+        contactoId: i.contacto.id,
+        cargo: i.cargo.trim() || null,
+        fechaIngreso: i.fechaIngreso || null,
+      }));
+    }
 
     const editId = this.editandoId();
     if (this.modoModal() === 'editar' && editId != null) {
@@ -622,6 +734,41 @@ export class AgrupacionesComponent {
         }
       });
     }
+  }
+
+  // ── Eliminar (con cartel de confirmación) ──
+  aEliminar = signal<Agrupacion | null>(null);
+  eliminarBusy = signal(false);
+  eliminarError = signal('');
+
+  pedirEliminar(a: Agrupacion) {
+    this.eliminarError.set('');
+    this.aEliminar.set(a);
+  }
+
+  cancelarEliminar() {
+    if (this.eliminarBusy()) return;
+    this.aEliminar.set(null);
+  }
+
+  confirmarEliminar() {
+    const a = this.aEliminar();
+    if (!a || this.eliminarBusy()) return;
+    this.eliminarBusy.set(true);
+    this.eliminarError.set('');
+    this.http.delete(`${environment.apiUrl}/agrupaciones/${a.id}`, { context: skipErrorToast() }).subscribe({
+      next: () => {
+        this.eliminarBusy.set(false);
+        this.aEliminar.set(null);
+        if (this.expandido() === a.id) this.expandido.set(null);
+        this.loadTodas();
+        this.toast.success(`Agrupación "${a.nombre}" eliminada.`);
+      },
+      error: (err) => {
+        this.eliminarBusy.set(false);
+        this.eliminarError.set(err?.error?.message || err?.message || 'No se pudo eliminar la agrupación.');
+      }
+    });
   }
 
   loadTodas() {
