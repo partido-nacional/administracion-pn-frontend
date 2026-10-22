@@ -14,6 +14,16 @@ export function detalleContacto(c: ContactoListado): string {
 }
 
 /**
+ * Aviso para un contacto que no está adherido al partido (sin adhesión local con aporte confirmado,
+ * el mismo criterio que validan las fichas web). Solo avisa: el contacto se puede cargar igual.
+ * Null si está adherido o si el dato no vino.
+ */
+export function avisoNoAdherido(c: ContactoListado): string | null {
+  if (c.adherente !== false) return null;
+  return `No adherido (${c.adhesion ?? 'sin adhesión'})`;
+}
+
+/**
  * Combo para buscar un contacto por nombre y apellido, cédula, credencial o ID (debounce 250 ms, 8 resultados) y elegirlo.
  * Busca en toda la agenda (q de GET /contactos); con un solo término, la coincidencia exacta de ID,
  * cédula o credencial sale primera.
@@ -35,6 +45,7 @@ export function detalleContacto(c: ContactoListado): string {
           @for (c of resultados(); track c.id) {
             <div class="combo-opt" role="option" (click)="elegir(c)">
               {{ etiqueta(c) }} <span class="combo-det">{{ detalle(c) }}</span>
+              @if (aviso(c); as a) { <span class="aviso-adh">{{ a }}</span> }
             </div>
           }
         </div>
@@ -59,6 +70,7 @@ export function detalleContacto(c: ContactoListado): string {
     .combo-opt:last-child { border-bottom:none; }
     .combo-opt:hover { background:#eef5ff; }
     .combo-det { color:#888; font-size:12px; margin-left:4px; }
+    .aviso-adh { display:inline-block; margin-left:6px; padding:1px 6px; border-radius:4px; font-size:11px; font-weight:600; color:#8a5a00; background:#fff3cd; border:1px solid #f0d58a; }
     .combo-empty { font-size:12px; color:#888; margin-top:4px; }
   `],
 })
@@ -73,6 +85,7 @@ export class ContactoBuscadorComponent {
   sinResultados = signal(false);
   readonly etiqueta = etiquetaContacto;
   readonly detalle = detalleContacto;
+  readonly aviso = avisoNoAdherido;
 
   private buscar$ = new Subject<string>();
 

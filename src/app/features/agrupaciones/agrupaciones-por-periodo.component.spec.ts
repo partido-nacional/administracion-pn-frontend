@@ -67,6 +67,18 @@ describe('AgrupacionesPorPeriodoComponent — integrantes', () => {
     flushReload();
   });
 
+  it('un contacto no adherido se avisa pero se guarda igual', () => {
+    const baja = { id: 42, nombre: 'Ana', apellido: 'Lopez', adherente: false, adhesion: 'Baja' } as any;
+    expect(cmp.avisoNoAdherido(baja)).toBe('No adherido (Baja)');
+    cmp.abrirAgregar(5);
+    cmp.seleccionarContacto(baja);
+    cmp.guardarIntegrante(5);
+    const post = httpMock.expectOne(`${environment.apiUrl}/agrupacion-integrantes`);
+    expect(post.request.body.contactoId).toBe(42);
+    post.flush({});
+    flushReload();
+  });
+
   it('no guarda sin contacto seleccionado', () => {
     cmp.abrirAgregar(5);
     cmp.guardarIntegrante(5);

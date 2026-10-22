@@ -166,6 +166,22 @@ describe('AgrupacionesComponent', () => {
       req.flush({ agrupacionId: 9, periodoId: 9, nombre: 'Lista Nueva', integrantes: 2 });
     });
 
+    it('un integrante no adherido muestra el aviso y se manda igual en el alta', () => {
+      const { f, c } = abrir();
+      c.nuevoForm.nombre = 'Lista Nueva';
+      c.agregarIntegrante({ ...ana, adherente: false, adhesion: 'Baja' });
+      c.agregarIntegrante({ ...luis, adherente: true });
+      f.detectChanges();
+      const avisos = Array.from((f.nativeElement as HTMLElement).querySelectorAll('.int-alta-table .aviso-adh'))
+        .map(e => e.textContent?.trim());
+      expect(avisos).toEqual(['No adherido (Baja)']);
+
+      c.guardarNueva();
+      const req = http.expectOne(r => r.method === 'POST' && r.url.endsWith('/agrupaciones-pendientes/nueva'));
+      expect(req.request.body.integrantes.map((i: any) => i.contactoId)).toEqual([1, 2]);
+      req.flush({ agrupacionId: 9, periodoId: 9, nombre: 'Lista Nueva', integrantes: 2 });
+    });
+
     it('Cargo es un desplegable con las 8 opciones', () => {
       const { f, c } = abrir();
       c.agregarIntegrante(ana);
