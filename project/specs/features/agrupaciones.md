@@ -327,3 +327,9 @@ En el modal de Pendientes (modo aprobar) dejan de llevar `*` y de figurar en `fa
 
 - En el alta de una agrupación, el **Cargo** de cada integrante es un desplegable (`CARGOS_INTEGRANTE` en `core/agrupaciones-catalogos.ts`): Presidente, Vicepresidente, Tesorero, Sec. General, Vocal, Secretario, Protesorero, Prosecretario. Vacío (—) se manda como `null`.
 - `app-contacto-buscador` busca en toda la agenda por nombre y apellido juntos, cédula (con o sin puntos), credencial o ID (`#45`); la interpretación la hace el backend (`BusquedaContacto`, `q` de `GET /contactos`). Cada resultado muestra además `#ID · Cred. …` para distinguir homónimos.
+
+## Actualización — mismo desplegable de Cargo en todas las pantallas
+
+- **Agrupaciones por Período** (agregar integrante): Cargo es un desplegable con `CARGOS_INTEGRANTE`; vacío (—) se manda como `null`.
+- **Fichas web** (editar autoridades): el Rol usa las mismas 8 opciones en lugar de las 5 fijas (Presidente, Vicepresidente, Secretario, Tesorero, Vocal). Al promover, ese rol pasa a ser el cargo del integrante. Un rol que vino de la web y no está en la lista se conserva como opción extra (`opcionesConActual`). Las validaciones siguen igual: exactamente 1 Presidente y al menos 1 Secretario; una autoridad nueva arranca como Vocal.
+- Los cargos ya guardados (texto libre: "Secretario General", "Tesorera", "Delegado Electoral"...) no se modifican.

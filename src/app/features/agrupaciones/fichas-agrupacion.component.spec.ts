@@ -25,6 +25,36 @@ describe('FichasAgrupacionComponent — sincronizar', () => {
 
   afterEach(() => http.verify());
 
+  describe('editar autoridades', () => {
+    const ficha: any = {
+      id: 3, nombreAgrupacion: 'Lista Web', tipo: 'DEPARTAMENTAL', sublema1: 'S1',
+      autoridades: [
+        { id: 1, nombre: 'Ana', apellido: 'Pérez', ci: '12345672', rol: 'Presidente', orden: 1 },
+        { id: 2, nombre: 'Luis', apellido: 'Gómez', ci: '45678901', rol: 'Secretaria General', orden: 2 },
+      ],
+    };
+
+    function rolSelects(f: any): HTMLSelectElement[] {
+      return Array.from((f.nativeElement as HTMLElement).querySelectorAll('select[aria-label="Rol"]'));
+    }
+
+    it('el Rol usa las 8 opciones de cargo y conserva un rol viejo que no está en la lista', () => {
+      const f = montar();
+      f.componentInstance.abrirEditar(ficha);
+      f.detectChanges();
+      const [pres, viejo] = rolSelects(f).map(s => Array.from(s.options).map(o => o.textContent?.trim()));
+      expect(pres).toEqual(['Presidente', 'Vicepresidente', 'Tesorero', 'Sec. General', 'Vocal', 'Secretario', 'Protesorero', 'Prosecretario']);
+      expect(viejo).toEqual(['Presidente', 'Vicepresidente', 'Tesorero', 'Sec. General', 'Vocal', 'Secretario', 'Protesorero', 'Prosecretario', 'Secretaria General']);
+    });
+
+    it('una autoridad nueva arranca como Vocal', () => {
+      const c = montar().componentInstance;
+      c.abrirEditar(ficha);
+      c.agregarAutoridad();
+      expect(c.edit.autoridades[2].rol).toBe('Vocal');
+    });
+  });
+
   it('POST /sincronizar, avisa cuántas fichas nuevas, muestra la última y recarga', () => {
     const f = montar();
     const c = f.componentInstance;
