@@ -333,3 +333,17 @@ En el modal de Pendientes (modo aprobar) dejan de llevar `*` y de figurar en `fa
 - **Agrupaciones por Período** (agregar integrante): Cargo es un desplegable con `CARGOS_INTEGRANTE`; vacío (—) se manda como `null`.
 - **Fichas web** (editar autoridades): el Rol usa las mismas 8 opciones en lugar de las 5 fijas (Presidente, Vicepresidente, Secretario, Tesorero, Vocal). Al promover, ese rol pasa a ser el cargo del integrante. Un rol que vino de la web y no está en la lista se conserva como opción extra (`opcionesConActual`). Las validaciones siguen igual: exactamente 1 Presidente y al menos 1 Secretario; una autoridad nueva arranca como Vocal.
 - Los cargos ya guardados (texto libre: "Secretario General", "Tesorera", "Delegado Electoral"...) no se modifican.
+
+## Actualización — aviso de integrante no adherido
+
+- Al cargar integrantes (alta de Nueva Agrupación y Agrupaciones por Período), un contacto **no adherido** se marca con "No adherido (Baja | Pendiente | sin adhesión)": en los resultados del buscador, en la lista de integrantes del alta y debajo del contacto elegido en Por Período.
+- **Solo avisa, no bloquea**: el integrante se guarda igual (decisión del usuario). En cambio, promover una ficha web sigue rechazando autoridades no adheridas.
+- Criterio: `adherente` del listado de contactos (alguna adhesión local con aporte confirmado), el mismo que valida la ficha web. El estado entre paréntesis es `adhesion` (la última). `avisoNoAdherido` en `contacto-buscador.component.ts`; si el dato no viene no avisa.
+
+## Actualización — impresión en una hoja, Adh. de integrantes y pendientes editables
+
+- **Impresión** (`imprimir-agrupacion.ts`): la ficha entra en **una sola hoja A4 con las firmas**, con el formato del sistema anterior (Informe de la Comisión de Asuntos Políticos, datos en grilla compacta, Resolución de la Comisión en recuadro, integrantes, 7 firmas en 4 columnas). Si igual no entra (muchos integrantes o textos largos), al abrir la ventana se achica entera con `zoom` (`escalaParaUnaHoja`, con 10% de margen porque Chrome pagina algo más alto que lo medido en pantalla). Verificado en PDF con 5, 25 y 40 integrantes: siempre 1 hoja. Por Período ahora también imprime las firmas.
+- Integrantes impresos: Cargo, Nombres, Apellidos, Cédula, C.C., **Adh.** (casilla tildada si está adherido) y F. Ingreso, ordenados por jerarquía de cargo (Presidente, Vicepresidente, Sec. General, Secretario, Prosecretario, Tesorero, Protesorero, Vocal; los demás al final).
+- **Adh.** como casilla de solo lectura (sale del contacto: adhesión local con aporte confirmado) en la carga de integrantes del alta y de pendientes, y en la tabla de Agrupaciones por Período. El editor muestra "Adheridos: N de M". Solo avisa, no bloquea.
+- `app-integrantes-editor` (`features/agrupaciones/integrantes-editor.component.ts`): buscador + tabla (Contacto, Adh., Cargo, Fecha ingreso, Quitar), compartido por el alta de Nueva Agrupación y el modal de una pendiente. Conserva un cargo viejo que no está en la lista.
+- **Pendientes**: Editar y Aprobar cargan los integrantes del período y los mandan con el resto del formulario (backend #160). Si el backend no mandó la lista, no se envía nada (una lista vacía los borraría). La impresión de una pendiente incluye los integrantes.

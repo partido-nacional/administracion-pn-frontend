@@ -11,6 +11,7 @@ import { buildPagedParams } from '../../core/services/paged';
 import { toggleSort, sortArrow } from '../../shared/grid/grid-sort';
 import { ContactosService, ContactoListado } from '../agenda/contactos.service';
 import { CARGOS_INTEGRANTE } from '../../core/agrupaciones-catalogos';
+import { avisoNoAdherido } from '../../shared/components/contacto-buscador/contacto-buscador.component';
 import { ToastService } from '../../core/services/toast.service';
 
 interface IntegranteRow {
@@ -25,6 +26,8 @@ interface IntegranteRow {
   email?: string;
   cargo?: string;
   fechaIngreso?: string;
+  /** Adhesión local con aporte confirmado: requisito para abrir una agrupación. */
+  adherente?: boolean;
 }
 
 interface AgrupacionPeriodoRow {
@@ -287,11 +290,17 @@ import { DEPARTAMENTOS } from '../../core/departamentos';
                               @if (!contactoSel() && resultados().length > 0) {
                                 <div class="combo-list">
                                   @for (c of resultados(); track c.id) {
-                                    <div class="combo-opt" (click)="seleccionarContacto(c)">{{ labelContacto(c) }}</div>
+                                    <div class="combo-opt" (click)="seleccionarContacto(c)">
+                                      {{ labelContacto(c) }}
+                                      @if (avisoNoAdherido(c); as a) { <span class="aviso-adh">{{ a }}</span> }
+                                    </div>
                                   }
                                 </div>
                               }
                             </div>
+                            @if (contactoSel() && avisoNoAdherido(contactoSel()!); as a) {
+                              <div class="aviso-adh aviso-sel">{{ a }}: se puede cargar igual.</div>
+                            }
                           </div>
                           <div class="add-fg"><label>Cargo</label>
                             <select [(ngModel)]="cargoNuevo" name="cargoNuevo">
@@ -319,6 +328,7 @@ import { DEPARTAMENTOS } from '../../core/departamentos';
                               <th>Nombre</th>
                               <th>Cédula</th>
                               <th>Credencial</th>
+                              <th class="c">Adh.</th>
                               <th>Teléfono</th>
                               <th>Celular</th>
                               <th>Email</th>
@@ -334,6 +344,10 @@ import { DEPARTAMENTOS } from '../../core/departamentos';
                                 <td><strong>{{ i.apellido }}, {{ i.nombre }}</strong></td>
                                 <td>{{ i.cedula || '—' }}</td>
                                 <td>{{ i.credencial || '—' }}</td>
+                                <td class="c">
+                                  <input type="checkbox" class="adh" disabled [checked]="i.adherente === true"
+                                         [attr.aria-label]="'Adherido: ' + i.apellido + ', ' + i.nombre">
+                                </td>
                                 <td>{{ i.telefono || '—' }}</td>
                                 <td>{{ i.celular || '—' }}</td>
                                 <td>{{ i.email || '—' }}</td>
@@ -504,6 +518,10 @@ import { DEPARTAMENTOS } from '../../core/departamentos';
       border:1px solid #cfd6e0; border-radius:5px; margin-top:2px;
       box-shadow:0 6px 16px rgba(0,0,0,.12);
     }
+    .aviso-adh { display:inline-block; margin-left:6px; padding:1px 6px; border-radius:4px; font-size:11px; font-weight:600; color:#8a5a00; background:#fff3cd; border:1px solid #f0d58a; }
+    .aviso-sel { margin:4px 0 0; }
+    .int-table .c { text-align:center; }
+    .adh { width:15px; height:15px; accent-color:#1f6f3b; }
     .combo-opt { padding:8px 12px; cursor:pointer; font-size:13px; border-bottom:1px solid #f0f3f7; }
     .combo-opt:last-child { border-bottom:none; }
     .combo-opt:hover { background:#eef5ff; }
@@ -525,6 +543,7 @@ export class AgrupacionesPorPeriodoComponent {
   contactoSel = signal<ContactoListado | null>(null);
   cargoNuevo = '';
   readonly cargos = CARGOS_INTEGRANTE;
+  readonly avisoNoAdherido = avisoNoAdherido;
   fechaIngresoNuevo = new Date().toISOString().slice(0, 10);
   guardando = signal(false);
   private buscarContacto$ = new Subject<string>();
@@ -716,7 +735,7 @@ export class AgrupacionesPorPeriodoComponent {
       sublema4: r.sublema4, sublema5: r.sublema5,
       sublemaRenunciado: r.sublemaRenunciado,
       integrantes: r.integrantes
-    }, { firmas: false, titulo: 'Agrupación por Período' });
+    }, { firmas: true, titulo: 'Agrupación por Período' });
   }
 
   joinSublemas(r: AgrupacionPeriodoRow): string {
