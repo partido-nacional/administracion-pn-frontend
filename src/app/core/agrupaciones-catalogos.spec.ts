@@ -1,4 +1,4 @@
-import { CLASIFICACIONES_AGRUPACION, FORMAS_AGRUPACION, SOLICITA_AGRUPACION, opcionesConActual } from './agrupaciones-catalogos';
+import { CARGOS_INTEGRANTE, CLASIFICACIONES_AGRUPACION, FORMAS_AGRUPACION, SOLICITA_AGRUPACION, opcionesConActual } from './agrupaciones-catalogos';
 
 describe('agrupaciones-catalogos', () => {
   it('Clasificación tiene las 5 opciones en orden', () => {
@@ -9,6 +9,12 @@ describe('agrupaciones-catalogos', () => {
 
   it('Solicita tiene las 4 opciones en orden', () => {
     expect(SOLICITA_AGRUPACION).toEqual(['Ampliar Sublemas', 'Reconocimiento', 'Modifica Autoridades', 'Cambio de cargo']);
+  });
+
+  it('Cargo de integrante tiene las 8 opciones en orden', () => {
+    expect(CARGOS_INTEGRANTE).toEqual([
+      'Presidente', 'Vicepresidente', 'Tesorero', 'Sec. General', 'Vocal', 'Secretario', 'Protesorero', 'Prosecretario',
+    ]);
   });
 
   it('Forma de Representación / Actuación: Indistinta y Conjunta', () => {

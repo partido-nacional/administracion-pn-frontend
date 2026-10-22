@@ -152,7 +152,7 @@ describe('AgrupacionesComponent', () => {
       const { c } = abrir();
       c.nuevoForm.nombre = 'Lista Nueva';
       c.agregarIntegrante(ana);
-      c.integrantesNuevos()[0].cargo = ' Presidente ';
+      c.integrantesNuevos()[0].cargo = 'Presidente';
       c.integrantesNuevos()[0].fechaIngreso = '2026-10-01';
       c.agregarIntegrante(luis);
       c.integrantesNuevos()[1].fechaIngreso = '';
@@ -164,6 +164,18 @@ describe('AgrupacionesComponent', () => {
         { contactoId: 2, cargo: null, fechaIngreso: null },
       ]);
       req.flush({ agrupacionId: 9, periodoId: 9, nombre: 'Lista Nueva', integrantes: 2 });
+    });
+
+    it('Cargo es un desplegable con las 8 opciones', () => {
+      const { f, c } = abrir();
+      c.agregarIntegrante(ana);
+      f.detectChanges();
+      const select = (f.nativeElement as HTMLElement).querySelector('.int-alta-table select') as HTMLSelectElement;
+      expect(select).toBeTruthy();
+      expect(Array.from(select.options).map(o => o.textContent?.trim())).toEqual([
+        '—', 'Presidente', 'Vicepresidente', 'Tesorero', 'Sec. General', 'Vocal', 'Secretario', 'Protesorero', 'Prosecretario',
+      ]);
+      expect((f.nativeElement as HTMLElement).querySelector('.int-alta-table input[placeholder="Cargo"]')).toBeNull();
     });
 
     it('al reabrir la lista arranca vacía y editar no manda integrantes', () => {
