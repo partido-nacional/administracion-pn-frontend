@@ -322,3 +322,8 @@ En el modal de Pendientes (modo aprobar) dejan de llevar `*` y de figurar en `fa
 - El modal **Nueva Agrupación** tiene una sección **Integrantes** (opcional): se busca el contacto por nombre o cédula con el nuevo `shared/components/contacto-buscador`, se agrega a una lista (no admite repetidos) y se completa cargo y fecha de ingreso (por defecto hoy). Se mandan en `integrantes` del `POST /agrupaciones-pendientes/nueva` y se guardan junto con la agrupación. En modo Editar la sección no aparece (los integrantes se gestionan en Agrupaciones por Período).
 - **Crear desde ficha** avisa que las autoridades de la ficha quedan cargadas como integrantes (lo hace el backend al promover).
 - `AgrupacionesPorPeriodoComponent` mantiene su propio buscador inline; migrarlo a `app-contacto-buscador` queda como mejora.
+
+## Actualización — Cargo como desplegable y buscador de contactos
+
+- En el alta de una agrupación, el **Cargo** de cada integrante es un desplegable (`CARGOS_INTEGRANTE` en `core/agrupaciones-catalogos.ts`): Presidente, Vicepresidente, Tesorero, Sec. General, Vocal, Secretario, Protesorero, Prosecretario. Vacío (—) se manda como `null`.
+- `app-contacto-buscador` busca en toda la agenda por nombre y apellido juntos, cédula (con o sin puntos), credencial o ID (`#45`); la interpretación la hace el backend (`BusquedaContacto`, `q` de `GET /contactos`). Cada resultado muestra además `#ID · Cred. …` para distinguir homónimos.

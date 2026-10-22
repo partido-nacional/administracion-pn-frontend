@@ -8,8 +8,15 @@ export function etiquetaContacto(c: ContactoListado): string {
   return `${c.apellido}, ${c.nombre}${c.cedula ? ' (' + c.cedula + ')' : ''}`;
 }
 
+/** Datos extra en cada resultado, para distinguir homónimos: "#45 · Cred. BAA27057". */
+export function detalleContacto(c: ContactoListado): string {
+  return [`#${c.id}`, c.credencial ? `Cred. ${c.credencial}` : ''].filter(Boolean).join(' · ');
+}
+
 /**
- * Combo para buscar un contacto por nombre o cédula (debounce 250 ms, 8 resultados) y elegirlo.
+ * Combo para buscar un contacto por nombre y apellido, cédula, credencial o ID (debounce 250 ms, 8 resultados) y elegirlo.
+ * Busca en toda la agenda (q de GET /contactos); con un solo término, la coincidencia exacta de ID,
+ * cédula o credencial sale primera.
  * Emite `seleccionar` con el contacto y se limpia solo, listo para buscar el siguiente.
  * Misma búsqueda que el alta de integrantes de Agrupaciones por Período.
  */
@@ -26,7 +33,9 @@ export function etiquetaContacto(c: ContactoListado): string {
       @if (resultados().length > 0) {
         <div class="combo-list" role="listbox">
           @for (c of resultados(); track c.id) {
-            <div class="combo-opt" role="option" (click)="elegir(c)">{{ etiqueta(c) }}</div>
+            <div class="combo-opt" role="option" (click)="elegir(c)">
+              {{ etiqueta(c) }} <span class="combo-det">{{ detalle(c) }}</span>
+            </div>
           }
         </div>
       }
@@ -49,19 +58,21 @@ export function etiquetaContacto(c: ContactoListado): string {
     .combo-opt { padding:8px 12px; cursor:pointer; font-size:13px; border-bottom:1px solid #f0f3f7; }
     .combo-opt:last-child { border-bottom:none; }
     .combo-opt:hover { background:#eef5ff; }
+    .combo-det { color:#888; font-size:12px; margin-left:4px; }
     .combo-empty { font-size:12px; color:#888; margin-top:4px; }
   `],
 })
 export class ContactoBuscadorComponent {
   private contactosSvc = inject(ContactosService);
 
-  @Input() placeholder = 'Buscar por nombre o cédula…';
+  @Input() placeholder = 'Buscar por nombre y apellido, cédula, credencial o ID…';
   @Output() seleccionar = new EventEmitter<ContactoListado>();
 
   q = signal('');
   resultados = signal<ContactoListado[]>([]);
   sinResultados = signal(false);
   readonly etiqueta = etiquetaContacto;
+  readonly detalle = detalleContacto;
 
   private buscar$ = new Subject<string>();
 

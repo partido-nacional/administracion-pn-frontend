@@ -35,7 +35,7 @@ interface PadronItem { serie: string; nro: string; primerNombre: string; segundo
 type Tab = 'todas' | 'pendientes' | 'fichas' | 'periodo' | 'padron';
 
 import { DEPARTAMENTOS_CON_NACIONAL } from '../../core/departamentos';
-import { CLASIFICACIONES_AGRUPACION, FORMAS_AGRUPACION, SOLICITA_AGRUPACION, opcionesConActual } from '../../core/agrupaciones-catalogos';
+import { CARGOS_INTEGRANTE, CLASIFICACIONES_AGRUPACION, FORMAS_AGRUPACION, SOLICITA_AGRUPACION, opcionesConActual } from '../../core/agrupaciones-catalogos';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 import { ContactoBuscadorComponent, etiquetaContacto } from '../../shared/components/contacto-buscador/contacto-buscador.component';
 import { ContactoListado } from '../agenda/contactos.service';
@@ -176,7 +176,12 @@ function hoyIso(): string {
                     @for (i of integrantesNuevos(); track i.contacto.id) {
                       <tr>
                         <td>{{ etiquetaContacto(i.contacto) }}</td>
-                        <td><input [(ngModel)]="i.cargo" [name]="'n-int-cargo-' + i.contacto.id" placeholder="Cargo"></td>
+                        <td>
+                          <select [(ngModel)]="i.cargo" [name]="'n-int-cargo-' + i.contacto.id" aria-label="Cargo">
+                            <option value="">—</option>
+                            @for (o of cargos; track o) { <option [ngValue]="o">{{ o }}</option> }
+                          </select>
+                        </td>
                         <td><input type="date" [(ngModel)]="i.fechaIngreso" [name]="'n-int-fi-' + i.contacto.id"></td>
                         <td><button type="button" class="btn btn-sm btn-secondary" (click)="quitarIntegrante(i.contacto.id)">Quitar</button></td>
                       </tr>
@@ -422,7 +427,7 @@ function hoyIso(): string {
     .int-alta-table { width:100%; border-collapse:collapse; font-size:13px; margin-top:8px; }
     .int-alta-table th, .int-alta-table td { border-bottom:1px solid #eef1f5; padding:6px 8px; text-align:left; }
     .int-alta-table th { font-size:11px; color:#666; text-transform:uppercase; letter-spacing:.4px; background:#fafbfd; }
-    .int-alta-table input { width:100%; box-sizing:border-box; padding:5px 8px; font-size:13px; border:1px solid #cfd6e0; border-radius:5px; }
+    .int-alta-table input, .int-alta-table select { width:100%; box-sizing:border-box; padding:5px 8px; font-size:13px; border:1px solid #cfd6e0; border-radius:5px; }
     .topbar-inline { display:flex; justify-content:flex-end; margin-bottom:16px; }
     tr.clickable { cursor:pointer; }
     tr.clickable:hover { background:#f5f8ff; }
@@ -577,6 +582,7 @@ export class AgrupacionesComponent {
   readonly clasificaciones = CLASIFICACIONES_AGRUPACION;
   readonly solicitaOpciones = SOLICITA_AGRUPACION;
   readonly formas = FORMAS_AGRUPACION;
+  readonly cargos = CARGOS_INTEGRANTE;
   readonly opcionesConActual = opcionesConActual;
 
   private formVacio() {
