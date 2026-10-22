@@ -19,6 +19,18 @@ export const SOLICITA_AGRUPACION: readonly string[] = [
   'Cambio de cargo',
 ];
 
+/** Cargo de un integrante al darlo de alta junto con la agrupación. */
+export const CARGOS_INTEGRANTE: readonly string[] = [
+  'Presidente',
+  'Vicepresidente',
+  'Tesorero',
+  'Sec. General',
+  'Vocal',
+  'Secretario',
+  'Protesorero',
+  'Prosecretario',
+];
+
 /** Forma de Representación y Forma de Actuación (desplegables independientes, mismas opciones). */
 export const FORMAS_AGRUPACION: readonly string[] = ['Indistinta', 'Conjunta'];
 
