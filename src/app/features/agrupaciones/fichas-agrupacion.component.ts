@@ -305,7 +305,7 @@ export interface SincronizacionAgrupaciones {
             </p>
 
             <div class="prom-grid">
-              <div class="fg"><label>Cod. Agrupación</label><input [(ngModel)]="prom.codAgrup" name="codAgrup"></div>
+              <div class="fg"><label>Cod. Agrupación</label><input [(ngModel)]="prom.codAgrup" name="codAgrup" placeholder="Automático si se deja vacío"></div>
               <div class="fg"><label>Cod. Depto.</label><input [(ngModel)]="prom.codDepto" name="codDepto"></div>
               <div class="fg"><label>Solic.</label><input type="number" [(ngModel)]="prom.solic" name="solic"></div>
               <div class="fg"><label>Clasificación</label>
@@ -330,7 +330,7 @@ export interface SincronizacionAgrupaciones {
               <div class="fg"><label>Fecha Ing. Comis.</label><input type="date" [(ngModel)]="prom.fechaIngComis" name="fechaIngComis"></div>
               <div class="fg"><label>Fecha Rec. Agrup.</label><input type="date" [(ngModel)]="prom.fechaRecAgrup" name="fechaRecAgrup"></div>
               <div class="fg"><label>Fecha Entr. C.E.</label><input type="date" [(ngModel)]="prom.fechaEntrCE" name="fechaEntrCE"></div>
-              <div class="fg"><label>Fecha Circ. C.E.</label><input type="date" [(ngModel)]="prom.fechaCircCE" name="fechaCircCE"></div>
+              <div class="fg"><label>N° Trámite</label><input [(ngModel)]="prom.nroTramite" name="nroTramite"></div>
               <div class="fg full"><label>Antecedentes</label><textarea rows="2" [(ngModel)]="prom.antecedentes" name="antecedentes"></textarea></div>
               <div class="fg full"><label>Resolución de la Comisión</label><textarea rows="2" [(ngModel)]="prom.resolucionComision" name="resolucionComision"></textarea></div>
               <div class="fg"><label>Observaciones</label><input [(ngModel)]="prom.observaciones" name="observaciones"></div>
@@ -773,7 +773,7 @@ export class FichasAgrupacionComponent {
       clasificacion: '', solicita: '', sector: '',
       codAnt: '', sublemaRenunciado: '', nombreAnt: '',
       fax: '', representante: '', delegadoCE: '',
-      fechaIngComis: '', fechaRecAgrup: '', fechaEntrCE: '', fechaCircCE: '',
+      fechaIngComis: '', fechaRecAgrup: '', fechaEntrCE: '', nroTramite: '',
       observaciones: '', obsCE: '', nota: '',
       antecedentes: '', resolucionComision: ''
     };
@@ -894,8 +894,7 @@ export class FichasAgrupacionComponent {
       solic: this.prom.solic === '' || this.prom.solic == null ? null : Number(this.prom.solic),
       fechaIngComis: this.prom.fechaIngComis || null,
       fechaRecAgrup: this.prom.fechaRecAgrup || null,
-      fechaEntrCE: this.prom.fechaEntrCE || null,
-      fechaCircCE: this.prom.fechaCircCE || null
+      fechaEntrCE: this.prom.fechaEntrCE || null
     };
     this.http.post(`${environment.apiUrl}/agrupaciones-pendientes/promover`, body).subscribe({
       next: () => {

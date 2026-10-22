@@ -38,3 +38,17 @@ describe('imprimirAgrupacion — escape XSS', () => {
     expect(html).toContain('&lt;script&gt;');
   });
 });
+
+describe('imprimirAgrupacion — N° Trámite', () => {
+  it('imprime el N° Trámite y la Fecha Circ. C.E. solo si la agrupación la tiene', () => {
+    const sinFecha = capturarHtml({ ...base, nroTramite: 'T-15' });
+    expect(sinFecha).toContain('N° Trámite');
+    expect(sinFecha).toContain('T-15');
+    expect(sinFecha).not.toContain('Fecha Circ. C.E.');
+    (window.open as jasmine.Spy).and.callThrough();
+  });
+
+  it('mantiene la Fecha Circ. C.E. migrada', () => {
+    expect(capturarHtml({ ...base, fechaCircCE: '01/05/2020' })).toContain('Fecha Circ. C.E.');
+  });
+});
